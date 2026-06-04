@@ -874,7 +874,7 @@ class MicroscopeActionRunner:
             pixel_size_A=pixel_size_A,
             output_prefix=output_prefix,
         )
-        bumps = self.detect_major_bumps(image)
+        bumps = self.detect_major_bumps(image, pixel_size_A=pixel_size_A)
         self.remember_bumps(bumps, settings_before)
         dFreq_Hz = self.dFreq()
         dFreq_report = self.interpret_dFreq(dFreq_Hz)
@@ -1814,7 +1814,16 @@ class MicroscopeActionRunner:
                     }
         return best
 
-    def detect_major_bumps(self, image, max_bumps=12, sigma_threshold=4.0, min_sep_px=16):
+    def detect_major_bumps(
+        self,
+        image,
+        max_bumps=12,
+        sigma_threshold=4.0,
+        min_sep_px=16,
+        pixel_size_A=1.0,
+        molecule_height_A=3.0,
+        large_blob_diameter_A=40.0,
+    ):
         """
         Detect large protrusions/bumps in the current image.
 
@@ -1844,25 +1853,91 @@ class MicroscopeActionRunner:
             return []
 
         score = np.abs(flat - median) / robust_sigma
-        candidates = np.argwhere(score >= sigma_threshold)
+        mask = score >= sigma_threshold
+        candidates = np.argwhere(mask)
         if candidates.size == 0:
             return []
-        order = np.argsort(score[score >= sigma_threshold])[::-1]
+        order = np.argsort(score[mask])[::-1]
         bumps = []
         for idx in order:
             py, px = candidates[idx]
             if all(np.hypot(px - b["px"], py - b["py"]) >= min_sep_px for b in bumps):
+                component = self._connected_component(mask, int(py), int(px))
+                if component.size:
+                    min_y = int(np.min(component[:, 0]))
+                    max_y = int(np.max(component[:, 0]))
+                    min_x = int(np.min(component[:, 1]))
+                    max_x = int(np.max(component[:, 1]))
+                    diameter_px = float(max(max_x - min_x + 1, max_y - min_y + 1))
+                    area_px = int(component.shape[0])
+                else:
+                    min_y = max_y = int(py)
+                    min_x = max_x = int(px)
+                    diameter_px = 1.0
+                    area_px = 1
+                diameter_A = float(diameter_px * float(pixel_size_A))
+                height_A = float(flat[py, px])
+                abs_height_A = abs(height_A)
+                if abs_height_A < float(molecule_height_A):
+                    feature_class = "molecule_candidate"
+                    avoid_for_clean_area = False
+                    count_for_offset_stop = False
+                elif diameter_A >= float(large_blob_diameter_A):
+                    feature_class = "large_blob_hazard"
+                    avoid_for_clean_area = True
+                    count_for_offset_stop = True
+                else:
+                    feature_class = "tall_local_feature"
+                    avoid_for_clean_area = True
+                    count_for_offset_stop = False
                 bumps.append(
                     {
                         "px": int(px),
                         "py": int(py),
                         "score_sigma": float(score[py, px]),
-                        "height_A": float(flat[py, px]),
+                        "height_A": height_A,
+                        "abs_height_A": abs_height_A,
+                        "diameter_px_est": diameter_px,
+                        "diameter_A_est": diameter_A,
+                        "area_px": area_px,
+                        "bbox_px": [min_x, min_y, max_x, max_y],
+                        "feature_class": feature_class,
+                        "avoid_for_clean_area": avoid_for_clean_area,
+                        "count_for_offset_stop": count_for_offset_stop,
+                        "classification_note": (
+                            "Molecule candidates are abs(dZ)<3 A. Large blob "
+                            "hazards are taller features with estimated "
+                            "diameter >=40 A."
+                        ),
                     }
                 )
             if len(bumps) >= max_bumps:
                 break
         return bumps
+
+    def _connected_component(self, mask, start_y, start_x, max_pixels=20000):
+        """Return 8-connected mask component coordinates for one seed pixel."""
+        if not mask[start_y, start_x]:
+            return np.empty((0, 2), dtype=int)
+        ny, nx = mask.shape
+        visited = set()
+        stack = [(int(start_y), int(start_x))]
+        coords = []
+        while stack and len(coords) < int(max_pixels):
+            y, x = stack.pop()
+            if (y, x) in visited:
+                continue
+            visited.add((y, x))
+            if y < 0 or y >= ny or x < 0 or x >= nx or not mask[y, x]:
+                continue
+            coords.append((y, x))
+            for yy in range(y - 1, y + 2):
+                for xx in range(x - 1, x + 2):
+                    if yy == y and xx == x:
+                        continue
+                    if 0 <= yy < ny and 0 <= xx < nx and (yy, xx) not in visited:
+                        stack.append((yy, xx))
+        return np.asarray(coords, dtype=int)
 
     def remember_scan_site(self, settings):
         site = {
@@ -1883,6 +1958,8 @@ class MicroscopeActionRunner:
     def remember_bumps(self, bumps, settings):
         remembered = []
         for bump in bumps:
+            if not bump.get("avoid_for_clean_area", True):
+                continue
             target = self.pixel_to_scan_xy(bump["px"], bump["py"])
             item = {
                 "timestamp": datetime.now().isoformat(),
@@ -3848,6 +3925,7 @@ class LandscapeNavigationController:
             image,
             max_bumps=30,
             min_sep_px=max(12, int(round(20.0 / max(pixel_size_A, 1e-9)))),
+            pixel_size_A=pixel_size_A,
         )
         self.runner.remember_bumps(bumps, settings)
         candidates = self.rank_flat_work_areas(
@@ -3939,6 +4017,7 @@ class LandscapeNavigationController:
             image,
             max_bumps=max_hazards,
             min_sep_px=max(12, int(round(20.0 / max(pixel_size_A, 1e-9)))),
+            pixel_size_A=pixel_size_A,
         )
         for hazard in hazards:
             hazard.update(
@@ -4784,10 +4863,12 @@ class LandscapeNavigationController:
                     max_bumps=10,
                     sigma_threshold=sigma_threshold,
                     min_sep_px=20,
+                    pixel_size_A=self.runner._pixel_size_A(channel),
                 )
                 bumps = [
                     bump for bump in bumps
                     if abs(float(bump.get("height_A", 0.0))) >= min_abs_height_A
+                    and bump.get("count_for_offset_stop", True)
                 ]
                 if bumps:
                     settings = self.runner._scan_settings(channel)

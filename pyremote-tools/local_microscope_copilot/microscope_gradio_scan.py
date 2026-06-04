@@ -78,7 +78,13 @@ class ScanGuiMixin:
             if "px" not in hazard or "py" not in hazard:
                 continue
             x_A, y_A = self.pixel_to_local_A(hazard["px"], hazard["py"], image, extent)
-            ax.plot(x_A, y_A, "rx", ms=7, mew=1.5)
+            feature_class = hazard.get("feature_class", "")
+            if feature_class == "molecule_candidate":
+                ax.plot(x_A, y_A, "o", color="#78a6c8", ms=4, mec="k", mew=0.3)
+            elif hazard.get("count_for_offset_stop"):
+                ax.plot(x_A, y_A, "rx", ms=8, mew=1.8)
+            else:
+                ax.plot(x_A, y_A, "x", color="#ff9f1c", ms=7, mew=1.4)
 
         candidates = (
             landscape.get("candidates")
@@ -130,7 +136,9 @@ class ScanGuiMixin:
                 )
             )
         if hazards:
-            summary_lines.append("hazards: {}".format(len(hazards)))
+            large = len([h for h in hazards if h.get("count_for_offset_stop")])
+            molecules = len([h for h in hazards if h.get("feature_class") == "molecule_candidate"])
+            summary_lines.append("large hazards: {}, molecules: {}".format(large, molecules))
         if candidates:
             summary_lines.append("flat candidates: {}".format(len(candidates)))
 

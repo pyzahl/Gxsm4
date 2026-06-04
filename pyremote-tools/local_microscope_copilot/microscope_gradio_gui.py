@@ -203,6 +203,12 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 return CHAT_ROUTER_HELP.strip() + "\n\n```json\n{}\n```".format(
                     json.dumps(self.chat_router_capabilities(), indent=2)
                 )
+        tip_gvp_reply = self.route_tip_gvp_intent(text, chat_arm=chat_arm)
+        if tip_gvp_reply is not None:
+            return tip_gvp_reply
+        tip_loop_reply = self.route_tip_tune_loop_intent(text, chat_arm=chat_arm)
+        if tip_loop_reply is not None:
+            return tip_loop_reply
         if self.looks_like_tip_or_scan_analysis(text_l):
             self.chat_context["last_action_domain"] = "analysis"
             return self.try_chat_scan_analysis(text)
@@ -245,6 +251,305 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                     chat_arm=chat_arm,
                 )
         return None
+
+    def route_tip_gvp_intent(self, text, chat_arm=False):
+        text_l = text.lower().strip()
+        if any(word in text_l for word in ("process", "loop", "improve", "improvement", "planner")):
+            return None
+        wants_pulse = (
+            "pulse tip" in text_l
+            or "tip pulse" in text_l
+            or ("tip" in text_l and "pulse" in text_l)
+        )
+        wants_dip = (
+            "dip tip" in text_l
+            or "tip dip" in text_l
+            or "tune tip" in text_l
+            or "tip tune" in text_l
+            or "fine tune" in text_l
+            or ("tip" in text_l and any(word in text_l for word in ("dip", "tune", "tuning")))
+        )
+        if not (wants_pulse or wants_dip):
+            return None
+        self.chat_context["last_action_domain"] = "gvp_tip_action"
+        execute_requested = self.safety_limits()["gvp_execute_extra_confirmation"].lower() in text_l
+        load_requested = bool(re.search(r"\b(load|prepare|setup|set up)\b", text_l))
+        if wants_pulse:
+            params = self.parse_tip_pulse_chat_parameters(text)
+            action_label = "tip bias pulse GVP"
+            load_callback = lambda params=params: self.load_bias_pulse(
+                params["pulse_du_V"],
+                arm=True,
+            )
+        else:
+            params = self.parse_tip_dip_chat_parameters(text)
+            action_label = "tip fine-tune Z-dip GVP" if params["fine_tune"] else "tip tune Z-dip GVP"
+            load_callback = lambda params=params: self.load_tip_tune_gvp(
+                params["contact_bias_V"],
+                params["dip_depth_A"],
+                arm=True,
+            )
+        if execute_requested:
+            return self.execute_chat_gvp_tip_action(
+                action_label,
+                params,
+                load_callback,
+                chat_arm=chat_arm,
+            )
+        if load_requested:
+            return self.execute_chat_level1_action(
+                "load {}".format(action_label),
+                params,
+                chat_arm,
+                load_callback,
+            )
+        return (
+            "I understood this as `{}`.\n\n"
+            "Parameters I would use:\n\n```json\n{}\n```\n\n"
+            "To load only, use a phrase like `load {}` with Control Level 1+ "
+            "and chat arm checked. To load and execute from chat, include the "
+            "exact confirmation phrase `{}`. Execution is a live GVP tip action."
+        ).format(
+            action_label,
+            json.dumps(params, indent=2),
+            action_label,
+            self.safety_limits()["gvp_execute_extra_confirmation"],
+        )
+
+    def parse_tip_pulse_chat_parameters(self, text):
+        text_l = text.lower()
+        pulse = 2.0
+        match = re.search(r"([-+]?\d+(?:\.\d+)?)\s*v", text_l)
+        if match:
+            pulse = float(match.group(1))
+        pulse = max(-4.0, min(4.0, pulse))
+        return {
+            "kind": "bias_pulse",
+            "pulse_du_V": pulse,
+            "max_abs_pulse_du_V": 4.0,
+            "note": "Default tip pulse is +2 V; Level 1 caps pulse du at +/-4 V.",
+        }
+
+    def parse_tip_dip_chat_parameters(self, text):
+        text_l = text.lower()
+        fine_tune = "fine tune" in text_l or "finetune" in text_l
+        dip_depth = 4.0 if fine_tune else 5.0
+        contact_bias = 0.0
+        match = re.search(r"([-+]?\d+(?:\.\d+)?)\s*a\b", text_l)
+        if match:
+            dip_depth = abs(float(match.group(1)))
+        match = re.search(r"(?:contact bias|contact voltage|at contact)\D*([-+]?\d+(?:\.\d+)?)\s*v", text_l)
+        if match:
+            contact_bias = float(match.group(1))
+        dip_depth = max(0.0, min(25.0, dip_depth))
+        contact_bias = max(-1.0, min(1.0, contact_bias))
+        return {
+            "kind": "tip_z_dip",
+            "fine_tune": fine_tune,
+            "dip_depth_A": dip_depth,
+            "contact_bias_V": contact_bias,
+            "note": (
+                "Fine tune means the most gentle default dip, 4 A. "
+                "Normal tune/dip default is 5 A. Contact bias defaults to 0 V."
+            ),
+        }
+
+    def execute_chat_gvp_tip_action(self, action_label, params, load_callback, chat_arm=False):
+        if self.control_level < 1:
+            return (
+                "I did not execute {}. Chat Level 1 actions require Control "
+                "Level 1 or higher, plus the chat arm checkbox."
+            ).format(action_label)
+        if not chat_arm:
+            return (
+                "I did not execute {}. To allow this Level 1 chat action, "
+                "check 'Arm Level 1 chat actions' in the Chat tab and submit "
+                "the request again."
+            ).format(action_label)
+        load_result = load_callback()
+        if isinstance(load_result, dict) and (
+            load_result.get("error")
+            or load_result.get("blocked")
+            or load_result.get("cancelled")
+        ):
+            return (
+                "I stopped before executing {}; loading failed or was gated.\n\n"
+                "```json\n{}\n```"
+            ).format(action_label, json.dumps(self.jsonable({"parameters": params, "load": load_result}), indent=2))
+        fig, execute_report = self.execute_loaded_gvp_with_plot(
+            self.safety_limits()["gvp_execute_extra_confirmation"],
+            arm=True,
+        )
+        if isinstance(execute_report, dict) and (
+            execute_report.get("error")
+            or execute_report.get("blocked")
+            or execute_report.get("cancelled")
+        ):
+            return (
+                "Loaded {}, but execution failed or was gated.\n\n"
+                "```json\n{}\n```"
+            ).format(
+                action_label,
+                json.dumps(
+                    self.jsonable(
+                        {
+                            "parameters": params,
+                            "load": load_result,
+                            "execute": execute_report,
+                        }
+                    ),
+                    indent=2,
+                ),
+            )
+        return (
+            "{} loaded and executed through the Level 1 chat GVP gate.\n\n"
+            "```json\n{}\n```"
+        ).format(
+            action_label.capitalize(),
+            json.dumps(
+                self.jsonable(
+                    {
+                        "parameters": params,
+                        "load": load_result,
+                        "execute": execute_report,
+                    }
+                ),
+                indent=2,
+            ),
+        )
+
+    def route_tip_tune_loop_intent(self, text, chat_arm=False):
+        text_l = text.lower().strip()
+        wants_tip_loop = (
+            any(
+                phrase in text_l
+                for phrase in (
+                    "initiate improve tip process",
+                    "initiate tip improvement",
+                    "start tip improvement",
+                    "run tip improvement",
+                    "start tip tune",
+                    "run tip tune",
+                    "start tip tuning",
+                    "run tip tuning",
+                    "tip tune planner",
+                    "tip tuning loop",
+                    "tip improvement loop",
+                    "improve tip process",
+                )
+            )
+            or (
+                "tip" in text_l
+                and any(word in text_l for word in ("improve", "improvement", "tune", "tuning"))
+                and any(word in text_l for word in ("initiate", "start", "run", "execute", "begin", "loop", "process"))
+            )
+        )
+        if not wants_tip_loop:
+            return None
+        self.chat_context["last_action_domain"] = "tip_tune_planner"
+        phrase = self.TIP_LOOP_CONFIRMATION
+        if phrase.lower() not in text_l:
+            return (
+                "I did not start the Tip Tune Planner loop yet. This is a live "
+                "Level 1 hardware workflow: it can start scans, stop scans, move "
+                "ScanX/ScanY to a clean candidate, load/execute gentle GVP tip "
+                "actions, and repeat.\n\n"
+                "To run it from chat, set Control Level 1+, check 'Arm Level 1 "
+                "chat actions', and include this exact confirmation phrase in "
+                "your request: `{}`.\n\n"
+                "Default chat loop parameters: max cycles 2, channel 0, minimum "
+                "140 lines, 700 A range, 400 points, max large hazards 8, "
+                "max |dFreq| 4 Hz, no automatic offset shift."
+            ).format(phrase)
+        return self.execute_chat_tip_tune_loop(text, chat_arm=chat_arm)
+
+    def execute_chat_tip_tune_loop(self, text, chat_arm=False):
+        if self.control_level < 1:
+            return (
+                "I did not execute the Tip Tune Planner loop. Chat Level 1 "
+                "actions require Control Level 1 or higher, plus the chat arm checkbox."
+            )
+        if not chat_arm:
+            return (
+                "I did not execute the Tip Tune Planner loop. To allow this "
+                "Level 1 chat action, check 'Arm Level 1 chat actions' in the "
+                "Chat tab and submit the request again."
+            )
+        params = self.parse_tip_loop_chat_parameters(text)
+        fig, progress, report = self.run_tip_planner_loop(
+            params["max_cycles"],
+            params["channel"],
+            params["min_lines"],
+            params["range_A"],
+            params["points"],
+            params["max_large_hazards"],
+            params["max_abs_dfreq_Hz"],
+            params["auto_shift_on_blobs"],
+            params["shift_direction"],
+            self.TIP_LOOP_CONFIRMATION,
+            True,
+        )
+        # Keep the latest figures reachable through normal GUI state/report
+        # paths; chat itself returns the structured JSON summary.
+        self.tip_planner_state["last_chat_loop_report"] = report
+        if isinstance(report, dict) and (report.get("error") or report.get("blocked") or report.get("cancelled")):
+            return (
+                "Tip Tune Planner loop did not start or stopped with a gate/error.\n\n"
+                "```json\n{}\n```"
+            ).format(json.dumps(self.jsonable({"parameters": params, "report": report}), indent=2))
+        return (
+            "Tip Tune Planner loop started through the Level 1 chat action gate.\n\n"
+            "```json\n{}\n```"
+        ).format(json.dumps(self.jsonable({"parameters": params, "report": report}), indent=2))
+
+    def parse_tip_loop_chat_parameters(self, text):
+        text_l = text.lower()
+        params = {
+            "max_cycles": 2,
+            "channel": 0,
+            "min_lines": 140,
+            "range_A": 700.0,
+            "points": 400,
+            "max_large_hazards": 8,
+            "max_abs_dfreq_Hz": 4.0,
+            "auto_shift_on_blobs": bool(re.search(r"\b(auto ?shift|shift offset|search offset)\b", text_l)),
+            "shift_direction": "image_left_below",
+        }
+        match = re.search(r"\b(?:max cycles|cycles?)\D+(\d+)", text_l)
+        if match:
+            params["max_cycles"] = max(1, min(6, int(match.group(1))))
+        match = re.search(r"\b(?:channel|ch)\D+(\d+)", text_l)
+        if match:
+            params["channel"] = max(0, min(8, int(match.group(1))))
+        match = re.search(r"\b(?:lines?|minimum lines|min lines)\D+(\d+)", text_l)
+        if match:
+            params["min_lines"] = max(20, min(400, int(match.group(1))))
+        match = re.search(r"(\d+(?:\.\d+)?)\s*(?:a|ang|angstrom|angstroms)\b", text_l)
+        if match:
+            params["range_A"] = max(100.0, min(1200.0, float(match.group(1))))
+        match = re.search(r"\b(?:points?|px)\D+(\d+)", text_l)
+        if match:
+            params["points"] = max(64, min(800, int(match.group(1))))
+        match = re.search(r"\b(?:large hazards?|hazards?|large blobs?)\D+(\d+)", text_l)
+        if match:
+            params["max_large_hazards"] = max(1, min(30, int(match.group(1))))
+        match = re.search(r"\b(?:dfreq|dfr|frequency)\D+(\d+(?:\.\d+)?)", text_l)
+        if match:
+            params["max_abs_dfreq_Hz"] = max(0.5, min(20.0, float(match.group(1))))
+        for direction in (
+            "image_left_below",
+            "image_right_below",
+            "image_left_above",
+            "image_right_above",
+            "image_left",
+            "image_right",
+            "image_up",
+            "image_down",
+        ):
+            if direction.replace("_", " ") in text_l or direction in text_l:
+                params["shift_direction"] = direction
+                break
+        return params
 
     def route_compound_level1_intent(self, text, chat_arm=False):
         text_l = text.lower().strip()
@@ -1048,14 +1353,17 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
 
     def execute_chat_level1_action(self, action_name, target, chat_arm, callback):
         is_scan_action = action_name in ("start scan", "stop scan")
+        is_load_action = str(action_name).startswith("load ")
         blocked_phrase = (
             "I did not execute {}".format(action_name)
-            if is_scan_action
+            if is_scan_action or is_load_action
             else "I did not change {}".format(action_name)
         )
         success_prefix = (
             "{} executed".format(action_name.capitalize())
             if is_scan_action
+            else "{} executed".format(action_name.capitalize())
+            if is_load_action
             else "{} change executed".format(action_name.capitalize())
         )
         if self.control_level < 1:
@@ -2113,7 +2421,7 @@ def build_ui(backend):
                     planner_patch = gr.Number(value=80.0, label="Flat patch size (A)")
                     planner_candidates = gr.Number(value=12, label="Max candidates", precision=0)
                 with gr.Row():
-                    planner_max_blobs = gr.Number(value=8, label="Stop/search if blobs >=", precision=0)
+                    planner_max_blobs = gr.Number(value=8, label="Stop/search if large hazards >=", precision=0)
                     planner_prefix = gr.Textbox(value="gui_tip_planner", label="Output prefix")
                     planner_analyze_btn = gr.Button("Analyze Tip And Flat Candidates")
                 planner_analyze_btn.click(
@@ -2197,7 +2505,7 @@ def build_ui(backend):
                     loop_range = gr.Number(value=700.0, label="Diagnostic range (A)")
                     loop_points = gr.Number(value=400, label="Points", precision=0)
                 with gr.Row():
-                    loop_max_blobs = gr.Number(value=8, label="Stop/search if blobs >=", precision=0)
+                    loop_max_blobs = gr.Number(value=8, label="Stop/search if large hazards >=", precision=0)
                     loop_df_ok = gr.Number(value=4.0, label="Max |dFreq| OK (Hz)")
                     loop_auto_shift = gr.Checkbox(value=False, label="Auto shift on too many blobs")
                 loop_confirm = gr.Textbox(

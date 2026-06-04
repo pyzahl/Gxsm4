@@ -100,6 +100,51 @@ class TipPlannerGuiMixin:
             "abnormal_contrast_lines": analysis.get("abnormal_contrast_lines", []),
         }
 
+    def blob_feature_summary(self, analysis, candidate=None):
+        features = list(analysis.get("hazards", []) or [])
+        molecule_candidates = [
+            item for item in features
+            if item.get("feature_class") == "molecule_candidate"
+        ]
+        large_hazards = [
+            item for item in features
+            if item.get("count_for_offset_stop")
+        ]
+        local_avoid = [
+            item for item in features
+            if item.get("avoid_for_clean_area")
+        ]
+        too_close = []
+        if candidate:
+            cx = candidate.get("px")
+            cy = candidate.get("py")
+            try:
+                for item in local_avoid:
+                    dist_px = float(np.hypot(float(item["px"]) - float(cx), float(item["py"]) - float(cy)))
+                    diameter_px = float(item.get("diameter_px_est") or 1.0)
+                    if dist_px <= max(24.0, 0.75 * diameter_px + 12.0):
+                        near = dict(item)
+                        near["distance_to_candidate_px"] = dist_px
+                        too_close.append(near)
+            except Exception:
+                too_close = []
+        return {
+            "feature_count": len(features),
+            "molecule_candidate_count": len(molecule_candidates),
+            "large_hazard_count": len(large_hazards),
+            "local_avoid_count": len(local_avoid),
+            "large_hazards": large_hazards,
+            "molecule_candidates": molecule_candidates[:30],
+            "local_avoid_too_close_to_candidate": too_close,
+            "too_close_to_clear_area": bool(too_close),
+            "rule": (
+                "Small blobs with abs(dZ)<3 A are molecule candidates and do "
+                "not trigger offset search. Large hazards require taller "
+                "features with estimated diameter >=40 A, or avoid-worthy "
+                "features too close to the chosen clean area."
+            ),
+        }
+
     def plot_tip_planner_analysis(self, image, meta, channel, analysis, title=None):
         landscape = self.normalize_planner_landscape(analysis)
         quality = dict(analysis.get("tip_quality") or {})
@@ -143,10 +188,18 @@ class TipPlannerGuiMixin:
                 analysis.get("tip_quality", {}),
                 dfreq_report,
             )
+            blob_summary = self.blob_feature_summary(
+                analysis,
+                candidate=analysis.get("best_flat_candidate"),
+            )
+            analysis["blob_feature_summary"] = blob_summary
             analysis["blob_stop"] = {
                 "max_blobs": int(max_blobs),
-                "hazard_count": len(analysis.get("hazards", [])),
-                "too_many_blobs": len(analysis.get("hazards", [])) >= int(max_blobs),
+                "feature_count": blob_summary["feature_count"],
+                "molecule_candidate_count": blob_summary["molecule_candidate_count"],
+                "large_hazard_count": blob_summary["large_hazard_count"],
+                "too_close_to_clear_area": blob_summary["too_close_to_clear_area"],
+                "too_many_blobs": blob_summary["large_hazard_count"] >= int(max_blobs),
             }
             self.tip_planner_state["last_analysis"] = analysis
             event = self.append_tip_planner_log(
@@ -155,7 +208,8 @@ class TipPlannerGuiMixin:
                     "status": "ok",
                     "verdict": analysis.get("tip_quality", {}).get("verdict"),
                     "dFrequency": dfreq_report,
-                    "hazard_count": len(analysis.get("hazards", [])),
+                    "hazard_count": blob_summary["large_hazard_count"],
+                    "molecule_candidate_count": blob_summary["molecule_candidate_count"],
                     "candidate_count": len(analysis.get("flat_candidates", [])),
                     "best_candidate": analysis.get("best_flat_candidate"),
                     "report_plot": analysis.get("plot"),
@@ -440,7 +494,11 @@ class TipPlannerGuiMixin:
                     dfreq_report,
                     max_abs_dfreq_Hz=max_abs_dfreq_Hz,
                 )
-                hazard_count = len(landscape.get("hazards", []))
+                blob_summary = self.blob_feature_summary(
+                    landscape,
+                    candidate=landscape.get("best_flat_candidate"),
+                )
+                hazard_count = blob_summary["large_hazard_count"]
                 cycle_report = {
                     "cycle": cycle,
                     "assessment_record": assessment.__dict__,
@@ -448,6 +506,7 @@ class TipPlannerGuiMixin:
                     "dFrequency": dfreq_report,
                     "satisfaction": satisfaction,
                     "hazard_count": hazard_count,
+                    "blob_feature_summary": blob_summary,
                     "flat_candidates": landscape.get("flat_candidates", []),
                     "best_flat_candidate": landscape.get("best_flat_candidate"),
                     "landscape_plot": landscape.get("plot"),
@@ -468,8 +527,12 @@ class TipPlannerGuiMixin:
                     loop_report["status"] = "satisfied"
                     break
 
-                if hazard_count >= int(max_blobs):
-                    cycle_report["decision"] = "too_many_blobs"
+                if hazard_count >= int(max_blobs) or blob_summary["too_close_to_clear_area"]:
+                    cycle_report["decision"] = (
+                        "too_many_large_blobs"
+                        if hazard_count >= int(max_blobs)
+                        else "large_blob_too_close_to_clear_area"
+                    )
                     self.runner.connect().stopscan() if not self.runner.dry_run else None
                     if auto_shift_on_blobs:
                         shift = self.tip_planner_apply_offset_shift(
@@ -482,7 +545,7 @@ class TipPlannerGuiMixin:
                         )
                         cycle_report["offset_shift"] = shift
                         continue
-                    loop_report["status"] = "stopped_too_many_blobs"
+                    loop_report["status"] = "stopped_for_large_blob_hazard"
                     break
 
                 candidate = landscape.get("best_flat_candidate")
@@ -512,6 +575,7 @@ class TipPlannerGuiMixin:
                         "verdict": quality.get("verdict"),
                         "dFrequency": dfreq_report,
                         "hazard_count": hazard_count,
+                        "molecule_candidate_count": blob_summary["molecule_candidate_count"],
                         "tip_action_plan": plan,
                     }
                 )
@@ -543,7 +607,9 @@ class TipPlannerGuiMixin:
         y = np.arange(len(history))
         labels = [str(item.get("event", "?")) for item in history]
         hazard_counts = [float(item.get("hazard_count", 0) or 0) for item in history]
-        ax.barh(y, hazard_counts, color="#d66b3d", alpha=0.75, label="hazards/blobs")
+        molecule_counts = [float(item.get("molecule_candidate_count", 0) or 0) for item in history]
+        ax.barh(y, molecule_counts, color="#78a6c8", alpha=0.55, label="molecule candidates")
+        ax.barh(y, hazard_counts, color="#d66b3d", alpha=0.75, label="large hazards")
         ax.set_yticks(y)
         ax.set_yticklabels(labels, fontsize=8)
         ax.invert_yaxis()

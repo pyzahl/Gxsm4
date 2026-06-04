@@ -818,7 +818,9 @@ in one place:
 - `Analyze Tip And Flat Candidates`: fetches current scan data, runs tip
   quality analysis, dFrequency interpretation, blob/hazard detection, stepped
   region marking, and flat work-site ranking. The plot marks hazards with red
-  crosses and flat candidates with numbered markers.
+  crosses, molecule-scale candidates with small blue markers, and flat
+  candidates with numbered markers. Small blobs with typical `abs(dZ)<3 A` are
+  treated as potential molecules, not large hazards.
 - `Move Tip To Candidate`: writes local `ScanX`/`ScanY` for the selected flat
   candidate and verifies with the live GVP X/Y monitor. This is Level 1 and
   arm-gated. It refuses to run while the scan status is busy because GXSM
@@ -836,9 +838,19 @@ in one place:
 - `Run Tip Tune Planner Loop`: Level 1, arm-gated, and requires typing
   `EXECUTE TIP LOOP`. It repeats a bounded cycle:
   scan/setup, wait until enough lines exist, assess image and dFreq, stop if
-  satisfactory, stop/search if too many blobs, otherwise stop scanning, move to
-  the best clean candidate, execute a gentle planned GVP pulse or Z-dip, and
+  satisfactory, stop/search if too many large hazards or if a large avoid-worthy
+  feature is too close to the chosen clear area, otherwise stop scanning, move
+  to the best clean candidate, execute a gentle planned GVP pulse or Z-dip, and
   repeat up to the requested max cycles.
+
+Feature classification for Tip Tune Planner:
+
+- `molecule_candidate`: `abs(dZ)<3 A`; counted separately and not used to stop
+  or shift offset.
+- `large_blob_hazard`: taller feature with estimated diameter at least about
+  `40 A`; avoided for clear-area selection and counted for offset-search stop.
+- `tall_local_feature`: taller but not broad enough to force offset search;
+  avoided locally when selecting a clear site.
 
 Planner progress is appended to:
 
@@ -851,6 +863,25 @@ start with a gentle 2 V bias pulse, escalate to 3 V if needed, then consider a
 very gentle 5 A-class Z-dip with 0 V contact bias. The policy is structured so
 an LLM planner can later propose the same action schema, but hardware execution
 still goes through GUI control level, arm, and typed confirmation gates.
+
+Chat can route common phrases to this same deterministic planner. For example,
+`initiate improve tip process` produces a gated explanation. To actually start
+from chat, use Control Level 1 or higher, check `Arm Level 1 chat actions`, and
+include the exact phrase `EXECUTE TIP LOOP` in the request. The default chat
+loop uses max cycles 2, channel 0, 140 evidence lines, 700 A range, 400 points,
+max large hazards 8, max `abs(dFreq)` 4 Hz, and no automatic offset shift unless
+requested.
+
+Chat also understands direct tip-action phrases:
+
+- `pulse tip` / `tip pulse`: bias-pulse GVP, default `+2 V`, capped at `+/-4 V`.
+- `dip tip` / `tune tip` / `tip tune`: Z-dip GVP, default `5 A`, contact bias
+  `0 V`.
+- `fine tune tip`: most gentle Z-dip GVP, default `4 A`, contact bias `0 V`.
+
+These routes are deterministic and still gated. Use `load ...` or `prepare ...`
+with Control Level 1+ and chat arm to load only. Include the exact phrase
+`EXECUTE GVP` to load and execute from chat.
 
 ## Public Function Reference
 

@@ -30,7 +30,13 @@ Chat responses from the language model are advisory only and must not claim
 hardware actions. A narrow deterministic pre-parser may execute safe Level-1
 commands before the model is called, but only through GUI control-level and
 arm gates. Bias targets above +/-1 V are outside Level 1 and must be described
-as blocked/not available unless a future higher-level workflow is implemented."""
+as blocked/not available unless a future higher-level workflow is implemented.
+For phrases such as "initiate improve tip process", explain that the deterministic
+Tip Tune Planner loop can run only through Control Level 1+, the chat arm
+checkbox, and the exact confirmation phrase EXECUTE TIP LOOP. Terms like
+"pulse tip", "dip tip", "tune tip", and "fine tune tip" map to deterministic
+GVP tip-action routes; explain that loading and execution are still gated and
+execution requires EXECUTE GVP."""
 
 ACTION_CLAIM_RE = re.compile(
     r"\b("
@@ -219,4 +225,10 @@ Deterministic chat router:
   speed 20% faster", and context pronouns like "set it to ..." after a read.
 - Routes tip/scan analysis to deterministic image analysis rather than asking
   the language model to invent a report.
+- Routes phrases like "initiate improve tip process" to the deterministic
+  Tip Tune Planner loop. It starts only with Control Level 1+, chat arm checked,
+  and the exact phrase `EXECUTE TIP LOOP` in the request.
+- Routes "pulse tip" / "tip pulse" to the bias-pulse GVP recipe and
+  "dip tip" / "tune tip" / "fine tune tip" to the Z-dip GVP recipe. "Fine
+  tune" means the most gentle default dip.
 """
