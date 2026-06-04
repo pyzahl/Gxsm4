@@ -62,6 +62,23 @@ from microscope_gradio_scan import ScanGuiMixin
 from microscope_gradio_tip_planner import TipPlannerGuiMixin
 
 
+EMERGENCY_STOP_CSS = """
+#level3_emergency_stop {
+    background: #b00020 !important;
+    border: 3px solid #ffccd5 !important;
+    color: #ffffff !important;
+    font-size: 28px !important;
+    font-weight: 900 !important;
+    min-height: 76px !important;
+    letter-spacing: 0 !important;
+    box-shadow: 0 0 0 4px rgba(176, 0, 32, 0.18) !important;
+}
+#level3_emergency_stop:hover {
+    background: #d40027 !important;
+}
+"""
+
+
 def load_config(path):
     with open(path, "r") as file:
         return json.load(file)
@@ -1834,6 +1851,13 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         except Exception as exc:
             return {"error": str(exc), "traceback": traceback.format_exc()}
 
+    def level3_emergency_stop_coarse_motion(self):
+        try:
+            rec = self.level3.emergency_stop_coarse_motion()
+            return self.jsonable(rec.__dict__)
+        except Exception as exc:
+            return {"error": str(exc), "traceback": traceback.format_exc()}
+
     def level3_set_script_control(self, enabled, confirm_text, arm):
         blocked = self.require_level3_confirmation(
             confirm_text,
@@ -2634,6 +2658,19 @@ def build_ui(backend):
                 "supervising; set it to 0 to abort watchdog-style loops."
             )
             level3_report = gr.JSON(label="Level 3 result")
+            emergency_stop_btn = gr.Button(
+                "EMERGENCY STOP COARSE MOTION",
+                variant="stop",
+                elem_id="level3_emergency_stop",
+            )
+            emergency_stop_btn.click(
+                backend.level3_emergency_stop_coarse_motion,
+                outputs=level3_report,
+            )
+            gr.Markdown(
+                "**Emergency stop sends zero-step, zero-volt THV5 stop commands "
+                "immediately. It does not require arming or confirmation.**"
+            )
             with gr.Row():
                 level3_arm = gr.Checkbox(value=False, label="Arm Level 3 action")
                 level3_confirm = gr.Textbox(
@@ -2884,6 +2921,7 @@ def main(argv=None):
         "server_port": args.port,
         "share": args.share,
         "show_error": True,
+        "css": EMERGENCY_STOP_CSS,
     }
     ssl_certfile = args.ssl_certfile or (DEFAULT_SSL_CERTFILE if args.https else "")
     ssl_keyfile = args.ssl_keyfile or (DEFAULT_SSL_KEYFILE if args.https else "")

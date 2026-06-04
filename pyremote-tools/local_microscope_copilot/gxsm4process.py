@@ -62,6 +62,7 @@ class gxsm_process():
         def __init__(self, verbose=0, use_asyncio=False):
 
                 self.verbose  = verbose
+                self.pyshm_timeout_s = float(os.environ.get("GXSM_PYSHM_TIMEOUT_S", "15.0"))
                 #self.Masyncio = use_asyncio
                 
                 print ('Gxsm4 Process Class Init. PySHM + RPSPMC Monitors. V {}'.format(self.version()))
@@ -170,6 +171,8 @@ class gxsm_process():
                 self.debug_print (1, 'exec_pyshm_method: {} ({}) '.format(method, args))
                 #async with self.mutex:
                 with self.mutex:
+                        if not hasattr(self, "gxsm_pyshm"):
+                                raise RuntimeError("GXSM4 PySHM is not available; cannot call gxsm.{}.".format(method))
                         pyshm_status = np.frombuffer(self.gxsm_pyshm.buf, dtype=np.int64, count=1, offset=100)
                         #while pyshm_status[0] == 1:
                         #        time.sleep(0.01)
@@ -200,6 +203,13 @@ class gxsm_process():
                         wms=0.0
                         n=100
                         while pyshm_status[0] == 1:
+                                if time.perf_counter() - start_time > self.pyshm_timeout_s:
+                                        raise TimeoutError(
+                                                "Timed out after {:.1f}s waiting for gxsm.{} PySHM acknowledgement.".format(
+                                                        self.pyshm_timeout_s,
+                                                        method,
+                                                )
+                                        )
                                 if wms > 100:
                                         n+=1
                                         if n > 100:

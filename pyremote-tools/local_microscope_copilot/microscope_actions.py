@@ -603,6 +603,118 @@ class MicroscopeActionRunner:
 
             time.sleep(delay_s)
 
+    def rtquery_scan_gvp_status(self):
+        """Read rtquery('s') and expose the Scan/GVP status word explicitly."""
+        if self.dry_run:
+            return {
+                "dry_run": True,
+                "Sall": 0,
+                "Sspm": 0,
+                "Sgvp": 0,
+                "ready": True,
+                "state": "stopped_or_finished_scan",
+            }
+        vec = self.connect().rtquery("s")
+        sgvp = int(vec[2]) if len(vec) > 2 else None
+        if sgvp == 0:
+            state = "stopped_or_finished_scan"
+            ready = True
+            busy = False
+        elif sgvp == 5:
+            state = "completed_gvp"
+            ready = True
+            busy = False
+        elif sgvp == 1:
+            state = "busy"
+            ready = False
+            busy = True
+        else:
+            state = "unknown"
+            ready = False
+            busy = False
+        result = {
+            "raw": self._jsonable(vec),
+            "Sall": int(vec[0]) if len(vec) > 0 else None,
+            "Sspm": int(vec[1]) if len(vec) > 1 else None,
+            "Sgvp": sgvp,
+            "state": state,
+            "busy": busy,
+        }
+        result["ready"] = ready
+        return result
+
+    def ready_check_scan_gvp(
+        self,
+        message="scan_gvp_ready_check",
+        delay_s=0.5,
+        timeout_s=60.0,
+        allow_abort=True,
+    ):
+        """
+        Wait until GXSM reports no scan/GVP activity.
+
+        Operator convention: `(Sall, Sspm, Sgvp) = gxsm.rtquery('s')`.
+        `Sgvp == 0` means stopped or finished scan, `Sgvp == 5` means
+        completed GVP; both are ready. `Sgvp == 1` is busy.
+        """
+        started = time.time()
+
+        if self.dry_run:
+            return self._record(
+                message,
+                "ready",
+                "dry-run",
+                started,
+                command="rtquery:s",
+                details={"status_word": "Sgvp", "timeout_s": timeout_s},
+                result={
+                    "Sgvp": 0,
+                    "ready": True,
+                    "state": "stopped_or_finished_scan",
+                    "busy": False,
+                },
+            )
+
+        deadline = time.monotonic() + timeout_s
+        last_status = None
+
+        while True:
+            if allow_abort and self.abort_requested():
+                return self._record(
+                    message,
+                    "ready",
+                    "aborted",
+                    started,
+                    command="rtquery:s",
+                    details={"status_word": "Sgvp", "last_status": last_status},
+                    result=False,
+                )
+
+            last_status = self.rtquery_scan_gvp_status()
+            if last_status.get("ready"):
+                return self._record(
+                    message,
+                    "ready",
+                    "ok",
+                    started,
+                    command="rtquery:s",
+                    details={"status_word": "Sgvp", "last_status": last_status},
+                    result=True,
+                )
+
+            if time.monotonic() >= deadline:
+                return self._record(
+                    message,
+                    "ready",
+                    "timeout",
+                    started,
+                    command="rtquery:s",
+                    details={"status_word": "Sgvp", "last_status": last_status},
+                    result=False,
+                )
+
+            time.sleep(delay_s)
+
     def fetch_probe_event(self, channel=None, nth=-1, collect_as=None):
         started = time.time()
         channel = self.default_channel if channel is None else channel
@@ -678,21 +790,28 @@ class MicroscopeActionRunner:
         channel = self.default_channel if channel is None else channel
 
         if precheck:
-            ready = self.ready_check(
+            ready = self.ready_check_scan_gvp(
                 message="pre_vp_ready",
                 timeout_s=ready_timeout_s,
             )
             if ready.status not in ("ok", "dry-run"):
                 return ready
 
-        self.action(action_name)
+        status_before = self.rtquery_scan_gvp_status()
+        action_record = self.action(action_name)
+        self.data["last_vp_execute_action"] = action_record
+        self.data["last_vp_execute_status_before"] = status_before
         self.sleep(wait_after_execute_s)
-        ready = self.ready_check(
+        status_after_wait = self.rtquery_scan_gvp_status()
+        self.data["last_vp_execute_status_after_wait"] = status_after_wait
+        ready = self.ready_check_scan_gvp(
             message="post_vp_ready",
             timeout_s=ready_timeout_s,
         )
         if ready.status not in ("ok", "dry-run"):
+            self.data["last_vp_execute_ready_record"] = ready
             return ready
+        self.data["last_vp_execute_ready_record"] = ready
 
         record = self.fetch_vpdata(
             channel=channel,
@@ -3280,6 +3399,7 @@ class Level3ProtectedController:
             thv_base_url,
             dry_run=runner.dry_run,
         )
+        self.last_coarse_motion_request = None
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -3348,6 +3468,15 @@ class Level3ProtectedController:
             float(voltage_V),
             start=True,
         )
+        self.last_coarse_motion_request = {
+            "channel": str(channel).upper(),
+            "direction": int(direction),
+            "burstcount": int(burstcount),
+            "period_s": float(period_s),
+            "voltage_V": float(voltage_V),
+            "started_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "danger": danger,
+        }
         time.sleep(0.2 if not self.runner.dry_run else 0.0)
         after = self.telemetry()
         report = {
@@ -3364,6 +3493,9 @@ class Level3ProtectedController:
                 if danger else ""
             ),
         }
+        self.runner.data["last_level3_coarse_motion_request"] = (
+            self.last_coarse_motion_request
+        )
         self.runner.data["last_level3_coarse_move"] = report
         return self.runner._record(
             "level3_coarse_move",
@@ -3379,6 +3511,92 @@ class Level3ProtectedController:
                 "voltage_V": voltage_V,
                 "danger": danger,
                 "danger_note": report["danger_note"],
+            },
+            result=report,
+        )
+
+    def emergency_stop_coarse_motion(self):
+        """
+        Immediately send THV5 stop commands for coarse motion.
+
+        This is intentionally not gated by Level-3 confirmation: the GUI panic
+        button must be able to send zero-step, zero-volt stop commands without
+        asking anything first.
+        """
+        started = time.time()
+        before = self.telemetry()
+        last = (
+            self.last_coarse_motion_request
+            or self.runner.data.get("last_level3_coarse_motion_request")
+            or {}
+        )
+        sequence = []
+        seen = set()
+
+        def add_stop(channel, direction):
+            channel = str(channel).upper()
+            direction = int(direction)
+            key = (channel, direction)
+            if key not in seen:
+                seen.add(key)
+                sequence.append(key)
+
+        if last.get("channel") in ("X", "Y", "Z"):
+            add_stop(last.get("channel"), last.get("direction", 1))
+
+        for axis in ("X", "Y", "Z"):
+            add_stop(axis, 1)
+            add_stop(axis, -1)
+
+        stop_results = []
+        for channel, direction in sequence:
+            try:
+                stop_results.append(
+                    {
+                        "channel": channel,
+                        "direction": direction,
+                        "result": self.thv.coarse_move(
+                            channel,
+                            direction,
+                            0,
+                            0.0,
+                            0.0,
+                            start=False,
+                        ),
+                    }
+                )
+            except Exception as exc:
+                stop_results.append(
+                    {
+                        "channel": channel,
+                        "direction": direction,
+                        "error": str(exc),
+                    }
+                )
+
+        after = self.telemetry()
+        report = {
+            "emergency_stop": True,
+            "before": before,
+            "last_coarse_motion_request": last,
+            "stop_sequence": stop_results,
+            "after": after,
+            "note": (
+                "Sent zero-step, zero-volt THV5 coarse stop commands. "
+                "The remembered last axis/direction was stopped first."
+            ),
+        }
+        self.runner.data["last_level3_emergency_stop"] = report
+        return self.runner._record(
+            "level3_emergency_stop_coarse_motion",
+            "level3",
+            "dry-run" if self.runner.dry_run else "ok",
+            started,
+            command="THV5 emergency coarse stop",
+            details={
+                "last_axis": last.get("channel"),
+                "last_direction": last.get("direction"),
+                "fanout_stop_count": len(stop_results),
             },
             result=report,
         )

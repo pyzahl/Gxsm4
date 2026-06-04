@@ -49,14 +49,16 @@ class TipPlannerGuiMixin:
             busy = True
             reason = "rtquery('s') did not return Sgvp; refusing local move."
         else:
-            # Operator rule: Sgvp == 0 means no scan/GVP is running and GXSM is
-            # ready for local ScanX/ScanY moves. Stopped scans may report any
-            # current line elsewhere; that should not block the move.
-            busy = int(sgvp) != 0
-            reason = (
-                "Sgvp != 0, scan or GVP is active."
-                if busy else "Sgvp == 0, local ScanX/ScanY move is allowed."
-            )
+            # Operator rule: Sgvp 0 means stopped/finished scan, Sgvp 5 means
+            # completed GVP; both are ready. Sgvp 1 is busy.
+            ready = int(sgvp) in (0, 5)
+            busy = not ready
+            if int(sgvp) == 1:
+                reason = "Sgvp == 1, scan or GVP is active."
+            elif ready:
+                reason = "Sgvp {} is ready; local ScanX/ScanY move is allowed.".format(sgvp)
+            else:
+                reason = "Sgvp {} is unknown; refusing local move.".format(sgvp)
         return {
             "busy": bool(busy),
             "status_vector": status_values,
@@ -67,9 +69,9 @@ class TipPlannerGuiMixin:
             "broad_dsp_ready_mask": self.runner.DSP_BUSY_MASK,
             "note": (
                 "ScanX/ScanY move busy check uses rtquery('s')[2] Sgvp. "
-                "Sgvp == 0 means no Scan/GVP is running; waitscan(False) may "
-                "still return the stopped current line and is not used as a "
-                "busy blocker here."
+                "Sgvp 0 means stopped/finished scan, Sgvp 5 means completed "
+                "GVP, and Sgvp 1 means busy. waitscan(False) may still return "
+                "the stopped current line and is not used as a busy blocker."
             ),
         }
 

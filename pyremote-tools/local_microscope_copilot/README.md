@@ -169,7 +169,11 @@ button is also available for richer controller monitor values.
   typing `EXECUTE LEVEL 3`. They are dry-run safe unless the GUI is started with
   `--live`. Extra-protected large coarse moves allow burstcounts up to 5000
   with fixed 0.5 s period and require `EXECUTE LEVEL 3 LARGE MOTION`. Any
-  `Z, -1` coarse move is dangerous fast tip-down motion.
+  `Z, -1` coarse move is dangerous fast tip-down motion. The red
+  **EMERGENCY STOP COARSE MOTION** button is deliberately not gated by arming or
+  confirmation: it immediately sends zero-step, zero-volt stop commands for the
+  last coarse axis/direction first, then fans out stop commands across all
+  coarse axes.
 
 ## Documentation Map
 

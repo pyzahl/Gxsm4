@@ -826,9 +826,10 @@ in one place:
   arm-gated. It refuses to run while the scan status is busy because GXSM
   prohibits local tip moves during scanning. The GUI uses
   `(Sall, Sspm, Sgvp) = gxsm.rtquery("s")` and allows the move only when
-  `Sgvp == 0`, which means no Scan/GVP action is running. A stopped scan may
-  still have any current-line value from `waitscan(False)`; only a changing
-  value over a few seconds indicates active scanning.
+  `Sgvp == 0` (stopped or finished scan) or `Sgvp == 5` (completed GVP).
+  `Sgvp == 1` means busy. A stopped scan may still have any current-line value
+  from `waitscan(False)`; only a changing value over a few seconds indicates
+  active scanning.
 - `Plan Offset Shift`: proposes a partially overlapping `OffsetX`/`OffsetY`
   world-coordinate shift for finding a cleaner area if the current image has
   too many large blobs.
@@ -1000,6 +1001,10 @@ shows the raw X/Y controller-voltage position.
 - `coarse_move(channel, direction, burstcount, period_s=0.5, voltage_V=30.0, ...)`:
   send one THV5 HTTP coarse-motion request; dry-run returns the URL without
   contacting the THV5.
+- `emergency_stop_coarse_motion()`: immediately send zero-step, zero-volt THV5
+  coarse stop commands. The remembered last coarse axis/direction is stopped
+  first, then stop commands are sent across X/Y/Z. This method is intentionally
+  not confirmation-gated so the GUI emergency button can act immediately.
 - `run_auto_approach(current_nA=0.013, coarse_steps_per_cycle=1, ...)`:
   watchdog-style auto approach based on the operator snippet. It sets the
   current, checks Z range, retracts, applies THV5 Z-down bursts, and aborts on
@@ -1007,7 +1012,10 @@ shows the raw X/Y controller-voltage position.
 
 GUI Level 3 actions are intentionally isolated in the `Level 3 Protected` tab.
 The tab exposes telemetry, `script-control`, generic THV X/Y/Z coarse moves, a
-Z-down shortcut, extra-protected large coarse moves, and protected auto approach.
+Z-down shortcut, extra-protected large coarse moves, protected auto approach,
+and a red **EMERGENCY STOP COARSE MOTION** button. The emergency stop button is
+not gated by Level 3 arm or typed confirmation; it sends zero-step, zero-volt
+stop commands immediately.
 Normal coarse moves are capped at burstcount 5 and 100 HV V. Large coarse moves
 use fixed 0.5 s period, allow burstcounts up to 5000, and require the separate
 typed phrase `EXECUTE LEVEL 3 LARGE MOTION`. Any `Z, -1` coarse move is

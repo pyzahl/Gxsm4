@@ -70,7 +70,7 @@ class GvpGuiMixin:
         if str(confirm_text).strip() != phrase:
             return {"cancelled": "Type '{}' to execute loaded GVP.".format(phrase)}
         try:
-            rec = self.runner.execute_loaded_gvp(precheck=True, wait_after_execute_s=8.0)
+            rec = self.runner.action("DSP_VP_VP_EXECUTE")
             return self.jsonable(rec.__dict__)
         except Exception as exc:
             return {"error": str(exc), "traceback": traceback.format_exc()}
@@ -87,17 +87,47 @@ class GvpGuiMixin:
             report = {"cancelled": "Type '{}' to execute loaded GVP.".format(phrase)}
             return self.gvp_trace_figure(None, report), report
         try:
-            before_df = self.runner.dFreq()
-            rec = self.runner.execute_vp_probe(
-                action_name="DSP_VP_VP_EXECUTE",
-                wait_after_execute_s=8.0,
-                ready_timeout_s=120.0,
-                precheck=True,
-                start_idx=0,
-                end_idx=200000,
-                collect_as="last_gui_gvp_vpdata",
-            )
-            after_df = self.runner.dFreq()
+            report = {
+                "command_order": (
+                    "Sent DSP_VP_VP_EXECUTE first. Status, dFreq, and VP trace "
+                    "fetch are follow-up diagnostics so they cannot block the "
+                    "execute command."
+                )
+            }
+            rec = self.runner.action("DSP_VP_VP_EXECUTE")
+            report["execute_record"] = self.jsonable(rec.__dict__)
+            self.runner.sleep(1.0)
+
+            before_df = None
+            after_df = None
+            try:
+                after_df = self.runner.dFreq()
+            except Exception as exc:
+                report["rt_dFreq_after_error"] = "{}: {}".format(type(exc).__name__, exc)
+
+            try:
+                report["rtquery_s_after_action"] = self.jsonable(
+                    self.runner.rtquery_scan_gvp_status()
+                )
+            except Exception as exc:
+                report["rtquery_s_after_action_error"] = "{}: {}".format(
+                    type(exc).__name__,
+                    exc,
+                )
+
+            fetch_record = None
+            try:
+                fetch_record = self.runner.fetch_vpdata(
+                    channel=self.runner.default_channel,
+                    nth=-1,
+                    start_idx=0,
+                    end_idx=200000,
+                    collect_as="last_gui_gvp_vpdata",
+                )
+                report["fetch_vpdata_record"] = self.jsonable(fetch_record.__dict__)
+            except Exception as exc:
+                report["fetch_vpdata_error"] = "{}: {}".format(type(exc).__name__, exc)
+
             data = self.runner.data.get("last_gui_gvp_vpdata")
             analysis = self.analyze_gvp_vpdata(data)
             analysis["rt_dFreq_before_Hz"] = before_df
@@ -105,10 +135,7 @@ class GvpGuiMixin:
             analysis["rt_dFreq_delta_Hz"] = (
                 None if before_df is None or after_df is None else float(after_df) - float(before_df)
             )
-            report = {
-                "execute_record": self.jsonable(rec.__dict__),
-                "analysis": self.jsonable(analysis),
-            }
+            report["analysis"] = self.jsonable(analysis)
             fig = self.gvp_trace_figure(data, report)
             return fig, report
         except Exception as exc:
