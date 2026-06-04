@@ -236,6 +236,9 @@ class MicroscopeGradioBackend:
 
     def direct_safety_reply(self, message, chat_arm=False):
         text = str(message)
+        analysis_reply = self.try_chat_scan_analysis(text)
+        if analysis_reply is not None:
+            return analysis_reply
         action_reply = self.try_chat_scan_action(text, chat_arm=chat_arm)
         if action_reply is not None:
             return action_reply
@@ -251,6 +254,118 @@ class MicroscopeGradioBackend:
         if read_reply is not None:
             return read_reply
         return None
+
+    def try_chat_scan_analysis(self, text):
+        text_l = text.lower()
+        wants_tip = any(
+            phrase in text_l
+            for phrase in (
+                "tip shape",
+                "tip quality",
+                "tip assessment",
+                "tip analysis",
+                "double tip",
+                "multi tip",
+                "multiple tip",
+                "autocorrelation",
+            )
+        )
+        wants_scan_analysis = (
+            "scan" in text_l
+            and any(word in text_l for word in ("analyze", "analyse", "analysis", "assess", "evaluate", "check"))
+        )
+        if not (wants_tip or wants_scan_analysis):
+            return None
+        channel = self.parse_channel_request(text, default=0)
+        lines = self.parse_line_count_request(text, default=256)
+        prefix = "chat_tip_analysis_{}".format(time.strftime("%Y%m%d-%H%M%S"))
+        try:
+            _fig, report, report_path = self.analyze_current_scan(
+                channel=channel,
+                chunk_lines=lines,
+                output_prefix=prefix,
+            )
+            if isinstance(report, dict) and report.get("error"):
+                return (
+                    "Tip/scan analysis failed:\n\n```json\n{}\n```"
+                ).format(json.dumps(report, indent=2))
+            return self.format_tip_analysis_reply(report, report_path)
+        except Exception as exc:
+            return (
+                "Tip/scan analysis failed: {}\n\n```text\n{}\n```"
+            ).format(str(exc), traceback.format_exc())
+
+    def format_tip_analysis_reply(self, report, report_path):
+        quality = report.get("tip_quality", {}) if isinstance(report, dict) else {}
+        landscape = report.get("landscape", {}) if isinstance(report, dict) else {}
+        peaks = [
+            peak for peak in quality.get("autocorrelation_secondary_peaks", [])
+            if peak.get("used_for_tip_verdict")
+        ]
+        hazards = landscape.get("hazards", [])
+        candidates = landscape.get("flat_candidates", [])
+        best = landscape.get("best_candidate") or {}
+        lines = [
+            "Deterministic tip/scan analysis complete.",
+            "Tip verdict: {} (confidence: {}).".format(
+                quality.get("verdict", "n/a"),
+                quality.get("confidence", "n/a"),
+            ),
+        ]
+        rough = quality.get("flattened_stats", {}).get("roughness_std")
+        if rough is not None:
+            lines.append("Flattened roughness std: {:.6g} A.".format(float(rough)))
+        if peaks:
+            lines.append("Autocorrelation peaks used for verdict:")
+            for peak in peaks[:4]:
+                lines.append(
+                    "- corr={:.4g}, distance~{:.3g} A, angle={:.3g} deg, dx={}, dy={}".format(
+                        float(peak.get("corr", 0.0)),
+                        float(peak.get("dist_A_approx", 0.0)),
+                        float(peak.get("angle_deg", 0.0)),
+                        peak.get("dx"),
+                        peak.get("dy"),
+                    )
+                )
+        else:
+            lines.append("No strong autocorrelation secondary peak was selected for the tip verdict.")
+        if hazards is not None:
+            lines.append("Detected major hazards/bumps: {}.".format(len(hazards)))
+        if candidates is not None:
+            lines.append("Flat work-area candidates: {}.".format(len(candidates)))
+        if best:
+            lines.append(
+                "Best flat candidate: px={}, py={}, world=({}, {}) A.".format(
+                    best.get("px"),
+                    best.get("py"),
+                    best.get("world_x_A"),
+                    best.get("world_y_A"),
+                )
+            )
+        if report_path:
+            lines.append("Full JSON report: {}".format(report_path))
+        compact = {
+            "tip_quality": quality,
+            "landscape_summary": {
+                "hazard_count": len(hazards or []),
+                "flat_candidate_count": len(candidates or []),
+                "best_candidate": best,
+            },
+            "report_path": report_path,
+        }
+        return "\n".join(lines) + "\n\n```json\n{}\n```".format(
+            json.dumps(self.jsonable(compact), indent=2)
+        )
+
+    def parse_channel_request(self, text, default=0):
+        match = re.search(r"\bch(?:annel)?\s*=?\s*(\d+)\b", text, re.IGNORECASE)
+        return int(match.group(1)) if match else int(default)
+
+    def parse_line_count_request(self, text, default=256):
+        match = re.search(r"(\d+)\s*(?:lines?|scan lines?)\b", text, re.IGNORECASE)
+        if not match:
+            return int(default)
+        return max(8, min(2048, int(match.group(1))))
 
     def try_chat_parameter_read(self, text):
         if not re.search(
