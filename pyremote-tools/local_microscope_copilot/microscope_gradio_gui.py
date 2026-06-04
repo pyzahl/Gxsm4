@@ -449,7 +449,11 @@ def build_ui(backend):
     with gr.Blocks(title="GXSM4 Local Microscope Copilot") as demo:
         gr.Markdown("# GXSM4 Local Microscope Copilot")
         status = gr.Textbox(value=backend.status_text(), label="Status", interactive=False)
-        with gr.Row():
+
+        with gr.Tab("Control Level"):
+            gr.Markdown(
+                "Select the operator permission level for live-changing GUI actions."
+            )
             control_level = gr.Dropdown(
                 choices=[CONTROL_LEVELS[i] for i in sorted(CONTROL_LEVELS)],
                 value=CONTROL_LEVELS[0],
