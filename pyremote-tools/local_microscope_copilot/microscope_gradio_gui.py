@@ -2,9 +2,9 @@
 """
 Gradio GUI skeleton for the local GXSM4 microscope copilot.
 
-The GUI intentionally separates chat from live microscope actions. Chat talks
-to Ollama. Microscope reads/actions are exposed as explicit buttons and forms so
-we can keep adding safety gates as the controller matures.
+The GUI keeps Ollama chat advisory by default. A small set of deterministic
+Level-1 chat commands may be routed through the same explicit safety gates as
+the button controls when the operator arms chat actions.
 """
 
 import argparse
@@ -62,12 +62,11 @@ Help interpret observations, propose cautious next steps, and explain controller
 readouts. The GUI has operator-selected control levels:
 Level 0 is read-only monitoring; Level 1 permits basic bounded operations;
 Level 2 and Level 3 are reserved for future advanced/extreme operations.
-The chat channel is advisory only: it cannot execute hardware actions. Do not
-claim that you changed hardware from chat. If asked to change a setting, state
-that this is a proposal and direct the operator to the matching GUI action,
-control level, arm checkbox, and explicit confirmation required. Bias targets
-above +/-1 V are outside Level 1 and must be described as blocked/not available
-unless a future higher-level workflow is implemented."""
+Chat responses from the language model are advisory only and must not claim
+hardware actions. A narrow deterministic pre-parser may execute safe Level-1
+commands before the model is called, but only through GUI control-level and
+arm gates. Bias targets above +/-1 V are outside Level 1 and must be described
+as blocked/not available unless a future higher-level workflow is implemented."""
 
 ACTION_CLAIM_RE = re.compile(
     r"\b("
@@ -124,10 +123,10 @@ class MicroscopeGradioBackend:
     def jsonable(self, value):
         return self.runner._jsonable(value)
 
-    def chat(self, message, history):
+    def chat(self, message, history, chat_arm=False):
         if not message:
             return "", history
-        direct = self.direct_safety_reply(message)
+        direct = self.direct_safety_reply(message, chat_arm=chat_arm)
         if direct is not None:
             history = list(history or [])
             history.append({"role": "user", "content": message})
@@ -178,7 +177,7 @@ class MicroscopeGradioBackend:
         )
         return text
 
-    def direct_safety_reply(self, message):
+    def direct_safety_reply(self, message, chat_arm=False):
         text = str(message)
         if re.search(r"\bbias\b", text, re.IGNORECASE):
             nums = re.findall(r"[-+]?\d+(?:\.\d+)?", text)
@@ -191,11 +190,27 @@ class MicroscopeGradioBackend:
                         "manual GXSM control or a future Level 2/3 workflow "
                         "after defining the required safety procedure."
                     ).format(target)
+                if self.control_level < 1:
+                    return (
+                        "I did not change the bias. Chat bias changes require "
+                        "Control Level 1 or higher, plus the chat arm checkbox."
+                    )
+                if not chat_arm:
+                    return (
+                        "I did not change the bias. To allow this Level 1 chat "
+                        "action, check 'Arm Level 1 chat actions' in the "
+                        "Chat tab and submit the request again."
+                    )
+                result = self.set_bias(target, arm=True)
+                if isinstance(result, dict) and result.get("error"):
+                    return (
+                        "I tried to set the bias to {:.3g} V, but GXSM returned "
+                        "an error:\n\n```json\n{}\n```"
+                    ).format(target, json.dumps(result, indent=2))
                 return (
-                    "I did not change the bias from chat. To set {:.3g} V, use "
-                    "the Armed Actions tab: select Level 1, enter the bias, "
-                    "check the arm box, and press Set Bias."
-                ).format(target)
+                    "Bias change executed through the Level 1 chat action gate: "
+                    "{:.3g} V.\n\n```json\n{}\n```"
+                ).format(target, json.dumps(result, indent=2))
         return None
 
     def set_control_level(self, choice):
@@ -718,12 +733,13 @@ def build_ui(backend):
 
         with gr.Tab("Chat"):
             gr.Markdown(
-                "Chat is advisory only. It cannot execute microscope actions. "
-                "Use Control Level plus Armed Actions for live changes."
+                "Ollama replies are advisory. Clear Level 1 chat commands can "
+                "execute only when Control Level is 1+ and chat action arm is checked."
             )
             chat = gr.Chatbot(label="Ollama chat", height=420)
+            chat_arm = gr.Checkbox(value=False, label="Arm Level 1 chat actions")
             prompt = gr.Textbox(label="Prompt", placeholder="Ask for interpretation or a proposed next step")
-            prompt.submit(backend.chat, [prompt, chat], [prompt, chat])
+            prompt.submit(backend.chat, [prompt, chat, chat_arm], [prompt, chat])
 
         with gr.Tab("Live Readouts"):
             with gr.Row():
