@@ -1,5 +1,6 @@
 """GVP-specific Gradio backend mixin."""
 
+import time
 import traceback
 
 import matplotlib.pyplot as plt
@@ -22,7 +23,7 @@ class GvpGuiMixin:
         except Exception as exc:
             return {"error": str(exc), "traceback": traceback.format_exc()}
 
-    def load_tip_tune_gvp(self, contact_bias_V, dip_depth_A, arm):
+    def load_tip_tune_gvp(self, contact_bias_V, dip_depth_A, ramp_time_s, arm):
         blocked = self.require_control_level(1, "load tip-tune Z-dip GVP")
         if blocked:
             return blocked
@@ -35,13 +36,19 @@ class GvpGuiMixin:
                 dip_depth_A=float(dip_depth_A),
                 contact_bias_V=float(contact_bias_V),
                 scan_bias_V=float(current_scan_bias),
+                ramp_time_s=float(ramp_time_s),
                 save_prefix=str(self.output_dir / "gui_tip_tune_gvp"),
             )
             result = self.jsonable(rec.__dict__)
             result["parameters"] = {
                 "contact_bias_V": float(contact_bias_V),
                 "dip_depth_A": -abs(float(dip_depth_A)),
+                "ramp_time_s": float(ramp_time_s),
                 "scan_bias_V_used_for_du": current_scan_bias,
+                "dt_mapping": {
+                    "dsp-gvp-dt02": float(ramp_time_s),
+                    "dsp-gvp-dt04": float(ramp_time_s),
+                },
                 "du_mapping": {
                     "dsp-gvp-du01": -float(current_scan_bias),
                     "dsp-gvp-du03": float(contact_bias_V),
@@ -56,6 +63,13 @@ class GvpGuiMixin:
                 ),
             }
             return result
+        except Exception as exc:
+            return {"error": str(exc), "traceback": traceback.format_exc()}
+
+    def emergency_stop_gvp(self):
+        try:
+            rec = self.runner.emergency_stop_gvp()
+            return self.jsonable(rec.__dict__)
         except Exception as exc:
             return {"error": str(exc), "traceback": traceback.format_exc()}
 
@@ -75,7 +89,47 @@ class GvpGuiMixin:
         except Exception as exc:
             return {"error": str(exc), "traceback": traceback.format_exc()}
 
-    def execute_loaded_gvp_with_plot(self, confirm_text, arm):
+    def wait_for_gvp_completion_report(self, max_wait_s=180.0, poll_s=1.0):
+        started = time.monotonic()
+        max_wait_s = max(0.0, float(max_wait_s))
+        poll_s = max(0.1, float(poll_s))
+        samples = []
+        saw_busy = False
+        while True:
+            elapsed = time.monotonic() - started
+            try:
+                status = self.runner.rtquery_scan_gvp_status()
+            except Exception as exc:
+                return {
+                    "completed": False,
+                    "error": "{}: {}".format(type(exc).__name__, exc),
+                    "elapsed_s": elapsed,
+                    "samples": samples,
+                }
+            status["elapsed_s"] = elapsed
+            samples.append(self.jsonable(status))
+            if status.get("busy"):
+                saw_busy = True
+            if status.get("ready") and (saw_busy or status.get("Sgvp") == 5):
+                return {
+                    "completed": True,
+                    "elapsed_s": elapsed,
+                    "saw_busy": saw_busy,
+                    "final_status": self.jsonable(status),
+                    "samples": samples[-20:],
+                }
+            if elapsed >= max_wait_s:
+                return {
+                    "completed": False,
+                    "timeout": True,
+                    "elapsed_s": elapsed,
+                    "saw_busy": saw_busy,
+                    "final_status": self.jsonable(status),
+                    "samples": samples[-20:],
+                }
+            time.sleep(poll_s)
+
+    def execute_loaded_gvp_with_plot(self, confirm_text, max_wait_s, arm):
         blocked = self.require_control_level(1, "execute loaded GVP")
         if blocked:
             return self.gvp_trace_figure(None, blocked), blocked
@@ -92,11 +146,13 @@ class GvpGuiMixin:
                     "Sent DSP_VP_VP_EXECUTE first. Status, dFreq, and VP trace "
                     "fetch are follow-up diagnostics so they cannot block the "
                     "execute command."
-                )
+                ),
+                "max_wait_s": float(max_wait_s),
             }
             rec = self.runner.action("DSP_VP_VP_EXECUTE")
             report["execute_record"] = self.jsonable(rec.__dict__)
-            self.runner.sleep(1.0)
+            completion = self.wait_for_gvp_completion_report(max_wait_s=max_wait_s)
+            report["completion"] = self.jsonable(completion)
 
             before_df = None
             after_df = None

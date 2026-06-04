@@ -62,7 +62,7 @@ class gxsm_process():
         def __init__(self, verbose=0, use_asyncio=False):
 
                 self.verbose  = verbose
-                self.pyshm_timeout_s = float(os.environ.get("GXSM_PYSHM_TIMEOUT_S", "15.0"))
+                self.pyshm_timeout_s = float(os.environ.get("GXSM_PYSHM_TIMEOUT_S", "90.0"))
                 #self.Masyncio = use_asyncio
                 
                 print ('Gxsm4 Process Class Init. PySHM + RPSPMC Monitors. V {}'.format(self.version()))

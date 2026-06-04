@@ -2327,7 +2327,7 @@ class MicroscopeActionRunner:
                 break
         return peaks
 
-    def load_gvp_program(self, program, collect_as=None):
+    def load_gvp_program(self, program, collect_as=None, verify_readback=True):
         """
         Load a full GVP program. This writes the program but does not execute it.
 
@@ -2350,10 +2350,14 @@ class MicroscopeActionRunner:
                 gxsm.set(key, flat[key])
             for key in sorted(checks):
                 gxsm.action(self._gvp_checkbox_set_action(key, checks[key]))
-            readback_numeric = {key: gxsm.get(key) for key in sorted(numeric)}
-            readback_checks = {
-                key: gxsm.action(key) for key in sorted(checks)
-            }
+            if verify_readback:
+                readback_numeric = {key: gxsm.get(key) for key in sorted(numeric)}
+                readback_checks = {
+                    key: gxsm.action(key) for key in sorted(checks)
+                }
+            else:
+                readback_numeric = dict(numeric)
+                readback_checks = dict(checks)
         else:
             readback_numeric = dict(numeric)
             readback_checks = dict(checks)
@@ -2366,6 +2370,7 @@ class MicroscopeActionRunner:
             "key_count": len(flat),
             "numeric_key_count": len(numeric),
             "checkbox_key_count": len(checks),
+            "verify_readback": bool(verify_readback),
             "mismatch_count": len(mismatches),
             "mismatches": mismatches,
             "nonzero_row_summary": self._gvp_nonzero_row_summary(readback_numeric),
@@ -2381,6 +2386,49 @@ class MicroscopeActionRunner:
             "dry-run" if self.dry_run else "ok",
             started,
             command="set dsp-gvp* and CHECK/UNCHECK dsp-gvp*",
+            result=result,
+        )
+
+    def build_gvp_null_stop_program(self):
+        """
+        Build an all-zero GVP table with all conditional flags unchecked.
+
+        This is used as a rough emergency GVP stop pattern: overwrite every
+        vector component with zero, including the zero-point termination rows,
+        then execute the loaded NULL program.
+        """
+        flat = {}
+        self._ensure_gvp_numeric_table(flat)
+        self._complete_gvp_checkbox_states(flat)
+        self._set_gvp_fb_flags(flat, checked_rows=())
+        return [{key: flat[key]} for key in sorted(flat)]
+
+    def load_gvp_null_stop_program(self, collect_as="last_gvp_null_stop_load"):
+        program = self.build_gvp_null_stop_program()
+        return self.load_gvp_program(
+            program,
+            collect_as=collect_as,
+            verify_readback=False,
+        )
+
+    def emergency_stop_gvp(self):
+        """Load the NULL GVP table and execute it immediately."""
+        started = time.time()
+        load_record = self.load_gvp_null_stop_program()
+        execute_record = self.action("DSP_VP_VP_EXECUTE")
+        result = {
+            "emergency_stop": True,
+            "method": "load NULL GVP vectors then DSP_VP_VP_EXECUTE",
+            "load_record": load_record.__dict__,
+            "execute_record": execute_record.__dict__,
+        }
+        self.data["last_gvp_emergency_stop"] = result
+        return self._record(
+            "gvp_emergency_stop",
+            "gvp_stop",
+            "dry-run" if self.dry_run else "ok",
+            started,
+            command="NULL GVP + DSP_VP_VP_EXECUTE",
             result=result,
         )
 
@@ -2509,8 +2557,11 @@ class MicroscopeActionRunner:
         recovery_depth_A=None,
         contact_bias_V=None,
         scan_bias_V=None,
+        ramp_time_s=30.0,
         template_file="gvp_tip_tune_template_current_latest.json",
         max_abs_dip_A=25.0,
+        min_ramp_time_s=1.0,
+        max_ramp_time_s=60.0,
     ):
         """
         Build a controlled tip-tune Z-dip GVP program from the captured template.
@@ -2529,6 +2580,7 @@ class MicroscopeActionRunner:
         return row restores Z by the opposite amount.  If scan_bias_V is given,
         row 01/07 use `-scan_bias_V` and `+scan_bias_V`.  If contact_bias_V is
         given, row 03/06 use `+contact_bias_V` and `-contact_bias_V`.
+        ramp_time_s sets the row 02 indentation and row 04 pull-out ramp time.
         """
         if abs(dip_depth_A) > max_abs_dip_A:
             raise ValueError(
@@ -2560,12 +2612,23 @@ class MicroscopeActionRunner:
                     2.0 * max_abs_dip_A,
                 )
             )
+        ramp_time_s = float(ramp_time_s)
+        if not (float(min_ramp_time_s) <= ramp_time_s <= float(max_ramp_time_s)):
+            raise ValueError(
+                "Refusing GVP ramp_time_s={} outside {}..{} s.".format(
+                    ramp_time_s,
+                    float(min_ramp_time_s),
+                    float(max_ramp_time_s),
+                )
+            )
 
         flat = self._load_gvp_template_flat(template_file)
         flat["dsp-gvp-du01"] = float(bias_remove_V)
         flat["dsp-gvp-dz02"] = float(dip_depth_A)
+        flat["dsp-gvp-dt02"] = ramp_time_s
         flat["dsp-gvp-du03"] = float(requested_contact_bias_V)
         flat["dsp-gvp-dz04"] = -float(dip_depth_A)
+        flat["dsp-gvp-dt04"] = ramp_time_s
         if "dsp-gvp-dz05" in flat:
             flat["dsp-gvp-dz05"] = float(recovery_depth_A)
         if "dsp-gvp-du06" in flat:
@@ -2585,6 +2648,7 @@ class MicroscopeActionRunner:
         recovery_depth_A=None,
         contact_bias_V=None,
         scan_bias_V=None,
+        ramp_time_s=30.0,
         template_file="gvp_tip_tune_template_current_latest.json",
         save_prefix=None,
     ):
@@ -2596,6 +2660,7 @@ class MicroscopeActionRunner:
             recovery_depth_A=recovery_depth_A,
             contact_bias_V=contact_bias_V,
             scan_bias_V=scan_bias_V,
+            ramp_time_s=ramp_time_s,
             template_file=template_file,
         )
         if save_prefix:
@@ -2613,6 +2678,11 @@ class MicroscopeActionRunner:
                         "recovery_depth_A": recovery_depth_A,
                         "contact_bias_V": contact_bias_V,
                         "scan_bias_V": scan_bias_V,
+                        "ramp_time_s": ramp_time_s,
+                        "dt_mapping": {
+                            "dsp-gvp-dt02": "ramp_time_s",
+                            "dsp-gvp-dt04": "ramp_time_s",
+                        },
                         "du_mapping": {
                             "dsp-gvp-du01": "-actual_scan_bias_V",
                             "dsp-gvp-du03": "+requested_contact_bias_V",

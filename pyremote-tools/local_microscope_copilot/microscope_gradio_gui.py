@@ -76,6 +76,18 @@ EMERGENCY_STOP_CSS = """
 #level3_emergency_stop:hover {
     background: #d40027 !important;
 }
+#gvp_emergency_stop {
+    background: #b00020 !important;
+    border: 3px solid #ffccd5 !important;
+    color: #ffffff !important;
+    font-size: 22px !important;
+    font-weight: 900 !important;
+    min-height: 58px !important;
+    letter-spacing: 0 !important;
+}
+#gvp_emergency_stop:hover {
+    background: #d40027 !important;
+}
 """
 
 
@@ -304,6 +316,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             load_callback = lambda params=params: self.load_tip_tune_gvp(
                 params["contact_bias_V"],
                 params["dip_depth_A"],
+                params["ramp_time_s"],
                 arm=True,
             )
         if execute_requested:
@@ -358,16 +371,23 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         match = re.search(r"(?:contact bias|contact voltage|at contact)\D*([-+]?\d+(?:\.\d+)?)\s*v", text_l)
         if match:
             contact_bias = float(match.group(1))
+        ramp_time = 30.0
+        match = re.search(r"(?:ramp(?: time)?|vec\s*[24]\s*time)\D*([-+]?\d+(?:\.\d+)?)\s*s", text_l)
+        if match:
+            ramp_time = float(match.group(1))
         dip_depth = max(0.0, min(25.0, dip_depth))
         contact_bias = max(-1.0, min(1.0, contact_bias))
+        ramp_time = max(1.0, min(60.0, ramp_time))
         return {
             "kind": "tip_z_dip",
             "fine_tune": fine_tune,
             "dip_depth_A": dip_depth,
             "contact_bias_V": contact_bias,
+            "ramp_time_s": ramp_time,
             "note": (
                 "Fine tune means the most gentle default dip, 4 A. "
-                "Normal tune/dip default is 5 A. Contact bias defaults to 0 V."
+                "Normal tune/dip default is 5 A. Contact bias defaults to 0 V. "
+                "Vec 2/4 ramp time defaults to 30 s and is capped to 1..60 s."
             ),
         }
 
@@ -395,6 +415,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             ).format(action_label, json.dumps(self.jsonable({"parameters": params, "load": load_result}), indent=2))
         fig, execute_report = self.execute_loaded_gvp_with_plot(
             self.safety_limits()["gvp_execute_extra_confirmation"],
+            min(300.0, max(180.0, 2.0 * float(params.get("ramp_time_s", 30.0)) + 60.0)),
             arm=True,
         )
         if isinstance(execute_report, dict) and (
@@ -2625,16 +2646,19 @@ def build_ui(backend):
                     "Gentle starting point: contact bias 0 V, dip depth 5 A. "
                     "Dip depth is entered as a positive magnitude; the GVP program "
                     "uses a negative Z step for indentation and a positive pull-out. "
+                    "Ramp time sets vec 2 indentation and vec 4 pull-out timing "
+                    "and is limited to 1..60 s. "
                     "Vec 1 removes the actual scan bias, vec 3 applies the contact "
                     "bias, vec 6 removes contact bias, and vec 7 restores scan bias."
                 )
                 with gr.Row():
                     tip_contact_bias = gr.Number(value=0.0, label="Contact bias (V)")
                     tip_dip_depth = gr.Number(value=5.0, label="Dip depth magnitude (A)")
+                    tip_ramp_time = gr.Number(value=30.0, label="Vec 2/4 ramp time (s)")
                     load_tip_tune_btn = gr.Button("Load Tip Tune Z-Dip GVP")
                 load_tip_tune_btn.click(
                     backend.load_tip_tune_gvp,
-                    [tip_contact_bias, tip_dip_depth, gvp_arm],
+                    [tip_contact_bias, tip_dip_depth, tip_ramp_time, gvp_arm],
                     gvp_report,
                 )
             with gr.Accordion("Execute Loaded GVP", open=True):
@@ -2643,11 +2667,21 @@ def build_ui(backend):
                     placeholder="Type EXECUTE GVP to run loaded GVP",
                 )
                 execute_gvp_btn = gr.Button("Execute Loaded GVP And Plot")
+                gvp_wait_s = gr.Number(value=300.0, label="Max wait for GVP completion (s)")
+                gvp_stop_btn = gr.Button(
+                    "GVP STOP: NULL VECTORS + EXECUTE",
+                    variant="stop",
+                    elem_id="gvp_emergency_stop",
+                )
                 gvp_plot = gr.Plot(label="GVP VP data: ZS, current, dFreq")
                 execute_gvp_btn.click(
                     backend.execute_loaded_gvp_with_plot,
-                    [gvp_confirm, gvp_arm],
+                    [gvp_confirm, gvp_wait_s, gvp_arm],
                     [gvp_plot, gvp_report],
+                )
+                gvp_stop_btn.click(
+                    backend.emergency_stop_gvp,
+                    outputs=gvp_report,
                 )
 
         with gr.Tab("Level 3 Protected"):

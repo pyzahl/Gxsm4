@@ -620,6 +620,7 @@ runner.load_gvp_tip_dip(
     dip_depth_A=-5.0,
     contact_bias_V=0.0,
     scan_bias_V=0.1,
+    ramp_time_s=30.0,
     save_prefix="manual_minus5A_tip_dip",
 )
 print(runner.data["last_loaded_gvp"])
@@ -629,12 +630,31 @@ For this Z-dip template, dU rows are intentionally separated:
 `du01=-scan_bias_V` removes the actual scan bias first, `du03=+contact_bias_V`
 applies the requested contact bias at contact, `du06=-contact_bias_V` removes
 that contact bias, and `du07=+scan_bias_V` restores the scan bias.
+The shared `ramp_time_s` parameter sets `dt02` for the indentation ramp and
+`dt04` for the pull-out ramp. It is bounded to `1..60 s`; the GUI default is
+`30 s`.
 
 Execute the currently loaded GVP:
 
 ```python
 runner.execute_loaded_gvp(wait_after_execute_s=4.0)
 ```
+
+The GUI `Execute Loaded GVP And Plot` control waits for GVP completion before
+fetching and plotting the VP trace. The default max wait is `300 s`, because
+tip-tune GVP programs can run for several minutes when vec 2/4 ramp sections
+are long.
+
+Emergency GVP stop:
+
+```python
+runner.emergency_stop_gvp()
+```
+
+This overwrites the GVP table with all NULL/zero vectors, unchecks all known
+conditional vector flags, and immediately executes `DSP_VP_VP_EXECUTE`. It is
+not a graceful abort, but it can force a GVP stop path when a long program needs
+to be interrupted.
 
 Before executing GVP after a scan, stop and wait for the controller to settle:
 
@@ -877,8 +897,9 @@ Chat also understands direct tip-action phrases:
 
 - `pulse tip` / `tip pulse`: bias-pulse GVP, default `+2 V`, capped at `+/-4 V`.
 - `dip tip` / `tune tip` / `tip tune`: Z-dip GVP, default `5 A`, contact bias
-  `0 V`.
+  `0 V`, vec 2/4 ramp time `30 s`.
 - `fine tune tip`: most gentle Z-dip GVP, default `4 A`, contact bias `0 V`.
+  Chat accepts ramp phrases such as `10s ramp`, bounded to `1..60 s`.
 
 These routes are deterministic and still gated. Use `load ...` or `prepare ...`
 with Control Level 1+ and chat arm to load only. Include the exact phrase
