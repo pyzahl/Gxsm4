@@ -236,7 +236,14 @@ class MicroscopeGradioBackend:
 
     def direct_safety_reply(self, message, chat_arm=False):
         text = str(message)
-        if re.search(r"\b(set|change|adjust|make|configure)\b", text, re.IGNORECASE):
+        action_reply = self.try_chat_scan_action(text, chat_arm=chat_arm)
+        if action_reply is not None:
+            return action_reply
+        if re.search(
+            r"\b(set|change|adjust|make|configure)\b",
+            text,
+            re.IGNORECASE,
+        ):
             write_reply = self.try_chat_parameter_write(text, chat_arm=chat_arm)
             if write_reply is not None:
                 return write_reply
@@ -269,6 +276,26 @@ class MicroscopeGradioBackend:
         if not matches:
             return None
         return self.format_parameter_readback(matches)
+
+    def try_chat_scan_action(self, text, chat_arm=False):
+        text_l = text.lower()
+        if "scan" not in text_l:
+            return None
+        if re.search(r"\b(start|begin|run)\b", text_l):
+            return self.execute_chat_level1_action(
+                "start scan",
+                "startscan",
+                chat_arm,
+                lambda: self.start_scan(arm=True),
+            )
+        if re.search(r"\b(stop|halt|abort|end)\b", text_l):
+            return self.execute_chat_level1_action(
+                "stop scan",
+                "stopscan",
+                chat_arm,
+                lambda: self.stop_scan(arm=True),
+            )
+        return None
 
     def format_parameter_readback(self, items):
         seen = set()
@@ -406,27 +433,38 @@ class MicroscopeGradioBackend:
         return None
 
     def execute_chat_level1_action(self, action_name, target, chat_arm, callback):
+        is_scan_action = action_name in ("start scan", "stop scan")
+        blocked_phrase = (
+            "I did not execute {}".format(action_name)
+            if is_scan_action
+            else "I did not change {}".format(action_name)
+        )
+        success_prefix = (
+            "{} executed".format(action_name.capitalize())
+            if is_scan_action
+            else "{} change executed".format(action_name.capitalize())
+        )
         if self.control_level < 1:
             return (
-                "I did not change {}. Chat parameter changes require Control "
+                "{}. Chat Level 1 actions require Control "
                 "Level 1 or higher, plus the chat arm checkbox."
-            ).format(action_name)
+            ).format(blocked_phrase)
         if not chat_arm:
             return (
-                "I did not change {}. To allow this Level 1 chat action, check "
+                "{}. To allow this Level 1 chat action, check "
                 "'Arm Level 1 chat actions' in the Chat tab and submit the "
                 "request again."
-            ).format(action_name)
+            ).format(blocked_phrase)
         result = callback()
         if isinstance(result, dict) and result.get("error"):
             return (
-                "I tried to change {} to {}, but GXSM returned an error:\n\n"
+                "I tried to execute {} ({}) but GXSM returned an error:\n\n"
                 "```json\n{}\n```"
             ).format(action_name, target, json.dumps(result, indent=2))
         return (
-            "{} change executed through the Level 1 chat action gate: {}.\n\n"
+            "{} through the Level 1 chat action gate: {}.\n\n"
             "```json\n{}\n```"
-        ).format(action_name.capitalize(), target, json.dumps(result, indent=2))
+        ).format(success_prefix, target, json.dumps(result, indent=2))
 
     def last_number(self, text):
         nums = re.findall(r"[-+]?\d+(?:\.\d+)?", str(text))
@@ -1051,7 +1089,8 @@ def build_ui(backend):
 
         with gr.Tab("Chat"):
             gr.Markdown(
-                "Ollama replies are advisory. Clear Level 1 chat commands can "
+                "Ollama replies are advisory. Clear Level 1 chat commands "
+                "(including start/stop scan and bounded parameter changes) can "
                 "execute only when Control Level is 1+ and chat action arm is checked."
             )
             chat = gr.Chatbot(label="Ollama chat", height=420)
