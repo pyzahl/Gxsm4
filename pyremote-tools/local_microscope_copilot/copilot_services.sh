@@ -11,6 +11,13 @@ OLLAMA_PORT="${OLLAMA_PORT:-11434}"
 GRADIO_HOST="${GRADIO_HOST:-127.0.0.1}"
 GRADIO_PORT="${GRADIO_PORT:-7870}"
 GRADIO_LIVE=0
+GRADIO_HTTPS=0
+GRADIO_SSL_CERTFILE="${GRADIO_SSL_CERTFILE:-/etc/grafana/ltncafm_cfn_bnl_gov.pem}"
+GRADIO_SSL_KEYFILE="${GRADIO_SSL_KEYFILE:-/etc/grafana/ltncafm_cfn_bnl_gov_privkey.key}"
+GRADIO_AUTH_USER="${GRADIO_AUTH_USER:-microscope}"
+GRADIO_AUTH_PASSWORD_ENV="${GRADIO_AUTH_PASSWORD_ENV:-MICROSCOPE_COPILOT_PASSWORD}"
+GRADIO_AUTH_PASSWORD_FILE="${GRADIO_AUTH_PASSWORD_FILE:-${ROOT_DIR}/.microscope_gui_password}"
+GRADIO_REQUIRE_AUTH=0
 MODEL_ARG=()
 
 mkdir -p "${RUN_DIR}" "${LOG_DIR}"
@@ -30,6 +37,15 @@ Options:
   --dry-run            Start Gradio in dry-run mode. Default.
   --host HOST          Gradio host. Default: 127.0.0.1
   --port PORT          Gradio port. Default: 7870
+  --https              Start Gradio with HTTPS.
+  --ssl-certfile FILE  Certificate file. Default: /etc/grafana/ltncafm_cfn_bnl_gov.pem
+  --ssl-keyfile FILE   Private key file. Default: /etc/grafana/ltncafm_cfn_bnl_gov_privkey.key
+  --auth-user USER     Microscope GUI login username. Default: microscope
+  --auth-password-env ENV
+                       Env var containing GUI password. Default: MICROSCOPE_COPILOT_PASSWORD
+  --auth-password-file FILE
+                       File containing GUI password. Default: .microscope_gui_password
+  --require-auth       Refuse to start Gradio unless a GUI password is available.
   --ollama-host HOST   Ollama host. Default: 127.0.0.1
   --ollama-port PORT   Ollama port. Default: 11434
   --model MODEL        Pass model override to Gradio.
@@ -56,7 +72,7 @@ read_pid() {
 
 http_ok() {
     local url="$1"
-    curl -fsS --max-time 2 "${url}" >/dev/null 2>&1
+    curl -k -fsS --max-time 2 "${url}" >/dev/null 2>&1
 }
 
 start_ollama() {
@@ -99,7 +115,8 @@ stop_ollama() {
 
 start_gradio() {
     local pid_file="${RUN_DIR}/gradio.pid"
-    local pid live_arg=() mode_label="dry-run"
+    local pid live_arg=() ssl_arg=() mode_label="dry-run" scheme="http"
+    local auth_arg=()
     pid="$(read_pid "${pid_file}")"
     if pid_running "${pid}"; then
         echo "Gradio already running from pidfile: ${pid}"
@@ -115,11 +132,28 @@ start_gradio() {
         live_arg=(--live)
         mode_label="LIVE GXSM4"
     fi
-    echo "Starting Gradio on http://${GRADIO_HOST}:${GRADIO_PORT} (${mode_label})"
+    if [[ "${GRADIO_HTTPS}" == "1" ]]; then
+        scheme="https"
+        ssl_arg=(
+            --ssl-certfile "${GRADIO_SSL_CERTFILE}"
+            --ssl-keyfile "${GRADIO_SSL_KEYFILE}"
+        )
+    fi
+    auth_arg=(
+        --auth-user "${GRADIO_AUTH_USER}"
+        --auth-password-env "${GRADIO_AUTH_PASSWORD_ENV}"
+        --auth-password-file "${GRADIO_AUTH_PASSWORD_FILE}"
+    )
+    if [[ "${GRADIO_REQUIRE_AUTH}" == "1" ]]; then
+        auth_arg+=(--require-auth)
+    fi
+    echo "Starting Gradio on ${scheme}://${GRADIO_HOST}:${GRADIO_PORT} (${mode_label})"
     nohup "${VENV_PY}" "${ROOT_DIR}/microscope_gradio_gui.py" \
         "${live_arg[@]}" \
         --host "${GRADIO_HOST}" \
         --port "${GRADIO_PORT}" \
+        "${ssl_arg[@]}" \
+        "${auth_arg[@]}" \
         "${MODEL_ARG[@]}" \
         >"${LOG_DIR}/gradio.log" 2>&1 &
     echo "$!" > "${pid_file}"
@@ -158,7 +192,9 @@ status_one() {
 
 status_services() {
     status_one "Ollama" "${RUN_DIR}/ollama.pid" "http://${OLLAMA_HOST}:${OLLAMA_PORT}/api/tags"
-    status_one "Gradio" "${RUN_DIR}/gradio.pid" "http://${GRADIO_HOST}:${GRADIO_PORT}"
+    local gradio_scheme="http"
+    [[ "${GRADIO_HTTPS}" == "1" ]] && gradio_scheme="https"
+    status_one "Gradio" "${RUN_DIR}/gradio.pid" "${gradio_scheme}://${GRADIO_HOST}:${GRADIO_PORT}"
 }
 
 cmd="${1:-status}"
@@ -190,6 +226,36 @@ while [[ $# -gt 0 ]]; do
         --port)
             GRADIO_PORT="$2"
             shift 2
+            ;;
+        --https)
+            GRADIO_HTTPS=1
+            shift
+            ;;
+        --ssl-certfile)
+            GRADIO_SSL_CERTFILE="$2"
+            GRADIO_HTTPS=1
+            shift 2
+            ;;
+        --ssl-keyfile)
+            GRADIO_SSL_KEYFILE="$2"
+            GRADIO_HTTPS=1
+            shift 2
+            ;;
+        --auth-user)
+            GRADIO_AUTH_USER="$2"
+            shift 2
+            ;;
+        --auth-password-env)
+            GRADIO_AUTH_PASSWORD_ENV="$2"
+            shift 2
+            ;;
+        --auth-password-file)
+            GRADIO_AUTH_PASSWORD_FILE="$2"
+            shift 2
+            ;;
+        --require-auth)
+            GRADIO_REQUIRE_AUTH=1
+            shift
             ;;
         --ollama-host)
             OLLAMA_HOST="$2"

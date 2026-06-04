@@ -4,3 +4,4 @@ __pycache__/
 gui_outputs/
 .run/
 logs/
+.microscope_gui_password

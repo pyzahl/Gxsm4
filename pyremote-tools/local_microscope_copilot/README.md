@@ -72,12 +72,47 @@ Use `--live` only when intentionally connected to the live GXSM4 microscope:
 .venv/bin/python microscope_gradio_gui.py --live --host 127.0.0.1 --port 7870
 ```
 
+Start the GUI with HTTPS using the local Grafana certificate/key:
+
+```bash
+.venv/bin/python microscope_gradio_gui.py --live --host 0.0.0.0 --port 7870 --https
+```
+
+Enable the microscope GUI login by providing a password outside git. The
+default username is `microscope`.
+
+```bash
+export MICROSCOPE_COPILOT_PASSWORD='choose-a-local-password'
+.venv/bin/python microscope_gradio_gui.py --live --host 0.0.0.0 --port 7870 --https --require-auth
+```
+
+Or use a local password file, which is ignored by git:
+
+```bash
+printf '%s\n' 'choose-a-local-password' > .microscope_gui_password
+chmod 600 .microscope_gui_password
+.venv/bin/python microscope_gradio_gui.py --live --host 0.0.0.0 --port 7870 --https --require-auth
+```
+
+Auth can also be customized with `--auth-user`, `--auth-password-env`, and
+`--auth-password-file`. If `--require-auth` is omitted and no password is found,
+the GUI still starts but prints a warning when bound to a non-localhost address.
+
+The default HTTPS paths are:
+
+- certificate: `/etc/grafana/ltncafm_cfn_bnl_gov.pem`
+- private key: `/etc/grafana/ltncafm_cfn_bnl_gov_privkey.key`
+
+The user running Gradio must have read access to both files. You can also pass
+explicit paths with `--ssl-certfile` and `--ssl-keyfile`.
+
 Or use the service helper:
 
 ```bash
 ./copilot_services.sh start all --live
 ./copilot_services.sh status
 ./copilot_services.sh restart gradio --live
+./copilot_services.sh restart gradio --live --https --require-auth
 ./copilot_services.sh stop all
 ```
 
@@ -88,6 +123,36 @@ The GUI separates Ollama chat from explicit microscope buttons. Live-changing
 buttons require an arm checkbox; loaded-GVP execution additionally requires
 typing `EXECUTE GVP`.
 
+The Chat tab now has a deterministic microscope intent router in front of
+Ollama. It handles clear operator commands and readbacks using controller code,
+then lets Ollama answer only when the request is advisory or ambiguous. The
+router understands aliases and recent context, for example:
+
+- `read bias`, `show current setpoint`, `report scan geometry`
+- `set bias to 0.2 V`, `set current setpoint to 10 pA`
+- `increase bias by 0.05 V`, `make scan speed 20% faster`
+- `start scan`, `stop scan`, and short context requests like `start it`
+- `analyze tip shape`, routed to deterministic scan/tip analysis
+
+Live-changing chat commands still require Control Level 1 or higher plus the
+`Arm Level 1 chat actions` checkbox. Relative changes require a valid current
+readback first. Requests outside Level-1 safety limits are blocked before
+Ollama is involved, and language-model replies are still prevented from
+claiming hardware actions that did not pass through the deterministic gate.
+
+The `Live Readouts` tab includes a read-only fast XYZ monitor that updates
+about 5 times per second from `gxsm4process.rt_query_xyz()` and displays
+`XYZ_monitor["monitor"]`. These XYZ monitor values are controller Volts, not
+Angstroms. The GUI also reports rough X/Y Angstrom context by comparing monitor
+Volts against `OffsetX/Y + ScanX/Y`; use the configured piezo scale when exact
+conversion is required. The live display includes visual bars with adjustable
+external amplifier gain factors; defaults are X/Y = 12x and Z = 24x, so
+effective piezo voltage is `controller_monitor_V * gain`. Bias, current, GVP U,
+PAC amplitude, and PAC dFreq are shown from `rt_query_rpspmc()` with 6
+significant digit formatting. PAC amplitude uses a +/-10 mV gauge. A 2D XY
+panel shows raw controller X/Y Volts. A manual `rt_query_rpspmc()` snapshot
+button is also available for richer controller monitor values.
+
 ### Control Levels
 
 - **Level 0: Hardware connected, monitoring only.** Read-only monitor, dFreq,
@@ -97,8 +162,14 @@ typing `EXECUTE GVP`.
   feedback CP/CI changes, safe GVP load/execute with explicit confirmation.
 - **Level 2: Advanced GVP and more aggressive tip tuning.** Reserved for future
   workflows.
-- **Level 3: Extreme GVP, coarse motion, hyper jumps, auto approach.** Reserved
-  for future high-risk workflows.
+- **Level 3: Extreme GVP, coarse motion, hyper jumps, auto approach.** The GUI
+  now includes a separate protected tab for THV5 coarse controls, including
+  generic X/Y/Z coarse moves, a Z-down shortcut, and watchdog-style auto
+  approach. These actions require Control Level 3, a Level 3 arm checkbox, and
+  typing `EXECUTE LEVEL 3`. They are dry-run safe unless the GUI is started with
+  `--live`. Extra-protected large coarse moves allow burstcounts up to 5000
+  with fixed 0.5 s period and require `EXECUTE LEVEL 3 LARGE MOTION`. Any
+  `Z, -1` coarse move is dangerous fast tip-down motion.
 
 ## Documentation Map
 

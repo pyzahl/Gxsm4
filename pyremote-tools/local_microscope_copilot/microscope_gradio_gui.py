@@ -27,6 +27,11 @@ import requests
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
+DEFAULT_SSL_CERTFILE = "/etc/grafana/ltncafm_cfn_bnl_gov.pem"
+DEFAULT_SSL_KEYFILE = "/etc/grafana/ltncafm_cfn_bnl_gov_privkey.key"
+DEFAULT_AUTH_USER = "microscope"
+DEFAULT_AUTH_PASSWORD_ENV = "MICROSCOPE_COPILOT_PASSWORD"
+DEFAULT_AUTH_PASSWORD_FILE = SCRIPT_DIR / ".microscope_gui_password"
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 if str(PROJECT_ROOT) not in sys.path:
@@ -34,6 +39,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from microscope_actions import (
     LandscapeNavigationController,
+    Level3ProtectedController,
     MicroscopeActionRunner,
     TipImprovementActivityController,
 )
@@ -138,10 +144,176 @@ PARAM_ALIASES = [
     ("gvp bias", "gvp_u_monitor_V", "dsp-GVP-U-MONITOR"),
 ]
 
+PARAM_SPECS = {
+    "bias": {
+        "label": "bias_V",
+        "refname": "dsp-fbs-bias",
+        "unit": "V",
+        "aliases": ("bias", "sample bias", "tunnel bias", "voltage"),
+        "write": "bias",
+    },
+    "current_setpoint": {
+        "label": "current_setpoint_nA",
+        "refname": "dsp-fbs-mx0-current-set",
+        "unit": "nA",
+        "aliases": (
+            "current setpoint",
+            "current set point",
+            "setpoint current",
+            "tunnel current",
+            "current",
+        ),
+        "write": "current",
+    },
+    "current_limit": {
+        "label": "current_limit_nA",
+        "refname": "dsp-fbs-mx0-current-level",
+        "unit": "nA",
+        "aliases": ("current limit", "z mode current limit"),
+        "write": None,
+    },
+    "scan_speed": {
+        "label": "scan_speed_A_per_s",
+        "refname": "dsp-fbs-scan-speed-scan",
+        "unit": "A/s",
+        "aliases": ("scan speed", "scan velocity", "speed"),
+        "write": "scan_speed",
+    },
+    "move_speed": {
+        "label": "move_speed_A_per_s",
+        "refname": "dsp-fbs-scan-speed-move",
+        "unit": "A/s",
+        "aliases": ("move speed", "tip move speed", "offset move speed"),
+        "write": None,
+    },
+    "feedback_cp": {
+        "label": "feedback_cp_dB",
+        "refname": "dsp-fbs-cp",
+        "unit": "dB",
+        "aliases": ("feedback cp", "cp"),
+        "write": "feedback_cp",
+    },
+    "feedback_ci": {
+        "label": "feedback_ci_dB",
+        "refname": "dsp-fbs-ci",
+        "unit": "dB",
+        "aliases": ("feedback ci", "ci"),
+        "write": "feedback_ci",
+    },
+    "rotation": {
+        "label": "rotation_deg",
+        "refname": "Rotation",
+        "unit": "deg",
+        "aliases": ("rotation", "scan rotation", "angle"),
+        "write": None,
+    },
+    "slope_x": {
+        "label": "scan_slope_x_A_per_A",
+        "refname": "dsp-adv-scan-slope-x",
+        "unit": "A/A",
+        "aliases": ("scan slope x", "slope x", "x slope"),
+        "write": "slope_x",
+    },
+    "slope_y": {
+        "label": "scan_slope_y_A_per_A",
+        "refname": "dsp-adv-scan-slope-y",
+        "unit": "A/A",
+        "aliases": ("scan slope y", "slope y", "y slope"),
+        "write": "slope_y",
+    },
+    "gvp_x": {
+        "label": "gvp_xs_monitor_A",
+        "refname": "dsp-GVP-XS-MONITOR",
+        "unit": "A",
+        "aliases": ("gvp x", "gvp xs", "tip x monitor"),
+        "write": None,
+    },
+    "gvp_y": {
+        "label": "gvp_ys_monitor_A",
+        "refname": "dsp-GVP-YS-MONITOR",
+        "unit": "A",
+        "aliases": ("gvp y", "gvp ys", "tip y monitor"),
+        "write": None,
+    },
+    "gvp_z": {
+        "label": "gvp_zs_monitor_A",
+        "refname": "dsp-GVP-ZS-MONITOR",
+        "unit": "A",
+        "aliases": ("gvp z", "gvp zs", "tip z monitor"),
+        "write": None,
+    },
+    "gvp_u": {
+        "label": "gvp_u_monitor_V",
+        "refname": "dsp-GVP-U-MONITOR",
+        "unit": "V",
+        "aliases": ("gvp u", "gvp bias", "gvp voltage"),
+        "write": None,
+    },
+}
+
+CHAT_ROUTER_HELP = """
+Deterministic chat router:
+- Reads known GXSM parameters by alias, including bias, current setpoint,
+  scan speed, feedback CP/CI, scan geometry, slopes, and GVP monitors.
+- Executes Level-1 scan start/stop and bounded parameter changes only when
+  Control Level is 1+ and the chat arm checkbox is checked.
+- Understands relative requests like "increase bias by 0.05 V", "make scan
+  speed 20% faster", and context pronouns like "set it to ..." after a read.
+- Routes tip/scan analysis to deterministic image analysis rather than asking
+  the language model to invent a report.
+"""
+
 
 def load_config(path):
     with open(path, "r") as file:
         return json.load(file)
+
+
+def resolve_gradio_auth(
+    username=DEFAULT_AUTH_USER,
+    password_env=DEFAULT_AUTH_PASSWORD_ENV,
+    password_file=DEFAULT_AUTH_PASSWORD_FILE,
+    require_auth=False,
+):
+    """
+    Resolve optional Gradio basic login credentials.
+
+    Password precedence:
+    1. environment variable, default MICROSCOPE_COPILOT_PASSWORD
+    2. local password file, default .microscope_gui_password
+
+    The password is intentionally not stored in config JSON or source files.
+    """
+    username = str(username or DEFAULT_AUTH_USER)
+    password_env = str(password_env or DEFAULT_AUTH_PASSWORD_ENV)
+    password_file = Path(password_file or DEFAULT_AUTH_PASSWORD_FILE)
+    password = os.environ.get(password_env, "")
+    source = ""
+    if password:
+        source = "environment:{}".format(password_env)
+    elif password_file.exists():
+        password = password_file.read_text().splitlines()[0].strip()
+        source = "file:{}".format(password_file)
+    if not password:
+        if require_auth:
+            raise SystemExit(
+                "Microscope GUI auth is required, but no password was found. "
+                "Set {} or create {}.".format(password_env, password_file)
+            )
+        return None, {
+            "enabled": False,
+            "username": username,
+            "password_source": "",
+            "note": (
+                "Authentication disabled. Set {} or create {} to enable it."
+            ).format(password_env, password_file),
+        }
+    return (username, password), {
+        "enabled": True,
+        "username": username,
+        "password_source": source,
+        "note": "Gradio login enabled for user '{}'.".format(username),
+    }
 
 
 class MicroscopeGradioBackend:
@@ -162,7 +334,18 @@ class MicroscopeGradioBackend:
             self.runner,
             output_dir=str(self.output_dir),
         )
+        self.level3 = Level3ProtectedController(
+            self.runner,
+            thv_base_url=self.config.get("thv_base_url", "http://192.168.40.10/"),
+            output_dir=str(self.output_dir),
+        )
         self.control_level = 0
+        self.chat_context = {
+            "last_parameter": None,
+            "last_action_domain": None,
+            "last_readback": {},
+            "last_intent": None,
+        }
         self.chat_messages = [{"role": "system", "content": DEFAULT_SYSTEM_PROMPT}]
 
     def status_text(self):
@@ -236,6 +419,9 @@ class MicroscopeGradioBackend:
 
     def direct_safety_reply(self, message, chat_arm=False):
         text = str(message)
+        routed = self.route_chat_intent(text, chat_arm=chat_arm)
+        if routed is not None:
+            return routed
         analysis_reply = self.try_chat_scan_analysis(text)
         if analysis_reply is not None:
             return analysis_reply
@@ -255,7 +441,390 @@ class MicroscopeGradioBackend:
             return read_reply
         return None
 
+    def route_chat_intent(self, text, chat_arm=False):
+        text_l = text.lower().strip()
+        if not text_l:
+            return None
+        if re.search(r"\b(what can you do|help|capabilit(?:y|ies)|actions?|commands?)\b", text_l):
+            if any(word in text_l for word in ("chat", "router", "action", "hardware", "microscope")):
+                return CHAT_ROUTER_HELP.strip() + "\n\n```json\n{}\n```".format(
+                    json.dumps(self.chat_router_capabilities(), indent=2)
+                )
+        if self.looks_like_tip_or_scan_analysis(text_l):
+            self.chat_context["last_action_domain"] = "analysis"
+            return self.try_chat_scan_analysis(text)
+        scan_action = self.infer_scan_action(text_l)
+        if scan_action:
+            self.chat_context["last_action_domain"] = "scan"
+            return self.execute_chat_level1_action(
+                "{} scan".format(scan_action),
+                "{}scan".format(scan_action),
+                chat_arm,
+                lambda: self.start_scan(arm=True)
+                if scan_action == "start"
+                else self.stop_scan(arm=True),
+            )
+        if self.looks_like_live_monitor_read(text_l):
+            self.chat_context["last_action_domain"] = "monitor"
+            return self.format_live_monitor_readback()
+        if self.looks_like_read_request(text_l):
+            keys = self.infer_parameter_keys(text_l, allow_context=True)
+            if keys or self.looks_like_scan_geometry_request(text_l):
+                self.chat_context["last_action_domain"] = "readback"
+                if self.looks_like_scan_geometry_request(text_l):
+                    return self.format_parameter_readback(list(KNOWN_READBACK_REFS))
+                return self.format_parameter_readback(
+                    [(PARAM_SPECS[key]["label"], PARAM_SPECS[key]["refname"]) for key in keys]
+                )
+        if self.looks_like_write_request(text_l):
+            keys = self.infer_parameter_keys(text_l, allow_context=True)
+            if self.looks_like_scan_geometry_request(text_l):
+                return self.route_scan_geometry_write(text, chat_arm=chat_arm)
+            if keys:
+                return self.route_parameter_write(text, keys[0], chat_arm=chat_arm)
+            if self.context_parameter_key():
+                return self.route_parameter_write(
+                    text,
+                    self.context_parameter_key(),
+                    chat_arm=chat_arm,
+                )
+        return None
+
+    def chat_router_capabilities(self):
+        return {
+            "control_level": self.control_level,
+            "live_mode": self.live,
+            "level1_writes": {
+                key: {
+                    "label": spec["label"],
+                    "unit": spec["unit"],
+                    "aliases": list(spec["aliases"]),
+                }
+                for key, spec in PARAM_SPECS.items()
+                if spec.get("write")
+            },
+            "level1_actions": ["start scan", "stop scan"],
+            "readbacks": {
+                key: {
+                    "label": spec["label"],
+                    "refname": spec["refname"],
+                    "unit": spec["unit"],
+                }
+                for key, spec in PARAM_SPECS.items()
+            },
+            "safety_limits": self.safety_limits(),
+        }
+
+    def looks_like_tip_or_scan_analysis(self, text_l):
+        return (
+            any(
+                phrase in text_l
+                for phrase in (
+                    "tip shape",
+                    "tip quality",
+                    "tip assessment",
+                    "tip analysis",
+                    "double tip",
+                    "multi tip",
+                    "multiple tip",
+                    "autocorrelation",
+                )
+            )
+            or (
+                "scan" in text_l
+                and any(
+                    word in text_l
+                    for word in ("analyze", "analyse", "analysis", "assess", "evaluate", "check")
+                )
+            )
+        )
+
+    def looks_like_live_monitor_read(self, text_l):
+        return (
+            any(word in text_l for word in ("live", "fast", "rpspmc", "xyz"))
+            and any(word in text_l for word in ("read", "show", "report", "monitor", "status"))
+        )
+
+    def looks_like_read_request(self, text_l):
+        return bool(
+            re.search(
+                r"\b(read|show|get|report|status|settings|what('?s| is)?|current|where|monitor)\b",
+                text_l,
+            )
+        )
+
+    def looks_like_write_request(self, text_l):
+        return bool(
+            re.search(
+                r"\b(set|change|adjust|make|configure|increase|decrease|raise|lower|faster|slower)\b",
+                text_l,
+            )
+        )
+
+    def looks_like_scan_geometry_request(self, text_l):
+        return (
+            "scan" in text_l
+            and any(word in text_l for word in ("size", "range", "geometry", "points"))
+        ) or bool(re.search(r"\b\d+\s*x\s*\d+\s*(?:a|ang|angstrom|points?)\b", text_l))
+
+    def infer_scan_action(self, text_l):
+        mentions_scan = any(word in text_l for word in ("scan", "scanning", "image"))
+        context_scan = self.chat_context.get("last_action_domain") == "scan"
+        if mentions_scan or context_scan:
+            if re.search(r"\b(start|begin|run|go|resume|restart)\b", text_l):
+                return "start"
+            if re.search(r"\b(stop|halt|abort|end|pause)\b", text_l):
+                return "stop"
+        return None
+
+    def infer_parameter_keys(self, text_l, allow_context=False):
+        matches = []
+        for key, spec in PARAM_SPECS.items():
+            for alias in spec["aliases"]:
+                if re.search(r"(?<![a-z0-9_-]){}(?![a-z0-9_-])".format(re.escape(alias)), text_l):
+                    matches.append(key)
+                    break
+        if matches:
+            # Prefer longer aliases already encoded by insertion order, while
+            # removing duplicates without scrambling priority.
+            result = []
+            for key in matches:
+                if key not in result:
+                    result.append(key)
+            self.chat_context["last_parameter"] = result[0]
+            return result
+        if allow_context and re.search(r"\b(it|that|same parameter|this parameter)\b", text_l):
+            key = self.context_parameter_key()
+            return [key] if key else []
+        return []
+
+    def context_parameter_key(self):
+        key = self.chat_context.get("last_parameter")
+        return key if key in PARAM_SPECS else None
+
+    def route_scan_geometry_write(self, text, chat_arm=False):
+        parsed = self.parse_scan_geometry_request(text)
+        if parsed is None:
+            return None
+        range_A, points = parsed
+        self.chat_context["last_action_domain"] = "scan"
+        self.chat_context["last_parameter"] = "scan_geometry"
+        return self.execute_chat_level1_action(
+            "scan geometry",
+            "{} A, {} points".format(range_A, points),
+            chat_arm,
+            lambda: self.set_scan_geometry(range_A, points, arm=True),
+        )
+
+    def route_parameter_write(self, text, key, chat_arm=False):
+        spec = PARAM_SPECS.get(key)
+        if not spec or not spec.get("write"):
+            return None
+        write_kind = spec["write"]
+        text_l = text.lower()
+        if write_kind == "bias":
+            target = self.resolve_numeric_target(
+                text,
+                current_refname=spec["refname"],
+                percent_ok=True,
+            )
+            if target is None:
+                if self.is_relative_request(text):
+                    return "I did not change the bias. A relative bias change needs a valid current bias readback first."
+                return None
+            if abs(target) > self.safety_limits()["level1_max_abs_bias_V"]:
+                return (
+                    "I did not change the bias. A target of {:.6g} V is outside "
+                    "the Level 1 automatic limit of +/-1 V."
+                ).format(target)
+            return self.execute_chat_level1_action(
+                "bias",
+                "{} V".format(self.fmt6(target)),
+                chat_arm,
+                lambda: self.set_bias(target, arm=True),
+            )
+        if write_kind == "current":
+            target_nA = self.resolve_current_target_nA(text, spec["refname"])
+            if target_nA is None:
+                if self.is_relative_request(text):
+                    return "I did not change the current setpoint. A relative current change needs a valid current setpoint readback first."
+                return None
+            if target_nA > self.safety_limits()["level1_max_current_nA"]:
+                return (
+                    "I did not change the current setpoint. The requested value "
+                    "is {:.6g} nA, above the Level 1 automatic limit of {:.6g} nA."
+                ).format(target_nA, self.safety_limits()["level1_max_current_nA"])
+            return self.execute_chat_level1_action(
+                "current setpoint",
+                "{} nA".format(self.fmt6(target_nA)),
+                chat_arm,
+                lambda: self.set_current(target_nA, "nA", arm=True),
+            )
+        if write_kind == "scan_speed":
+            target = self.resolve_numeric_target(
+                text,
+                current_refname=spec["refname"],
+                percent_ok=True,
+                relative_words={"faster": 1.2, "slower": 0.8},
+            )
+            if target is None:
+                if self.is_relative_request(text) or re.search(r"\b(faster|slower)\b", text_l):
+                    return "I did not change the scan speed. A relative speed change needs a valid current scan-speed readback first."
+                return None
+            range_A = self.read_float_parameter("RangeX", fallback=700.0)
+            return self.execute_chat_level1_action(
+                "scan speed",
+                "{} A/s".format(self.fmt6(target)),
+                chat_arm,
+                lambda: self.set_scan_speed(target, range_A, arm=True),
+            )
+        if write_kind in ("slope_x", "slope_y"):
+            target = self.resolve_numeric_target(text, current_refname=spec["refname"])
+            if target is None:
+                if self.is_relative_request(text):
+                    return "I did not change {}. A relative change needs a valid current readback first.".format(
+                        spec["label"]
+                    )
+                return None
+            if abs(target) > self.safety_limits()["level1_max_abs_scan_slope"]:
+                return "I did not change {}. Level 1 allows abs(slope) <= 0.1.".format(
+                    spec["label"]
+                )
+            return self.execute_chat_level1_action(
+                spec["label"],
+                target,
+                chat_arm,
+                lambda: self.set_scan_slope(
+                    slope_x=target if write_kind == "slope_x" else None,
+                    slope_y=target if write_kind == "slope_y" else None,
+                    arm=True,
+                ),
+            )
+        if write_kind in ("feedback_cp", "feedback_ci"):
+            target = self.resolve_numeric_target(text, current_refname=spec["refname"])
+            if target is None:
+                if self.is_relative_request(text):
+                    return "I did not change {}. A relative change needs a valid current readback first.".format(
+                        spec["label"]
+                    )
+                return None
+            limits = self.safety_limits()["level1_feedback_cp_ci_range_dB"]
+            if not (limits[0] <= target <= limits[1]):
+                return (
+                    "I did not change {}. Level 1 allows {}..{} dB."
+                ).format(spec["label"], limits[0], limits[1])
+            other_key = "feedback_ci" if write_kind == "feedback_cp" else "feedback_cp"
+            other = self.read_float_parameter(PARAM_SPECS[other_key]["refname"], fallback=-90.0)
+            cp = target if write_kind == "feedback_cp" else other
+            ci = target if write_kind == "feedback_ci" else other
+            return self.execute_chat_level1_action(
+                "feedback CP/CI",
+                "CP {}, CI {}".format(self.fmt6(cp), self.fmt6(ci)),
+                chat_arm,
+                lambda: self.set_feedback_cp_ci(cp, ci, arm=True),
+            )
+        return None
+
+    def resolve_numeric_target(
+        self,
+        text,
+        current_refname=None,
+        percent_ok=False,
+        relative_words=None,
+    ):
+        text_l = text.lower()
+        current = None
+        if current_refname:
+            current = self.read_float_parameter(current_refname, fallback=np.nan)
+            if not np.isfinite(current):
+                current = None
+        relative_words = relative_words or {}
+        relative_requested = self.is_relative_request(text) or any(
+            re.search(r"\b{}\b".format(re.escape(word)), text_l)
+            for word in relative_words
+        )
+        if relative_requested and current is None:
+            return None
+        for word, factor in relative_words.items():
+            if re.search(r"\b{}\b".format(re.escape(word)), text_l) and current is not None:
+                percent = self.parse_percent(text_l)
+                return current * (1.0 + percent / 100.0) if percent is not None else current * factor
+        delta_match = re.search(
+            r"\b(?:increase|raise|decrease|lower|up|down)\b[^-+\d]*([-+]?\d+(?:\.\d+)?)",
+            text_l,
+        )
+        if delta_match and current is not None:
+            delta = float(delta_match.group(1))
+            if re.search(r"\b(decrease|lower|down)\b", text_l):
+                delta = -abs(delta)
+            elif re.search(r"\b(increase|raise|up)\b", text_l):
+                delta = abs(delta)
+            if percent_ok and "%" in text_l:
+                return current * (1.0 + delta / 100.0)
+            return current + delta
+        if percent_ok and current is not None:
+            percent = self.parse_percent(text_l)
+            if percent is not None and re.search(r"\b(increase|raise|decrease|lower)\b", text_l):
+                sign = -1.0 if re.search(r"\b(decrease|lower)\b", text_l) else 1.0
+                return current * (1.0 + sign * abs(percent) / 100.0)
+        return self.last_number(text)
+
+    def is_relative_request(self, text):
+        return bool(
+            re.search(
+                r"\b(increase|raise|decrease|lower|up|down|more|less)\b",
+                str(text).lower(),
+            )
+            or "%" in str(text)
+        )
+
+    def resolve_current_target_nA(self, text, current_refname):
+        text_l = text.lower()
+        if re.search(r"\b(increase|raise|decrease|lower|up|down)\b", text_l) or "%" in text_l:
+            return self.resolve_numeric_target(
+                text,
+                current_refname=current_refname,
+                percent_ok=True,
+            )
+        parsed = self.parse_current_request(text)
+        if parsed is not None:
+            value, unit = parsed
+            return float(value) / 1000.0 if str(unit).lower() == "pa" else float(value)
+        target = self.resolve_numeric_target(text, current_refname=current_refname)
+        return target
+
+    def parse_percent(self, text_l):
+        match = re.search(r"([-+]?\d+(?:\.\d+)?)\s*%", text_l)
+        return None if not match else float(match.group(1))
+
+    def format_live_monitor_readback(self):
+        try:
+            xyz = self.runner.read_xyz_monitor()
+            rpspmc = self.runner.read_rpspmc_monitor()
+            self.chat_context["last_action_domain"] = "monitor"
+            compact = {
+                "xyz_monitor_V": xyz.get("monitor"),
+                "bias_V": rpspmc.get("bias"),
+                "current_nA": rpspmc.get("current"),
+                "gvp_u_V": (rpspmc.get("gvp") or {}).get("u"),
+                "pac_ampl_mV": (rpspmc.get("pac") or {}).get("ampl"),
+                "pac_dfreq_Hz": (rpspmc.get("pac") or {}).get("dfreq"),
+            }
+            compact = self.jsonable(compact)
+            lines = ["Fast live monitor readback:"]
+            for label, value in compact.items():
+                lines.append("{}: {}".format(label, value))
+            return "\n".join(lines) + "\n\n```json\n{}\n```".format(
+                json.dumps(self.jsonable({"compact": compact, "xyz": xyz, "rpspmc": rpspmc}), indent=2)
+            )
+        except Exception as exc:
+            return (
+                "Fast monitor readback failed: {}\n\n```text\n{}\n```"
+            ).format(str(exc), traceback.format_exc())
+
     def try_chat_scan_analysis(self, text):
+        if not self.live:
+            return "Tip/scan analysis needs live GXSM scan data. The GUI is currently in dry-run mode."
         text_l = text.lower()
         wants_tip = any(
             phrase in text_l
@@ -425,6 +994,13 @@ class MicroscopeGradioBackend:
                 result[label] = rec.result_summary
                 records[label] = self.jsonable(rec.__dict__)
             self.add_scan_spacing(result)
+            self.chat_context["last_readback"] = dict(result)
+            if len(seen) == 1:
+                label = next(iter(seen))
+                for key, spec in PARAM_SPECS.items():
+                    if spec["label"] == label:
+                        self.chat_context["last_parameter"] = key
+                        break
             lines = []
             for label in sorted(result):
                 lines.append("{}: {}".format(label, result[label]))
@@ -665,6 +1241,15 @@ class MicroscopeGradioBackend:
             "level1_scan_points": [16, 1024],
             "level1_max_abs_scan_slope": 0.1,
             "gvp_execute_extra_confirmation": "EXECUTE GVP",
+            "level3_extra_confirmation": "EXECUTE LEVEL 3",
+            "level3_large_motion_confirmation": "EXECUTE LEVEL 3 LARGE MOTION",
+            "level3_thv_base_url": self.config.get("thv_base_url", "http://192.168.40.10/"),
+            "level3_max_auto_approach_steps": 10,
+            "level3_max_abs_dFreq_Hz": 5.0,
+            "level3_max_coarse_burstcount": 5,
+            "level3_max_coarse_voltage_V": 100.0,
+            "level3_max_large_coarse_burstcount": 5000,
+            "level3_coarse_period_s_range": [0.05, 2.0],
         }
 
     def read_monitors(self):
@@ -674,6 +1259,271 @@ class MicroscopeGradioBackend:
             return self.jsonable(data), self.status_text()
         except Exception as exc:
             return {"error": str(exc), "traceback": traceback.format_exc()}, self.status_text()
+
+    def read_xyz_monitor(self):
+        try:
+            data = self.runner.read_xyz_monitor()
+            monitor = data.get("monitor") or [None, None, None]
+            position = self.xyz_monitor_position_context(monitor)
+            report = {
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                "source": "gxsm4process.rt_query_xyz",
+                "unit": "Volts, not Angstroms",
+                "XYZ_monitor": data,
+                "position_context": position,
+            }
+            return (
+                monitor[0] if len(monitor) > 0 else None,
+                monitor[1] if len(monitor) > 1 else None,
+                monitor[2] if len(monitor) > 2 else None,
+                self.jsonable(report),
+            )
+        except Exception as exc:
+            report = {"error": str(exc), "traceback": traceback.format_exc()}
+            return None, None, None, report
+
+    def read_fast_live_dashboard(self, gain_x_V=12.0, gain_y_V=12.0, gain_z_V=24.0):
+        try:
+            gains = {
+                "x": max(abs(float(gain_x_V)), 1e-9),
+                "y": max(abs(float(gain_y_V)), 1e-9),
+                "z": max(abs(float(gain_z_V)), 1e-9),
+            }
+            xyz = self.runner.read_xyz_monitor()
+            rpspmc = self.runner.read_rpspmc_monitor()
+            monitor = xyz.get("monitor") or [None, None, None]
+            values = {
+                "x_monitor_V": monitor[0] if len(monitor) > 0 else None,
+                "y_monitor_V": monitor[1] if len(monitor) > 1 else None,
+                "z_monitor_V": monitor[2] if len(monitor) > 2 else None,
+                "bias_V": rpspmc.get("bias"),
+                "current_nA": rpspmc.get("current"),
+                "gvp_u_V": (rpspmc.get("gvp") or {}).get("u"),
+                "pac_ampl_mV": (rpspmc.get("pac") or {}).get("ampl"),
+                "pac_dfreq_Hz": (rpspmc.get("pac") or {}).get("dfreq"),
+                "rpspmc_time_s": rpspmc.get("time"),
+            }
+            values["x_effective_piezo_V"] = self.mul_or_none(values["x_monitor_V"], gains["x"])
+            values["y_effective_piezo_V"] = self.mul_or_none(values["y_monitor_V"], gains["y"])
+            values["z_effective_piezo_V"] = self.mul_or_none(values["z_monitor_V"], gains["z"])
+            html = self.live_monitor_html(values, gains)
+            report = {
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                "units": {
+                    "xyz_monitor": "Volts, not Angstroms",
+                    "xyz_effective_piezo": "Volts after external amplifier gain",
+                    "bias": "V",
+                    "current": "nA",
+                    "gvp_u": "V",
+                    "pac_ampl": "mV",
+                    "pac_dfreq": "Hz",
+                },
+                "xyz_external_amplifier_gain": gains,
+                "values": values,
+                "XYZ_monitor": xyz,
+                "rpspmc": rpspmc,
+            }
+            return (
+                values["x_monitor_V"],
+                values["y_monitor_V"],
+                values["z_monitor_V"],
+                html,
+                self.jsonable(report),
+            )
+        except Exception as exc:
+            report = {"error": str(exc), "traceback": traceback.format_exc()}
+            return None, None, None, self.live_monitor_html({}, {}), report
+
+    def mul_or_none(self, value, factor):
+        try:
+            if value is None:
+                return None
+            return float(value) * float(factor)
+        except Exception:
+            return None
+
+    def fmt6(self, value):
+        if value is None:
+            return "n/a"
+        try:
+            if not np.isfinite(float(value)):
+                return "n/a"
+            return "{:.6g}".format(float(value))
+        except Exception:
+            return "n/a"
+
+    def gauge_row(self, label, value, unit, limit, bipolar=True, danger_note=""):
+        try:
+            v = float(value)
+            finite = np.isfinite(v)
+        except Exception:
+            v = 0.0
+            finite = False
+        limit = max(abs(float(limit or 1.0)), 1e-9)
+        if bipolar:
+            pct = 50.0 + 50.0 * max(-1.0, min(1.0, v / limit))
+            zero = 50.0
+            left = min(zero, pct)
+            width = abs(pct - zero)
+            scale = "+/-{} {}".format(self.fmt6(limit), unit)
+        else:
+            pct = 100.0 * max(0.0, min(1.0, v / limit))
+            left = 0.0
+            width = pct
+            zero = 0.0
+            scale = "0..{} {}".format(self.fmt6(limit), unit)
+        color = "#2f80ed" if finite else "#888"
+        if finite and abs(v) >= 0.9 * limit:
+            color = "#c62828"
+        value_text = "{} {}".format(self.fmt6(value), unit)
+        note = (
+            "<div style='font-size:11px;color:#b00020;margin-top:2px'>{}</div>".format(danger_note)
+            if danger_note else ""
+        )
+        return """
+<div style="display:grid;grid-template-columns:150px 105px 1fr 95px;gap:8px;align-items:center;margin:5px 0;font-family:system-ui,-apple-system,Segoe UI,sans-serif">
+  <div style="font-weight:600">{label}</div>
+  <div style="font-variant-numeric:tabular-nums">{value}</div>
+  <div style="position:relative;height:14px;background:#e7e7e7;border:1px solid #c9c9c9;border-radius:3px;overflow:hidden">
+    <div style="position:absolute;left:{left:.3f}%;width:{width:.3f}%;height:100%;background:{color};opacity:.85"></div>
+    <div style="position:absolute;left:{zero:.3f}%;width:1px;height:100%;background:#333;opacity:.75"></div>
+  </div>
+  <div style="font-size:11px;color:#555">{scale}</div>
+</div>
+{note}
+""".format(
+            label=label,
+            value=value_text,
+            left=left,
+            width=width,
+            zero=zero,
+            color=color,
+            scale=scale,
+            note=note,
+        )
+
+    def xy_position_html(self, values, raw_limit_V=10.0):
+        limit = max(abs(float(raw_limit_V)), 1e-9)
+        try:
+            x = float(values.get("x_monitor_V"))
+            y = float(values.get("y_monitor_V"))
+            finite = np.isfinite(x) and np.isfinite(y)
+        except Exception:
+            x = 0.0
+            y = 0.0
+            finite = False
+        xpct = 50.0 + 50.0 * max(-1.0, min(1.0, x / limit))
+        ypct = 50.0 - 50.0 * max(-1.0, min(1.0, y / limit))
+        color = "#1b7f3a" if finite else "#777"
+        return """
+<div style="border:1px solid #d0d0d0;border-radius:6px;padding:10px;background:#fff;margin-top:10px">
+  <div style="font-weight:700;margin-bottom:6px">Live XY controller-voltage position</div>
+  <div style="font-size:12px;color:#555;margin-bottom:8px">
+    Crosshair uses raw X/Y monitor Volts from <code>rt_query_xyz()</code>,
+    normalized to +/-{limit} V. External amplifier gains are not applied here.
+  </div>
+  <div style="display:grid;grid-template-columns:190px 1fr;gap:12px;align-items:center">
+    <div style="font-variant-numeric:tabular-nums;font-size:13px">
+      X raw: {x_text} V<br>
+      Y raw: {y_text} V<br>
+      X piezo: {xe_text} V<br>
+      Y piezo: {ye_text} V
+    </div>
+    <div style="position:relative;width:180px;height:180px;background:#f7f7f7;border:1px solid #aaa">
+      <div style="position:absolute;left:50%;top:0;width:1px;height:100%;background:#bbb"></div>
+      <div style="position:absolute;left:0;top:50%;width:100%;height:1px;background:#bbb"></div>
+      <div style="position:absolute;left:{xpct:.3f}%;top:{ypct:.3f}%;width:12px;height:12px;margin-left:-6px;margin-top:-6px;border-radius:50%;background:{color};box-shadow:0 0 0 2px white,0 0 0 3px #444"></div>
+      <div style="position:absolute;left:4px;top:3px;font-size:10px;color:#555">+Y</div>
+      <div style="position:absolute;right:4px;top:84px;font-size:10px;color:#555">+X</div>
+    </div>
+  </div>
+</div>
+""".format(
+            limit=self.fmt6(limit),
+            x_text=self.fmt6(values.get("x_monitor_V")),
+            y_text=self.fmt6(values.get("y_monitor_V")),
+            xe_text=self.fmt6(values.get("x_effective_piezo_V")),
+            ye_text=self.fmt6(values.get("y_effective_piezo_V")),
+            xpct=xpct,
+            ypct=ypct,
+            color=color,
+        )
+
+    def live_monitor_html(self, values, gains):
+        x_label = "X piezo"
+        y_label = "Y piezo"
+        z_label = "Z piezo"
+        if values.get("x_monitor_V") is not None:
+            x_label += " (raw {} V)".format(self.fmt6(values.get("x_monitor_V")))
+        if values.get("y_monitor_V") is not None:
+            y_label += " (raw {} V)".format(self.fmt6(values.get("y_monitor_V")))
+        if values.get("z_monitor_V") is not None:
+            z_label += " (raw {} V)".format(self.fmt6(values.get("z_monitor_V")))
+        rows = [
+            self.gauge_row(x_label, values.get("x_effective_piezo_V"), "V", 100.0, bipolar=True),
+            self.gauge_row(y_label, values.get("y_effective_piezo_V"), "V", 100.0, bipolar=True),
+            self.gauge_row(z_label, values.get("z_effective_piezo_V"), "V", 100.0, bipolar=True),
+            self.gauge_row("Bias", values.get("bias_V"), "V", 5.0, bipolar=True),
+            self.gauge_row("Current", values.get("current_nA"), "nA", 0.1, bipolar=True),
+            self.gauge_row("GVP U", values.get("gvp_u_V"), "V", 5.0, bipolar=True),
+            self.gauge_row("PAC ampl", values.get("pac_ampl_mV"), "mV", 10.0, bipolar=True),
+            self.gauge_row("PAC dFreq", values.get("pac_dfreq_Hz"), "Hz", 20.0, bipolar=True),
+        ]
+        xy_panel = self.xy_position_html(values)
+        return """
+<div style="border:1px solid #d0d0d0;border-radius:6px;padding:10px;background:#fafafa">
+  <div style="font-weight:700;margin-bottom:6px">Fast live monitor</div>
+  <div style="font-size:12px;color:#555;margin-bottom:8px">
+    XYZ values are controller Volts from <code>rt_query_xyz()</code>, not Angstroms.
+    X/Y/Z gauge values are effective piezo Volts after multiplying by the external amplifier gain.
+    Bias/current/GVP/PAC values are from <code>rt_query_rpspmc()</code>.
+    Numbers use 6 significant digits.
+  </div>
+  {rows}
+  {xy_panel}
+</div>
+""".format(rows="\n".join(rows), xy_panel=xy_panel)
+
+    def xyz_monitor_position_context(self, monitor):
+        context = {
+            "note": (
+                "XYZ monitor values are controller Volts. X/Y Angstrom context "
+                "is estimated by comparing OffsetX/Y + ScanX/Y to monitor X/Y."
+            )
+        }
+        try:
+            settings = self.runner._scan_settings(0)
+            x_A = float(settings.get("OffsetX", 0.0)) + float(settings.get("ScanX", 0.0))
+            y_A = float(settings.get("OffsetY", 0.0)) + float(settings.get("ScanY", 0.0))
+            context["gxsm_position_A"] = {
+                "world_x_A_approx": x_A,
+                "world_y_A_approx": y_A,
+                "offset_x_A": settings.get("OffsetX"),
+                "offset_y_A": settings.get("OffsetY"),
+                "scan_x_A": settings.get("ScanX"),
+                "scan_y_A": settings.get("ScanY"),
+                "rotation_deg": settings.get("Rotation"),
+            }
+            if monitor and len(monitor) >= 2:
+                vx = float(monitor[0])
+                vy = float(monitor[1])
+                context["instant_scale_estimate_A_per_V"] = {
+                    "x": None if abs(vx) < 1e-12 else x_A / vx,
+                    "y": None if abs(vy) < 1e-12 else y_A / vy,
+                    "caution": (
+                        "Instant ratio is only a rough estimate unless the "
+                        "monitor zero/origin and configured piezo scale are known."
+                    ),
+                }
+        except Exception as exc:
+            context["position_context_error"] = str(exc)
+        return context
+
+    def read_rpspmc_monitor(self):
+        try:
+            return self.jsonable(self.runner.read_rpspmc_monitor())
+        except Exception as exc:
+            return {"error": str(exc), "traceback": traceback.format_exc()}
 
     def sample_dfrequency(self, count, delay_s):
         try:
@@ -892,6 +1742,198 @@ class MicroscopeGradioBackend:
             ax.text(0.5, 0.5, str(exc), ha="center", va="center", wrap=True)
             ax.set_axis_off()
             return fig, {"error": str(exc), "traceback": traceback.format_exc()}, ""
+
+    def require_level3_confirmation(self, confirm_text, arm, action_name):
+        blocked = self.require_control_level(3, action_name)
+        if blocked:
+            return blocked
+        cancelled = self.require_arm(arm, action_name)
+        if cancelled:
+            return cancelled
+        phrase = self.safety_limits()["level3_extra_confirmation"]
+        if str(confirm_text).strip() != phrase:
+            return {"cancelled": "Type '{}' to {}.".format(phrase, action_name)}
+        return None
+
+    def require_level3_large_motion_confirmation(self, confirm_text, arm, action_name):
+        blocked = self.require_control_level(3, action_name)
+        if blocked:
+            return blocked
+        cancelled = self.require_arm(arm, action_name)
+        if cancelled:
+            return cancelled
+        phrase = self.safety_limits()["level3_large_motion_confirmation"]
+        if str(confirm_text).strip() != phrase:
+            return {"cancelled": "Type '{}' to {}.".format(phrase, action_name)}
+        return None
+
+    def level3_telemetry(self):
+        try:
+            return self.jsonable(self.level3.telemetry())
+        except Exception as exc:
+            return {"error": str(exc), "traceback": traceback.format_exc()}
+
+    def level3_set_script_control(self, enabled, confirm_text, arm):
+        blocked = self.require_level3_confirmation(
+            confirm_text,
+            arm,
+            "set script-control",
+        )
+        if blocked:
+            return blocked
+        try:
+            rec = self.level3.set_script_control(bool(enabled))
+            return self.jsonable(rec.__dict__)
+        except Exception as exc:
+            return {"error": str(exc), "traceback": traceback.format_exc()}
+
+    def level3_coarse_z_down(self, burstcount, confirm_text, arm):
+        blocked = self.require_level3_confirmation(
+            confirm_text,
+            arm,
+            "execute coarse Z down",
+        )
+        if blocked:
+            return blocked
+        try:
+            rec = self.level3.coarse_move(
+                "Z",
+                -1,
+                int(burstcount),
+                period_s=0.5,
+                voltage_V=30.0,
+                max_burstcount=5,
+                max_voltage_V=60.0,
+            )
+            return self.jsonable(rec.__dict__)
+        except Exception as exc:
+            return {"error": str(exc), "traceback": traceback.format_exc()}
+
+    def level3_coarse_move(
+        self,
+        channel,
+        direction,
+        burstcount,
+        period_s,
+        voltage_V,
+        confirm_text,
+        arm,
+    ):
+        blocked = self.require_level3_confirmation(
+            confirm_text,
+            arm,
+            "execute THV coarse move",
+        )
+        if blocked:
+            return blocked
+        try:
+            channel = str(channel).upper()
+            if channel not in ("X", "Y", "Z"):
+                raise ValueError("Channel must be X, Y, or Z.")
+            direction_text = str(direction).strip()
+            direction_value = -1 if direction_text.startswith("-") else 1
+            limits = self.safety_limits()
+            period_min, period_max = limits["level3_coarse_period_s_range"]
+            if not (float(period_min) <= float(period_s) <= float(period_max)):
+                raise ValueError(
+                    "Coarse period must be within {}..{} s.".format(
+                        period_min,
+                        period_max,
+                    )
+                )
+            rec = self.level3.coarse_move(
+                channel,
+                direction_value,
+                int(burstcount),
+                period_s=float(period_s),
+                voltage_V=float(voltage_V),
+                max_burstcount=limits["level3_max_coarse_burstcount"],
+                max_voltage_V=limits["level3_max_coarse_voltage_V"],
+            )
+            return self.jsonable(rec.__dict__)
+        except Exception as exc:
+            return {"error": str(exc), "traceback": traceback.format_exc()}
+
+    def level3_large_coarse_move(
+        self,
+        channel,
+        direction,
+        burstcount,
+        voltage_V,
+        confirm_text,
+        arm,
+    ):
+        blocked = self.require_level3_large_motion_confirmation(
+            confirm_text,
+            arm,
+            "execute large THV coarse move",
+        )
+        if blocked:
+            return blocked
+        try:
+            channel = str(channel).upper()
+            if channel not in ("X", "Y", "Z"):
+                raise ValueError("Channel must be X, Y, or Z.")
+            direction_text = str(direction).strip()
+            direction_value = -1 if direction_text.startswith("-") else 1
+            limits = self.safety_limits()
+            rec = self.level3.coarse_move(
+                channel,
+                direction_value,
+                int(burstcount),
+                period_s=0.5,
+                voltage_V=float(voltage_V),
+                max_burstcount=limits["level3_max_large_coarse_burstcount"],
+                max_voltage_V=limits["level3_max_coarse_voltage_V"],
+            )
+            return self.jsonable(rec.__dict__)
+        except Exception as exc:
+            return {"error": str(exc), "traceback": traceback.format_exc()}
+
+    def level3_auto_approach(
+        self,
+        current_nA,
+        coarse_steps_per_cycle,
+        max_total_steps,
+        max_abs_dFreq_Hz,
+        check_timeout_s,
+        confirm_text,
+        arm,
+    ):
+        blocked = self.require_level3_confirmation(
+            confirm_text,
+            arm,
+            "execute protected auto approach",
+        )
+        if blocked:
+            return blocked
+        try:
+            max_steps_limit = self.safety_limits()["level3_max_auto_approach_steps"]
+            df_limit = self.safety_limits()["level3_max_abs_dFreq_Hz"]
+            if int(max_total_steps) > int(max_steps_limit):
+                raise ValueError(
+                    "max_total_steps exceeds Level-3 GUI limit {}.".format(
+                        max_steps_limit,
+                    )
+                )
+            if float(max_abs_dFreq_Hz) > float(df_limit):
+                raise ValueError(
+                    "max_abs_dFreq_Hz exceeds Level-3 GUI limit {}.".format(
+                        df_limit,
+                    )
+                )
+            prefix = self.output_dir / "gui_level3_auto_approach"
+            rec = self.level3.run_auto_approach(
+                current_nA=float(current_nA),
+                coarse_steps_per_cycle=int(coarse_steps_per_cycle),
+                max_total_steps=int(max_total_steps),
+                max_abs_dFreq_Hz=float(max_abs_dFreq_Hz),
+                check_timeout_s=float(check_timeout_s),
+                output_prefix=str(prefix),
+            )
+            return self.jsonable(rec.__dict__)
+        except Exception as exc:
+            return {"error": str(exc), "traceback": traceback.format_exc()}
 
     def load_bias_pulse(self, pulse_du_V, arm):
         blocked = self.require_control_level(1, "load bias-pulse GVP")
@@ -1217,13 +2259,52 @@ def build_ui(backend):
             with gr.Row():
                 read_btn = gr.Button("Read X/Y/Z/U Monitors")
                 df_btn = gr.Button("Sample dFreq")
+                rpspmc_btn = gr.Button("Read RPSPMC Monitor")
             with gr.Row():
                 df_count = gr.Number(value=20, label="dFreq samples", precision=0)
                 df_delay = gr.Number(value=0.15, label="Delay per sample (s)")
+            gr.Markdown(
+                "Fast XYZ monitor updates at 5 Hz from "
+                "`gxsm4process.rt_query_xyz()` and displays "
+                "`XYZ_monitor['monitor']` in controller Volts, not Angstroms. "
+                "The X/Y/Z gain fields are external amplifier factors used to "
+                "compute effective piezo voltage from controller output voltage."
+            )
+            with gr.Row():
+                gain_choices = ["1", "3", "6", "12", "24"]
+                xyz_gain_x = gr.Dropdown(
+                    choices=gain_choices,
+                    value="12",
+                    label="X external amplifier gain",
+                )
+                xyz_gain_y = gr.Dropdown(
+                    choices=gain_choices,
+                    value="12",
+                    label="Y external amplifier gain",
+                )
+                xyz_gain_z = gr.Dropdown(
+                    choices=gain_choices,
+                    value="24",
+                    label="Z external amplifier gain",
+                )
+            with gr.Row():
+                xyz_x = gr.Number(label="X monitor (V)", interactive=False)
+                xyz_y = gr.Number(label="Y monitor (V)", interactive=False)
+                xyz_z = gr.Number(label="Z monitor (V)", interactive=False)
+            live_gauges = gr.HTML(label="Fast monitor gauges")
             monitors = gr.JSON(label="Monitor readback")
             dfreq = gr.JSON(label="dFrequency report")
+            xyz_report = gr.JSON(label="Fast XYZ monitor report")
+            rpspmc_report = gr.JSON(label="RPSPMC monitor snapshot")
+            xyz_timer = gr.Timer(value=0.2, active=True)
+            xyz_timer.tick(
+                backend.read_fast_live_dashboard,
+                inputs=[xyz_gain_x, xyz_gain_y, xyz_gain_z],
+                outputs=[xyz_x, xyz_y, xyz_z, live_gauges, xyz_report],
+            )
             read_btn.click(backend.read_monitors, outputs=[monitors, status])
             df_btn.click(backend.sample_dfrequency, [df_count, df_delay], dfreq)
+            rpspmc_btn.click(backend.read_rpspmc_monitor, outputs=rpspmc_report)
 
         with gr.Tab("Scan Image"):
             with gr.Row():
@@ -1294,6 +2375,134 @@ def build_ui(backend):
                     level_arm,
                 ],
                 [level_plot, level_report],
+            )
+
+        with gr.Tab("Level 3 Protected"):
+            gr.Markdown(
+                "Extreme actions: coarse motion and auto approach. These require "
+                "Control Level 3, the Level 3 arm checkbox, and exact typed "
+                "confirmation. Keep `script-control` enabled only while actively "
+                "supervising; set it to 0 to abort watchdog-style loops."
+            )
+            level3_report = gr.JSON(label="Level 3 result")
+            with gr.Row():
+                level3_arm = gr.Checkbox(value=False, label="Arm Level 3 action")
+                level3_confirm = gr.Textbox(
+                    label="Level 3 confirmation",
+                    placeholder="Type EXECUTE LEVEL 3",
+                )
+                level3_tel_btn = gr.Button("Read Level 3 Telemetry")
+            level3_tel_btn.click(backend.level3_telemetry, outputs=level3_report)
+            with gr.Row():
+                script_control = gr.Checkbox(value=True, label="script-control enabled")
+                script_control_btn = gr.Button("Set script-control")
+            script_control_btn.click(
+                backend.level3_set_script_control,
+                [script_control, level3_confirm, level3_arm],
+                level3_report,
+            )
+            gr.Markdown(
+                "Coarse Z-down uses THV5 Z, direction -1, period 0.5 s, 30 V. "
+                "Burstcount is capped at 5 in this GUI. Z direction -1 is "
+                "DANGEROUS: fast tip-down coarse motion."
+            )
+            with gr.Row():
+                coarse_burstcount = gr.Number(value=1, label="Z-down burstcount", precision=0)
+                coarse_z_btn = gr.Button("Execute Coarse Z Down")
+            coarse_z_btn.click(
+                backend.level3_coarse_z_down,
+                [coarse_burstcount, level3_confirm, level3_arm],
+                level3_report,
+            )
+            gr.Markdown(
+                "Generic THV coarse move. Direction signs are controller signs; "
+                "use only with an explicit operator coordinate plan. Normal "
+                "coarse moves are capped at burstcount 5 and 100 HV V."
+            )
+            with gr.Row():
+                coarse_channel = gr.Dropdown(choices=["X", "Y", "Z"], value="Z", label="Channel")
+                coarse_direction = gr.Dropdown(
+                    choices=["-1", "+1"],
+                    value="-1",
+                    label="Direction",
+                )
+                coarse_generic_burst = gr.Number(value=1, label="Burstcount", precision=0)
+            with gr.Row():
+                coarse_period = gr.Number(value=0.5, label="Period (s)")
+                coarse_voltage = gr.Number(value=30.0, label="Voltage (HV V)")
+                coarse_generic_btn = gr.Button("Execute Generic Coarse Move")
+            coarse_generic_btn.click(
+                backend.level3_coarse_move,
+                [
+                    coarse_channel,
+                    coarse_direction,
+                    coarse_generic_burst,
+                    coarse_period,
+                    coarse_voltage,
+                    level3_confirm,
+                    level3_arm,
+                ],
+                level3_report,
+            )
+            gr.Markdown(
+                "Extra-protected large/fast coarse motion. Period is fixed at "
+                "0.5 s. Burstcount can be up to 5000 and voltage up to 100 HV V. "
+                "This requires the separate phrase `EXECUTE LEVEL 3 LARGE MOTION`. "
+                "Z direction -1 is DANGEROUS: fast tip-down coarse motion."
+            )
+            with gr.Row():
+                large_confirm = gr.Textbox(
+                    label="Large-motion confirmation",
+                    placeholder="Type EXECUTE LEVEL 3 LARGE MOTION",
+                )
+            with gr.Row():
+                large_channel = gr.Dropdown(choices=["X", "Y", "Z"], value="X", label="Channel")
+                large_direction = gr.Dropdown(
+                    choices=["-1", "+1"],
+                    value="+1",
+                    label="Direction",
+                )
+                large_burst = gr.Number(value=100, label="Burstcount", precision=0)
+            with gr.Row():
+                large_voltage = gr.Number(value=30.0, label="Voltage (HV V)")
+                large_btn = gr.Button("Execute Large Coarse Move")
+            large_btn.click(
+                backend.level3_large_coarse_move,
+                [
+                    large_channel,
+                    large_direction,
+                    large_burst,
+                    large_voltage,
+                    large_confirm,
+                    level3_arm,
+                ],
+                level3_report,
+            )
+            gr.Markdown(
+                "Protected auto approach follows the watchdog pattern: set current, "
+                "check Z range, retract, apply one or more coarse Z-down bursts, "
+                "abort on script-control=0, dFreq limit, or max steps."
+            )
+            with gr.Row():
+                approach_current = gr.Number(value=0.013, label="Approach current (nA)")
+                approach_steps = gr.Number(value=1, label="Coarse steps/cycle", precision=0)
+                approach_max_steps = gr.Number(value=3, label="Max total steps", precision=0)
+            with gr.Row():
+                approach_df_limit = gr.Number(value=5.0, label="Max abs dFreq (Hz)")
+                approach_timeout = gr.Number(value=30.0, label="Check timeout (s)")
+                approach_btn = gr.Button("Execute Protected Auto Approach")
+            approach_btn.click(
+                backend.level3_auto_approach,
+                [
+                    approach_current,
+                    approach_steps,
+                    approach_max_steps,
+                    approach_df_limit,
+                    approach_timeout,
+                    level3_confirm,
+                    level3_arm,
+                ],
+                level3_report,
             )
 
         with gr.Tab("Armed Actions"):
@@ -1370,6 +2579,33 @@ def main(argv=None):
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=7860)
     parser.add_argument("--share", action="store_true")
+    parser.add_argument(
+        "--https",
+        action="store_true",
+        help="Enable HTTPS using the default local certificate/key paths.",
+    )
+    parser.add_argument("--ssl-certfile", default="")
+    parser.add_argument("--ssl-keyfile", default="")
+    parser.add_argument(
+        "--auth-user",
+        default=DEFAULT_AUTH_USER,
+        help="Username for the optional microscope GUI login.",
+    )
+    parser.add_argument(
+        "--auth-password-env",
+        default=DEFAULT_AUTH_PASSWORD_ENV,
+        help="Environment variable containing the GUI login password.",
+    )
+    parser.add_argument(
+        "--auth-password-file",
+        default=str(DEFAULT_AUTH_PASSWORD_FILE),
+        help="Local file containing the GUI login password.",
+    )
+    parser.add_argument(
+        "--require-auth",
+        action="store_true",
+        help="Fail startup unless a GUI login password is available.",
+    )
     args = parser.parse_args(argv)
 
     os.chdir(SCRIPT_DIR)
@@ -1378,12 +2614,49 @@ def main(argv=None):
         config["model"] = args.model
     backend = MicroscopeGradioBackend(config, live=args.live)
     demo = build_ui(backend)
-    demo.launch(
-        server_name=args.host,
-        server_port=args.port,
-        share=args.share,
-        show_error=True,
+    launch_kwargs = {
+        "server_name": args.host,
+        "server_port": args.port,
+        "share": args.share,
+        "show_error": True,
+    }
+    ssl_certfile = args.ssl_certfile or (DEFAULT_SSL_CERTFILE if args.https else "")
+    ssl_keyfile = args.ssl_keyfile or (DEFAULT_SSL_KEYFILE if args.https else "")
+    if ssl_certfile or ssl_keyfile:
+        if not (ssl_certfile and ssl_keyfile):
+            raise SystemExit("HTTPS requires both --ssl-certfile and --ssl-keyfile.")
+        if not os.access(ssl_certfile, os.R_OK):
+            raise SystemExit("SSL certfile is not readable: {}".format(ssl_certfile))
+        if not os.access(ssl_keyfile, os.R_OK):
+            raise SystemExit("SSL keyfile is not readable: {}".format(ssl_keyfile))
+        launch_kwargs["ssl_certfile"] = ssl_certfile
+        launch_kwargs["ssl_keyfile"] = ssl_keyfile
+        launch_kwargs["ssl_verify"] = False
+    auth, auth_report = resolve_gradio_auth(
+        username=args.auth_user,
+        password_env=args.auth_password_env,
+        password_file=args.auth_password_file,
+        require_auth=args.require_auth,
     )
+    if auth is not None:
+        launch_kwargs["auth"] = auth
+        print(
+            "Microscope GUI login enabled for user '{}' from {}.".format(
+                auth_report["username"],
+                auth_report["password_source"],
+            )
+        )
+    elif args.host not in ("127.0.0.1", "localhost"):
+        print(
+            "WARNING: Microscope GUI authentication is disabled while binding "
+            "to {}. Set {} or create {} and use --require-auth for access "
+            "control.".format(
+                args.host,
+                args.auth_password_env,
+                args.auth_password_file,
+            )
+        )
+    demo.launch(**launch_kwargs)
 
 
 if __name__ == "__main__":

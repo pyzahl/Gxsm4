@@ -12,6 +12,7 @@ from datetime import datetime
 import importlib
 import json
 from pathlib import Path
+import requests
 import time
 import traceback
 
@@ -373,6 +374,52 @@ class MicroscopeActionRunner:
             result=value,
         )
         return value
+
+    def read_xyz_monitor(self):
+        """Read fast XYZ monitor values via gxsm4process.rt_query_xyz()."""
+        started = time.time()
+        if self.dry_run:
+            monitor = {
+                "monitor": [None, None, None],
+                "monitor_min": [None, None, None],
+                "monitor_max": [None, None, None],
+            }
+        else:
+            gxsm = self.connect()
+            monitor = gxsm.rt_query_xyz()
+        result = {
+            "monitor": np.asarray(monitor.get("monitor"), dtype=float).tolist(),
+            "monitor_min": np.asarray(monitor.get("monitor_min"), dtype=float).tolist(),
+            "monitor_max": np.asarray(monitor.get("monitor_max"), dtype=float).tolist(),
+        }
+        self.data["last_xyz_monitor"] = result
+        self._record(
+            "read_xyz_monitor",
+            "rtquery",
+            "dry-run" if self.dry_run else "ok",
+            started,
+            command="rt_query_xyz",
+            result=result,
+        )
+        return result
+
+    def read_rpspmc_monitor(self):
+        """Read fast RPSPMC controller monitor values via rt_query_rpspmc()."""
+        started = time.time()
+        if self.dry_run:
+            result = {"dry_run": True}
+        else:
+            result = self._jsonable(self.connect().rt_query_rpspmc())
+        self.data["last_rpspmc_monitor"] = result
+        self._record(
+            "read_rpspmc_monitor",
+            "rtquery",
+            "dry-run" if self.dry_run else "ok",
+            started,
+            command="rt_query_rpspmc",
+            result=result,
+        )
+        return result
 
     def interpret_dFreq(self, dFreq_Hz):
         """
@@ -3025,8 +3072,13 @@ class MicroscopeActionRunner:
     def _jsonable(self, value):
         if isinstance(value, np.ndarray):
             return self._summarize(value)
+        if isinstance(value, np.floating):
+            value = float(value)
+            return value if np.isfinite(value) else None
         if isinstance(value, np.generic):
             return value.item()
+        if isinstance(value, float):
+            return value if np.isfinite(value) else None
         if isinstance(value, dict):
             return {str(k): self._jsonable(v) for k, v in value.items()}
         if isinstance(value, tuple):
@@ -3042,6 +3094,346 @@ class MicroscopeActionRunner:
 
 def format_exception():
     return traceback.format_exc()
+
+
+class THV5CoarseController:
+    """
+    Minimal THV5 HTTP wrapper for Level-3 coarse motion.
+
+    This mirrors the existing pyaction watchdog snippet but keeps requests
+    explicit, dry-run aware, and easy to audit from action reports.
+    """
+
+    def __init__(self, base_url="http://192.168.40.10/", dry_run=True, timeout_s=3.0):
+        self.base_url = str(base_url).rstrip("/") + "/"
+        self.dry_run = bool(dry_run)
+        self.timeout_s = float(timeout_s)
+
+    def coarse_move(self, channel, direction, burstcount, period_s, voltage_V, start=True):
+        channel = str(channel).upper()
+        if channel not in ("X", "Y", "Z"):
+            raise ValueError("THV coarse channel must be X, Y, or Z.")
+        direction = int(direction)
+        if direction not in (-1, 1):
+            raise ValueError("THV coarse direction must be -1 or +1.")
+        burstcount = int(burstcount)
+        if burstcount < 0:
+            raise ValueError("THV burstcount must be non-negative.")
+        period_ms = int(1000.0 * float(period_s))
+        voltage = int(voltage_V) if start else 0
+        c0 = burstcount * direction if start else 0
+        path = "coarse?v={}&p0={}&a0={}&c0={}&bs=0".format(
+            voltage,
+            period_ms if start else 0,
+            channel,
+            c0,
+        )
+        url = self.base_url + path
+        if self.dry_run:
+            return {
+                "dry_run": True,
+                "url": url,
+                "channel": channel,
+                "direction": direction,
+                "burstcount": burstcount,
+                "period_s": float(period_s),
+                "voltage_V": float(voltage_V),
+                "start": bool(start),
+            }
+        response = requests.get(url, timeout=self.timeout_s)
+        return {
+            "url": url,
+            "status_code": response.status_code,
+            "text": response.text[:500],
+        }
+
+    def tip_down_app(self, burstcount):
+        return self.coarse_move("Z", -1, burstcount, 0.5, 30.0, start=True)
+
+
+class Level3ProtectedController:
+    """
+    Protected Level-3 workflows: coarse motion, hyper jumps, auto approach.
+
+    These methods intentionally do not run through the Level-1 chat gate. The
+    GUI must enforce Level 3, a separate arm checkbox, and typed confirmation.
+    """
+
+    def __init__(
+        self,
+        runner,
+        thv_base_url="http://192.168.40.10/",
+        output_dir=".",
+    ):
+        self.runner = runner
+        self.thv = THV5CoarseController(
+            thv_base_url,
+            dry_run=runner.dry_run,
+        )
+        self.output_dir = Path(output_dir)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+    def VZ_tip(self):
+        """Read tip Z voltage proxy from rtquery('z'), matching watchdog sign."""
+        if self.runner.dry_run:
+            return None
+        zvec = self.runner.connect().rtquery("z")
+        return -float(zvec[0])
+
+    def user_ok(self):
+        if self.runner.dry_run:
+            return True
+        try:
+            return int(float(self.runner.connect().get(self.runner.abort_refname))) > 0
+        except Exception:
+            return False
+
+    def set_script_control(self, enabled):
+        return self.runner.set_parameter(
+            self.runner.abort_refname,
+            "1" if enabled else "0",
+        )
+
+    def telemetry(self):
+        df = self.runner.dFreq()
+        return {
+            "dFreq_Hz": df,
+            "dFreq_interpretation": self.runner.interpret_dFreq(df),
+            "VZ_tip_V": self.VZ_tip(),
+            "user_ok": self.user_ok(),
+        }
+
+    def coarse_move(
+        self,
+        channel,
+        direction,
+        burstcount,
+        period_s=0.5,
+        voltage_V=30.0,
+        max_burstcount=5,
+        max_voltage_V=100.0,
+    ):
+        started = time.time()
+        if int(burstcount) > int(max_burstcount):
+            raise ValueError(
+                "Burstcount {} exceeds Level-3 max_burstcount {}.".format(
+                    int(burstcount),
+                    int(max_burstcount),
+                )
+            )
+        if abs(float(voltage_V)) > float(max_voltage_V):
+            raise ValueError(
+                "Voltage {} exceeds Level-3 max_voltage_V {}.".format(
+                    float(voltage_V),
+                    float(max_voltage_V),
+                )
+            )
+        before = self.telemetry()
+        danger = str(channel).upper() == "Z" and int(direction) == -1
+        result = self.thv.coarse_move(
+            channel,
+            int(direction),
+            int(burstcount),
+            float(period_s),
+            float(voltage_V),
+            start=True,
+        )
+        time.sleep(0.2 if not self.runner.dry_run else 0.0)
+        after = self.telemetry()
+        report = {
+            "before": before,
+            "thv_result": result,
+            "after": after,
+            "limits": {
+                "max_burstcount": int(max_burstcount),
+                "max_voltage_V": float(max_voltage_V),
+            },
+            "danger": danger,
+            "danger_note": (
+                "Z direction -1 is a fast tip-down coarse motion."
+                if danger else ""
+            ),
+        }
+        self.runner.data["last_level3_coarse_move"] = report
+        return self.runner._record(
+            "level3_coarse_move",
+            "level3",
+            "dry-run" if self.runner.dry_run else "ok",
+            started,
+            command="THV5 coarse move",
+            details={
+                "channel": channel,
+                "direction": direction,
+                "burstcount": burstcount,
+                "period_s": period_s,
+                "voltage_V": voltage_V,
+                "danger": danger,
+                "danger_note": report["danger_note"],
+            },
+            result=report,
+        )
+
+    def retract(
+        self,
+        current_zero=True,
+        z_retract_threshold_V=-100.0,
+        poll_s=0.5,
+        timeout_s=60.0,
+    ):
+        started = time.time()
+        log = []
+        if current_zero:
+            self.runner.set_parameter("dsp-fbs-mx0-current-set", "0")
+        while True:
+            tel = self.telemetry()
+            tel["elapsed_s"] = time.time() - started
+            log.append(tel)
+            vz = tel.get("VZ_tip_V")
+            if self.runner.dry_run:
+                break
+            if not tel.get("user_ok"):
+                break
+            if vz is not None and float(vz) <= float(z_retract_threshold_V):
+                break
+            if tel["elapsed_s"] >= float(timeout_s):
+                break
+            time.sleep(float(poll_s))
+        return log
+
+    def check_range(
+        self,
+        current_nA=0.03,
+        z_target_V=100.0,
+        timeout_s=10.0,
+        poll_s=0.5,
+    ):
+        started = time.time()
+        log = []
+        self.runner.set_live_current_setpoint(
+            current_nA,
+            unit="nA",
+            max_auto_nA=max(float(current_nA), 0.05),
+        )
+        while True:
+            tel = self.telemetry()
+            tel["elapsed_s"] = time.time() - started
+            log.append(tel)
+            vz = tel.get("VZ_tip_V")
+            if self.runner.dry_run:
+                return {"reached": False, "log": log}
+            if not tel.get("user_ok"):
+                return {"reached": False, "log": log, "abort_reason": "script-control"}
+            if vz is not None and float(vz) >= float(z_target_V):
+                return {"reached": True, "log": log}
+            if tel["elapsed_s"] >= float(timeout_s):
+                return {"reached": False, "log": log, "abort_reason": "timeout"}
+            time.sleep(float(poll_s))
+
+    def run_auto_approach(
+        self,
+        current_nA=0.013,
+        coarse_steps_per_cycle=1,
+        max_total_steps=10,
+        max_abs_dFreq_Hz=5.0,
+        check_timeout_s=30.0,
+        z_target_V=100.0,
+        retract_threshold_V=-100.0,
+        thv_period_s=0.5,
+        thv_voltage_V=30.0,
+        poll_s=0.5,
+        output_prefix=None,
+    ):
+        started = time.time()
+        report = {
+            "started_at": datetime.fromtimestamp(started).isoformat(),
+            "parameters": {
+                "current_nA": float(current_nA),
+                "coarse_steps_per_cycle": int(coarse_steps_per_cycle),
+                "max_total_steps": int(max_total_steps),
+                "max_abs_dFreq_Hz": float(max_abs_dFreq_Hz),
+                "check_timeout_s": float(check_timeout_s),
+                "z_target_V": float(z_target_V),
+                "retract_threshold_V": float(retract_threshold_V),
+                "thv_period_s": float(thv_period_s),
+                "thv_voltage_V": float(thv_voltage_V),
+            },
+            "cycles": [],
+            "total_steps": 0,
+            "status": "running",
+        }
+        if int(coarse_steps_per_cycle) < 1:
+            raise ValueError("coarse_steps_per_cycle must be >= 1.")
+        if int(max_total_steps) < int(coarse_steps_per_cycle):
+            raise ValueError("max_total_steps must be >= coarse_steps_per_cycle.")
+
+        self.set_script_control(True)
+        while report["total_steps"] < int(max_total_steps):
+            tel = self.telemetry()
+            df = tel.get("dFreq_Hz")
+            if df is not None and abs(float(df)) >= float(max_abs_dFreq_Hz):
+                report["status"] = "stopped_dFreq_limit_before_step"
+                report["final_telemetry"] = tel
+                break
+            if not tel.get("user_ok"):
+                report["status"] = "stopped_script_control"
+                report["final_telemetry"] = tel
+                break
+
+            check = self.check_range(
+                current_nA=float(current_nA),
+                z_target_V=float(z_target_V),
+                timeout_s=float(check_timeout_s),
+                poll_s=float(poll_s),
+            )
+            cycle = {"check_range": check}
+            if check.get("reached"):
+                report["status"] = "finished_range_reached"
+                cycle["note"] = "Z range reached under current setpoint."
+                report["cycles"].append(cycle)
+                break
+
+            cycle["retract"] = self.retract(
+                current_zero=True,
+                z_retract_threshold_V=float(retract_threshold_V),
+                poll_s=float(poll_s),
+                timeout_s=float(check_timeout_s),
+            )
+            move = self.thv.tip_down_app(int(coarse_steps_per_cycle))
+            report["total_steps"] += int(coarse_steps_per_cycle)
+            cycle["coarse_move"] = move
+            cycle["after_move"] = self.telemetry()
+            report["cycles"].append(cycle)
+
+            df_after = cycle["after_move"].get("dFreq_Hz")
+            if df_after is not None and abs(float(df_after)) >= float(max_abs_dFreq_Hz):
+                report["status"] = "stopped_dFreq_limit_after_step"
+                report["final_telemetry"] = cycle["after_move"]
+                break
+            if self.runner.dry_run:
+                report["status"] = "dry-run"
+                break
+            time.sleep(float(poll_s))
+        else:
+            report["status"] = "stopped_max_total_steps"
+            report["final_telemetry"] = self.telemetry()
+
+        if "final_telemetry" not in report:
+            report["final_telemetry"] = self.telemetry()
+        report["elapsed_s"] = time.time() - started
+        self.runner.data["last_level3_auto_approach"] = report
+        if output_prefix:
+            Path("{}_level3_auto_approach.json".format(output_prefix)).write_text(
+                json.dumps(self.runner._jsonable(report), indent=2)
+            )
+        return self.runner._record(
+            "level3_auto_approach",
+            "level3",
+            "dry-run" if self.runner.dry_run else report["status"],
+            started,
+            command="protected auto approach",
+            details=report["parameters"],
+            result=report,
+        )
 
 
 class TipImprovementActivityController:

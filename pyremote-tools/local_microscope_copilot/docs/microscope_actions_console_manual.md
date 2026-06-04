@@ -813,7 +813,20 @@ python3 manual_landscape_check.py
 - `set_parameter(refname, value, wait_after_s=0.0)`
 - `get_parameter(refname, collect_as=None)`
 - `dFreq()`
+- `read_xyz_monitor()`
+- `read_rpspmc_monitor()`
 - `interpret_dFreq(dFreq_Hz)`
+
+`read_xyz_monitor()` uses `gxsm4process.rt_query_xyz()` and returns
+`XYZ_monitor["monitor"]` in controller Volts, not Angstroms. Convert with the
+configured piezo scale. For rough live context, compare X/Y monitor Volts with
+`OffsetX/Y + ScanX/Y`; this is only an estimate unless monitor zero/origin and
+the configured scale are known. In the GUI, the live XYZ gain fields are
+external amplifier factors, not min/max display scales. Defaults are X/Y = 12x
+and Z = 24x, so effective piezo voltage is `controller_monitor_V * gain`. The
+same live dashboard also shows RPSPMC `bias` in V, `current` in nA, `gvp.u` in
+V, `pac.ampl` in mV with a +/-10 mV gauge, and `pac.dfreq` in Hz. A 2D panel
+shows the raw X/Y controller-voltage position.
 - `move_to(x, y, wait_after_s=0.0)`
 - `call_gxsm(method_name, *args, ...)`
 - `sleep(seconds)`
@@ -895,3 +908,25 @@ python3 manual_landscape_check.py
 - `plot_landscape_candidates(...)`
 - `plot_landscape_world_map(...)`
 - `write_report(report, filename)`
+
+`Level3ProtectedController`:
+
+- `telemetry()`: read dFreq, interpret it, read watchdog Z voltage proxy via
+  `rtquery("z")`, and check `script-control`.
+- `set_script_control(enabled)`: set GXSM `script-control` to `1` or `0`.
+- `coarse_move(channel, direction, burstcount, period_s=0.5, voltage_V=30.0, ...)`:
+  send one THV5 HTTP coarse-motion request; dry-run returns the URL without
+  contacting the THV5.
+- `run_auto_approach(current_nA=0.013, coarse_steps_per_cycle=1, ...)`:
+  watchdog-style auto approach based on the operator snippet. It sets the
+  current, checks Z range, retracts, applies THV5 Z-down bursts, and aborts on
+  `script-control=0`, dFreq limit, or max total steps.
+
+GUI Level 3 actions are intentionally isolated in the `Level 3 Protected` tab.
+The tab exposes telemetry, `script-control`, generic THV X/Y/Z coarse moves, a
+Z-down shortcut, extra-protected large coarse moves, and protected auto approach.
+Normal coarse moves are capped at burstcount 5 and 100 HV V. Large coarse moves
+use fixed 0.5 s period, allow burstcounts up to 5000, and require the separate
+typed phrase `EXECUTE LEVEL 3 LARGE MOTION`. Any `Z, -1` coarse move is
+dangerous fast tip-down motion. Treat all Level 3 actions as live high-risk
+operations.
