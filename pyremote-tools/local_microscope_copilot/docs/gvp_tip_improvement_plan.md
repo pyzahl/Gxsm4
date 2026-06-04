@@ -174,7 +174,9 @@ Expected observations:
 - Chosen clean-patch world coordinates and local `ScanX`/`ScanY`.
 - Scan coordinate convention for clean-patch moves:
   - left image edge is `ScanX=-RangeX/2`
-  - top/first scan line is `ScanY=-RangeY/2`
+  - top/first scan line is `ScanY=+RangeY/2`
+  - bottom scan line is `ScanY=-RangeY/2`
+  - line numbers count downward from top=0 while physical scan Y is positive up
   - offsets are non-rotated world coordinates
   - at `Rotation=90 deg`, moving the displayed scan area downward corresponds
     to decreasing world `OffsetX`

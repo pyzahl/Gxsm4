@@ -220,11 +220,16 @@ Coordinate convention:
 
 - `ScanX` / `ScanY`: local tip position inside the current scan coordinate
   system.
-- Scan image coordinates map to local scan coordinates as:
-  - left image edge: `ScanX = -RangeX/2`
-  - right image edge: `ScanX = +RangeX/2`
-  - top/first scan line: `ScanY = -RangeY/2`
-  - bottom scan line: `ScanY = +RangeY/2`
+- The scan image coordinate system is right handed: physical/local `Y` is
+  positive upward in the image. Pixel line numbers are separate from physical
+  Y and count from top to bottom:
+  - left image edge: local `ScanX = -RangeX/2`
+  - right image edge: local `ScanX = +RangeX/2`
+  - top/first scan line, line index 0: local `ScanY = +RangeY/2`
+  - bottom scan line, line index N: local `ScanY = -RangeY/2`
+- The helper `pixel_to_scan_xy(px, py)` converts row index to right-handed
+  local scan coordinates and returns those values as `ScanX_A`/`ScanY_A`.
+  It also reports `row_down_y_A` for debugging the row-index sign.
 - `OffsetX` / `OffsetY`: scan-frame center in non-rotated world coordinates.
 - `Rotation`: rotates the scan view around the `OffsetX/Y` center.
 - Example: at `Rotation=90 deg`, moving the scan image downward corresponds to
@@ -817,10 +822,11 @@ in one place:
 - `Move Tip To Candidate`: writes local `ScanX`/`ScanY` for the selected flat
   candidate and verifies with the live GVP X/Y monitor. This is Level 1 and
   arm-gated. It refuses to run while the scan status is busy because GXSM
-  prohibits local tip moves during scanning. The GUI uses a narrower move-busy
-  mask than the GVP/DSP-ready check: it ignores status bit 4 because
-  `rtquery("s") == 5` is a known reset/completed state and should not block
-  a stopped local tip move.
+  prohibits local tip moves during scanning. The GUI uses
+  `(Sall, Sspm, Sgvp) = gxsm.rtquery("s")` and allows the move only when
+  `Sgvp == 0`, which means no Scan/GVP action is running. A stopped scan may
+  still have any current-line value from `waitscan(False)`; only a changing
+  value over a few seconds indicates active scanning.
 - `Plan Offset Shift`: proposes a partially overlapping `OffsetX`/`OffsetY`
   world-coordinate shift for finding a cleaner area if the current image has
   too many large blobs.

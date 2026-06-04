@@ -129,7 +129,9 @@ Image display convention in the copilot:
 
 - line 0 is displayed at the top
 - left edge is local `ScanX = -RangeX/2`
-- top/first line is local `ScanY = -RangeY/2`
+- top/first line is local `ScanY = +RangeY/2`
+- bottom line is local `ScanY = -RangeY/2`
+- line numbers count downward, while physical scan Y is positive upward
 - plot aspect is physical Angstrom aspect, so partial scans are not stretched
 
 ### Probe / VP / GVP Event Data
@@ -371,4 +373,3 @@ The Gradio GUI currently uses these control levels:
 - Level 2: reserved for advanced GVP and more aggressive tip tuning.
 - Level 3: reserved for extreme GVP, coarse motion/hyper jumps, and auto
   approach workflows.
-

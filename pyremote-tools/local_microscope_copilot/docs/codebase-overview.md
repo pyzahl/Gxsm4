@@ -89,7 +89,9 @@ Basic SPM scan geometry and frame parameters:
   controls, not landscape/coarse-area navigation.
   In the image-to-scan convention, the left image edge is
   `ScanX=-RangeX/2`, the right edge is `ScanX=+RangeX/2`, the top/first scan
-  line is `ScanY=-RangeY/2`, and the bottom line is `ScanY=+RangeY/2`.
+  line is `ScanY=+RangeY/2`, and the bottom line is `ScanY=-RangeY/2`.
+  Line numbers count downward from top=0, while physical scan Y is positive
+  upward.
 - `OffsetX`, `OffsetY`: move the scan frame/landscape area in non-rotated
   world coordinates. `Rotation` rotates the scan view around this center.
   At `Rotation=90 deg`, moving the displayed scan area downward corresponds to

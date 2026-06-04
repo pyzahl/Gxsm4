@@ -27,8 +27,8 @@ class ScanGuiMixin:
         fetched_y = float(meta.get("fetched_y_count", ny) or ny)
         x_left = -0.5 * range_x
         x_right = 0.5 * range_x
-        y_top = -0.5 * range_y
-        y_bottom = y_top + range_y * fetched_y / max(points_y, 1.0)
+        y_top = 0.5 * range_y
+        y_bottom = y_top - range_y * fetched_y / max(points_y, 1.0)
         return (x_left, x_right, y_bottom, y_top)
 
     def pixel_to_local_A(self, px, py, image, extent):
@@ -59,7 +59,7 @@ class ScanGuiMixin:
         )
         ax.set_title(title)
         ax.set_xlabel("Scan X (A)")
-        ax.set_ylabel("Scan Y (A), line 0 at top")
+        ax.set_ylabel("Scan Y (A), positive up; line 0 at top")
         fig.colorbar(im, ax=ax, label=colorbar_label)
         if quality or landscape:
             self.annotate_analysis_plot(ax, image, extent, quality, landscape)

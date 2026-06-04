@@ -40,27 +40,36 @@ class TipPlannerGuiMixin:
     def scan_is_busy_report(self):
         if self.runner.dry_run:
             return {"busy": False, "dry_run": True}
-        status = int(self.runner.connect().rtquery("s")[0])
-        # For local ScanX/ScanY moves we only need to avoid active scan/GVP
-        # execution states. The broader DSP ready mask also includes bit 4;
-        # older GXSM scripts document status 5 as reset/completed, so bit 4
-        # would falsely block an idle instrument.
-        move_busy_mask = 8 + 16 + 2
+        status_vec = self.runner.connect().rtquery("s")
+        status_values = [int(value) for value in status_vec]
+        sall = status_values[0] if len(status_values) > 0 else None
+        sspm = status_values[1] if len(status_values) > 1 else None
+        sgvp = status_values[2] if len(status_values) > 2 else None
+        if sgvp is None:
+            busy = True
+            reason = "rtquery('s') did not return Sgvp; refusing local move."
+        else:
+            # Operator rule: Sgvp == 0 means no scan/GVP is running and GXSM is
+            # ready for local ScanX/ScanY moves. Stopped scans may report any
+            # current line elsewhere; that should not block the move.
+            busy = int(sgvp) != 0
+            reason = (
+                "Sgvp != 0, scan or GVP is active."
+                if busy else "Sgvp == 0, local ScanX/ScanY move is allowed."
+            )
         return {
-            "busy": bool(status & move_busy_mask),
-            "status": status,
-            "busy_mask": move_busy_mask,
+            "busy": bool(busy),
+            "status_vector": status_values,
+            "Sall": sall,
+            "Sspm": sspm,
+            "Sgvp": sgvp,
+            "reason": reason,
             "broad_dsp_ready_mask": self.runner.DSP_BUSY_MASK,
-            "raw_status_bits": {
-                "bit_1": bool(status & 1),
-                "bit_2": bool(status & 2),
-                "bit_4": bool(status & 4),
-                "bit_8": bool(status & 8),
-                "bit_16": bool(status & 16),
-            },
             "note": (
-                "ScanX/ScanY move busy check intentionally ignores bit 4 "
-                "because status 5 may mean reset/completed, not active scan."
+                "ScanX/ScanY move busy check uses rtquery('s')[2] Sgvp. "
+                "Sgvp == 0 means no Scan/GVP is running; waitscan(False) may "
+                "still return the stopped current line and is not used as a "
+                "busy blocker here."
             ),
         }
 

@@ -1911,18 +1911,34 @@ class MicroscopeActionRunner:
         return False
 
     def pixel_to_scan_xy(self, px, py, channel=0):
-        """Convert image pixel coordinates to centered ScanX/ScanY Angstroms."""
+        """
+        Convert image pixel coordinates to centered ScanX/ScanY Angstroms.
+
+        Pixel row indices count down from line 0 at the image top, but the
+        physical scan coordinate system is right handed: positive local Y is
+        upward in the image.  Use the returned ScanX_A/ScanY_A values for
+        actual local tip moves.
+        """
         if self.dry_run:
             return {"ScanX_A": None, "ScanY_A": None, "dry_run": True}
         range_x = float(self.connect().get("RangeX"))
         range_y = float(self.connect().get("RangeY"))
         points_x = float(self.connect().get("PointsX"))
         points_y = float(self.connect().get("PointsY"))
+        local_x_A = float((px - points_x / 2.0) * (range_x / points_x))
+        local_y_A = float((points_y / 2.0 - py) * (range_y / points_y))
         return {
-            "ScanX_A": float((px - points_x / 2.0) * (range_x / points_x)),
-            "ScanY_A": float((py - points_y / 2.0) * (range_y / points_y)),
+            "ScanX_A": local_x_A,
+            "ScanY_A": local_y_A,
+            "local_scan_x_A": local_x_A,
+            "local_scan_y_A": local_y_A,
+            "row_down_y_A": -local_y_A,
             "pixel_origin": "top-left",
-            "scan_origin": "scan center",
+            "scan_origin": "scan center, right handed X-right/Y-up",
+            "scan_y_note": (
+                "Line numbers count downward from top=0, while physical "
+                "local ScanY is positive upward."
+            ),
             "pixel_size_x_A": float(range_x / points_x),
             "pixel_size_y_A": float(range_y / points_y),
         }
@@ -4038,10 +4054,10 @@ class LandscapeNavigationController:
         Convert image pixel coordinates to world OffsetX/Y coordinates.
 
         OffsetX/OffsetY are non-rotated world coordinates for the scan center.
-        Pixel coordinates are first converted to local scan coordinates, then
-        rotated by the scan Rotation around that center. The top/first scan
-        line is local ScanY = -RangeY/2, and the left image edge is
-        ScanX = -RangeX/2.
+        Pixel coordinates are first converted to right-handed local scan
+        coordinates, then rotated by the scan Rotation around that center. The
+        top/first scan line is local ScanY = +RangeY/2, the bottom line is
+        ScanY = -RangeY/2, and the left image edge is ScanX = -RangeX/2.
         """
         if settings is None:
             settings = self.runner._scan_settings(channel)
@@ -4053,7 +4069,7 @@ class LandscapeNavigationController:
         offset_y = float(settings.get("OffsetY", 0.0))
         rotation_deg = float(settings.get("Rotation", 0.0))
         local_x = (float(px) - points_x / 2.0) * (range_x / points_x)
-        local_y = (float(py) - points_y / 2.0) * (range_y / points_y)
+        local_y = (points_y / 2.0 - float(py)) * (range_y / points_y)
         theta = np.deg2rad(rotation_deg)
         world_dx = local_x * np.cos(theta) - local_y * np.sin(theta)
         world_dy = local_x * np.sin(theta) + local_y * np.cos(theta)
@@ -4068,7 +4084,8 @@ class LandscapeNavigationController:
             "coordinate_note": (
                 "OffsetX/Y are non-rotated world coordinates; local scan "
                 "coordinates are rotated around the scan center by Rotation. "
-                "Line 0/top is ScanY=-RangeY/2; left is ScanX=-RangeX/2."
+                "Line 0/top is ScanY=+RangeY/2; line numbers increase "
+                "downward while physical local Y is positive upward."
             ),
         }
 
@@ -4326,7 +4343,7 @@ class LandscapeNavigationController:
         This is useful for GVP pulse marks, where the highest pixel may be on a
         shoulder or edge while the operator-visible blob center is closer to the
         centroid of the high-contrast region.  World coordinates use the scan
-        convention: line 0/top is ScanY=-RangeY/2 and left is ScanX=-RangeX/2.
+        convention: line 0/top is ScanY=+RangeY/2 and left is ScanX=-RangeX/2.
         """
         arr = np.asarray(image, dtype=float)
         ny, nx = arr.shape
