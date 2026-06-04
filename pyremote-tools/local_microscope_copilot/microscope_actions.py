@@ -2024,6 +2024,8 @@ class MicroscopeActionRunner:
             "ScanY",
             "OffsetX",
             "OffsetY",
+            "dsp-adv-scan-slope-x",
+            "dsp-adv-scan-slope-y",
             "dsp-fbs-bias",
             "dsp-fbs-mx0-current-set",
         ]
