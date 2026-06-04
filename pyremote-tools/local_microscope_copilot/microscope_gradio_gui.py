@@ -21,6 +21,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import numpy as np
 import requests
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -218,7 +219,23 @@ class MicroscopeGradioBackend:
         y_bottom = y_top + range_y * fetched_y / max(points_y, 1.0)
         return (x_left, x_right, y_bottom, y_top)
 
-    def plot_scan_image_A(self, image, meta, channel, title, colorbar_label):
+    def pixel_to_local_A(self, px, py, image, extent):
+        ny, nx = image.shape
+        x_left, x_right, y_bottom, y_top = extent
+        x_A = x_left + (float(px) + 0.5) * (x_right - x_left) / max(nx, 1)
+        y_A = y_top + (float(py) + 0.5) * (y_bottom - y_top) / max(ny, 1)
+        return x_A, y_A
+
+    def plot_scan_image_A(
+        self,
+        image,
+        meta,
+        channel,
+        title,
+        colorbar_label,
+        quality=None,
+        landscape=None,
+    ):
         fig, ax = plt.subplots(figsize=(6, 5), constrained_layout=True)
         extent = self.scan_extent_A(image, meta, channel)
         im = ax.imshow(
@@ -232,7 +249,92 @@ class MicroscopeGradioBackend:
         ax.set_xlabel("Scan X (A)")
         ax.set_ylabel("Scan Y (A), line 0 at top")
         fig.colorbar(im, ax=ax, label=colorbar_label)
+        if quality or landscape:
+            self.annotate_analysis_plot(ax, image, extent, quality, landscape)
         return fig, extent
+
+    def annotate_analysis_plot(self, ax, image, extent, quality=None, landscape=None):
+        quality = quality or {}
+        landscape = landscape or {}
+
+        hazards = (
+            landscape.get("hazards")
+            or landscape.get("major_bumps")
+            or []
+        )
+        for hazard in hazards[:12]:
+            if "px" not in hazard or "py" not in hazard:
+                continue
+            x_A, y_A = self.pixel_to_local_A(hazard["px"], hazard["py"], image, extent)
+            ax.plot(x_A, y_A, "rx", ms=7, mew=1.5)
+
+        candidates = (
+            landscape.get("candidates")
+            or landscape.get("flat_candidates")
+            or []
+        )
+        for idx, candidate in enumerate(candidates[:6], start=1):
+            px = candidate.get("px")
+            py = candidate.get("py")
+            if px is None or py is None:
+                continue
+            x_A, y_A = self.pixel_to_local_A(px, py, image, extent)
+            ax.plot(x_A, y_A, "wo", ms=7, mec="k", mew=1.0)
+            ax.text(
+                x_A,
+                y_A,
+                str(idx),
+                color="black",
+                ha="center",
+                va="center",
+                fontsize=7,
+            )
+
+        best = landscape.get("best_candidate") or {}
+        if best.get("px") is not None and best.get("py") is not None:
+            x_A, y_A = self.pixel_to_local_A(best["px"], best["py"], image, extent)
+            ax.plot(x_A, y_A, "c*", ms=12, mec="k", mew=0.8, label="best flat")
+
+        peaks = [
+            peak for peak in quality.get("autocorrelation_secondary_peaks", [])
+            if peak.get("used_for_tip_verdict")
+        ]
+        summary_lines = [
+            "Tip: {} ({})".format(
+                quality.get("verdict", "n/a"),
+                quality.get("confidence", "n/a"),
+            ),
+        ]
+        rough = quality.get("flattened_stats", {}).get("roughness_std")
+        if rough is not None:
+            summary_lines.append("rough std: {:.4g} A".format(float(rough)))
+        if peaks:
+            peak = peaks[0]
+            summary_lines.append(
+                "peak: corr={:.3g}, d~{:.1f} A, angle={:.0f} deg".format(
+                    float(peak.get("corr", 0.0)),
+                    float(peak.get("dist_A_approx", 0.0)),
+                    float(peak.get("angle_deg", 0.0)),
+                )
+            )
+        if hazards:
+            summary_lines.append("hazards: {}".format(len(hazards)))
+        if candidates:
+            summary_lines.append("flat candidates: {}".format(len(candidates)))
+
+        ax.text(
+            0.01,
+            0.99,
+            "\n".join(summary_lines),
+            transform=ax.transAxes,
+            va="top",
+            ha="left",
+            fontsize=8,
+            color="white",
+            bbox={"facecolor": "black", "alpha": 0.62, "pad": 4},
+        )
+        if hazards or candidates or best:
+            ax.legend(loc="lower right", fontsize=7)
 
     def fetch_scan_plot(self, channel, chunk_lines):
         try:
@@ -285,6 +387,8 @@ class MicroscopeGradioBackend:
                 channel,
                 "Scan image used for analysis",
                 "topography / signal",
+                quality=quality,
+                landscape=landscape,
             )
             report = {
                 "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
@@ -434,6 +538,93 @@ class MicroscopeGradioBackend:
         except Exception as exc:
             return {"error": str(exc), "traceback": traceback.format_exc()}
 
+    def measure_scan_leveling(self, channel, line_count, output_prefix):
+        try:
+            report = self.runner.measure_recent_fast_axis_slope(
+                channel=int(channel),
+                line_count=int(line_count),
+                output_prefix=str(self.output_dir / output_prefix),
+            )
+            profile_path = self.output_dir / (output_prefix + "_profile.png")
+            fig = self.slope_report_figure(report, profile_path=profile_path)
+            return fig, self.jsonable(report)
+        except Exception as exc:
+            fig, ax = plt.subplots(figsize=(6, 4), constrained_layout=True)
+            ax.text(0.5, 0.5, str(exc), ha="center", va="center", wrap=True)
+            ax.set_axis_off()
+            return fig, {"error": str(exc), "traceback": traceback.format_exc()}
+
+    def slope_report_figure(self, report, profile_path=None):
+        fig, ax = plt.subplots(figsize=(7, 4), constrained_layout=True)
+        if profile_path and Path(profile_path).exists():
+            img = plt.imread(profile_path)
+            ax.imshow(img)
+            ax.set_axis_off()
+            return fig
+        if isinstance(report, dict):
+            slope = report.get("fit_slope_local_fast_x_AngZ_per_Ang")
+            residual = report.get("residual_std_after_fit_A")
+            axis = report.get("leveling_axis")
+            rotation = report.get("rotation_deg")
+            current_x = report.get("current_scan_slope_x")
+            current_y = report.get("current_scan_slope_y")
+            text = (
+                "Residual fast-axis slope: {slope}\n"
+                "Residual std after fit: {residual}\n"
+                "Rotation: {rotation} deg\n"
+                "Corrects: {axis}\n"
+                "Current slope X: {sx}\n"
+                "Current slope Y: {sy}\n"
+            ).format(
+                slope="{:.6g} AngZ/Ang".format(float(slope)) if slope is not None else "n/a",
+                residual="{:.6g} A".format(float(residual)) if residual is not None else "n/a",
+                rotation="{:.3g}".format(float(rotation)) if rotation is not None else "n/a",
+                axis=axis or "n/a",
+                sx=current_x,
+                sy=current_y,
+            )
+        else:
+            text = str(report)
+        ax.text(0.02, 0.98, text, va="top", ha="left", family="monospace")
+        ax.set_axis_off()
+        return fig
+
+    def apply_scan_leveling_correction(
+        self,
+        channel,
+        line_count,
+        correction_sign,
+        gain,
+        max_abs_delta,
+        verify_delay_s,
+        verify_line_count,
+        output_prefix,
+        arm,
+    ):
+        blocked = self.require_control_level(1, "apply scan slope correction")
+        if blocked:
+            return self.slope_report_figure(blocked), blocked
+        cancelled = self.require_arm(arm, "apply scan slope correction")
+        if cancelled:
+            return self.slope_report_figure(cancelled), cancelled
+        try:
+            result = self.runner.auto_correct_scan_slope_from_recent_lines(
+                channel=int(channel),
+                line_count=int(line_count),
+                correction_sign=float(correction_sign),
+                gain=float(gain),
+                verify_delay_s=float(verify_delay_s),
+                verify_line_count=int(verify_line_count),
+                max_abs_delta=float(max_abs_delta),
+                output_prefix=str(self.output_dir / output_prefix),
+            )
+            profile_path = self.output_dir / (output_prefix + "_after_profile.png")
+            fig = self.slope_report_figure(result.get("post") or result, profile_path=profile_path)
+            return fig, self.jsonable(result)
+        except Exception as exc:
+            report = {"error": str(exc), "traceback": traceback.format_exc()}
+            return self.slope_report_figure(report), report
+
 
 def build_ui(backend):
     try:
@@ -509,6 +700,53 @@ def build_ui(backend):
                 backend.analyze_current_scan,
                 [ana_channel, ana_lines, ana_prefix],
                 [ana_plot, ana_report, ana_path],
+            )
+
+        with gr.Tab("Scan Leveling"):
+            gr.Markdown(
+                "Measure residual fast-axis slope from recent scan lines. "
+                "Apply correction only on flat areas and only after setting "
+                "Rotation=0 for world X or Rotation=90 for world Y."
+            )
+            with gr.Row():
+                level_channel = gr.Number(value=0, label="Channel", precision=0)
+                level_lines = gr.Number(value=64, label="Recent line count", precision=0)
+                level_prefix = gr.Textbox(value="gui_scan_leveling", label="Output prefix")
+                measure_level_btn = gr.Button("Measure Residual Slope")
+            level_plot = gr.Plot(label="Recent-line mean profile and fit")
+            level_report = gr.JSON(label="Leveling report")
+            measure_level_btn.click(
+                backend.measure_scan_leveling,
+                [level_channel, level_lines, level_prefix],
+                [level_plot, level_report],
+            )
+            gr.Markdown(
+                "Correction is Level 1 and arm-gated. If the correction worsens "
+                "the residual, use the opposite correction sign."
+            )
+            with gr.Row():
+                level_arm = gr.Checkbox(value=False, label="Arm leveling correction")
+                correction_sign = gr.Number(value=-1.0, label="Correction sign")
+                correction_gain = gr.Number(value=1.0, label="Gain")
+                max_abs_delta = gr.Number(value=0.005, label="Max abs delta")
+            with gr.Row():
+                verify_delay = gr.Number(value=20.0, label="Verify delay (s)")
+                verify_lines = gr.Number(value=16, label="Verify line count", precision=0)
+                apply_level_btn = gr.Button("Apply Slope Correction")
+            apply_level_btn.click(
+                backend.apply_scan_leveling_correction,
+                [
+                    level_channel,
+                    level_lines,
+                    correction_sign,
+                    correction_gain,
+                    max_abs_delta,
+                    verify_delay,
+                    verify_lines,
+                    level_prefix,
+                    level_arm,
+                ],
+                [level_plot, level_report],
             )
 
         with gr.Tab("Armed Actions"):
