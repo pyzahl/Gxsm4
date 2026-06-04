@@ -180,6 +180,38 @@ class MicroscopeGradioBackend:
     def direct_safety_reply(self, message, chat_arm=False):
         text = str(message)
         if re.search(r"\bbias\b", text, re.IGNORECASE):
+            if re.search(
+                r"\b(read|show|get|report|what('?s| is)?|current)\b",
+                text,
+                re.IGNORECASE,
+            ):
+                try:
+                    rec = self.runner.get_parameter("dsp-fbs-bias")
+                    value = rec.result_summary
+                    if value is None:
+                        return (
+                            "Bias readback did not return a numeric value.\n\n"
+                            "```json\n{}\n```"
+                        ).format(json.dumps(self.jsonable(rec.__dict__), indent=2))
+                    value = float(value)
+                    margin = (
+                        "within"
+                        if abs(value) <= self.safety_limits()["level1_max_abs_bias_V"]
+                        else "outside"
+                    )
+                    return (
+                        "Current bias reading: {:.6g} V. This is {} the "
+                        "Level 1 absolute-bias margin of +/-1 V.\n\n"
+                        "```json\n{}\n```"
+                    ).format(
+                        value,
+                        margin,
+                        json.dumps(self.jsonable(rec.__dict__), indent=2),
+                    )
+                except Exception as exc:
+                    return (
+                        "Bias readback failed: {}\n\n```text\n{}\n```"
+                    ).format(str(exc), traceback.format_exc())
             nums = re.findall(r"[-+]?\d+(?:\.\d+)?", text)
             if nums:
                 target = float(nums[-1])
