@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
 import sys
 import time
 import traceback
@@ -61,9 +62,25 @@ Help interpret observations, propose cautious next steps, and explain controller
 readouts. The GUI has operator-selected control levels:
 Level 0 is read-only monitoring; Level 1 permits basic bounded operations;
 Level 2 and Level 3 are reserved for future advanced/extreme operations.
-Do not claim that you changed hardware unless a GUI action result confirms it.
-For actions, tell the operator which control level, arm checkbox, and explicit
-confirmation are required."""
+The chat channel is advisory only: it cannot execute hardware actions. Do not
+claim that you changed hardware from chat. If asked to change a setting, state
+that this is a proposal and direct the operator to the matching GUI action,
+control level, arm checkbox, and explicit confirmation required. Bias targets
+above +/-1 V are outside Level 1 and must be described as blocked/not available
+unless a future higher-level workflow is implemented."""
+
+ACTION_CLAIM_RE = re.compile(
+    r"\b("
+    r"I (have )?(set|changed|adjusted|started|stopped|executed|loaded)|"
+    r"(bias|current|scan|gvp|feedback).{0,40}\b(has been|is now|was set|changed)"
+    r")\b",
+    re.IGNORECASE,
+)
+
+HARDWARE_WORD_RE = re.compile(
+    r"\b(bias|current|scan|gvp|feedback|cp|ci|setpoint|start|stop|execute)\b",
+    re.IGNORECASE,
+)
 
 
 def load_config(path):
@@ -110,6 +127,12 @@ class MicroscopeGradioBackend:
     def chat(self, message, history):
         if not message:
             return "", history
+        direct = self.direct_safety_reply(message)
+        if direct is not None:
+            history = list(history or [])
+            history.append({"role": "user", "content": message})
+            history.append({"role": "assistant", "content": direct})
+            return "", history
         level_note = "Current GUI control setting: {}. {}".format(
             CONTROL_LEVELS.get(self.control_level, self.control_level),
             "Live GUI mode is enabled." if self.live else "GUI is in dry-run mode.",
@@ -137,11 +160,43 @@ class MicroscopeGradioBackend:
             text = "Could not connect to Ollama. Start it with: `ollama serve`."
         except Exception as exc:
             text = "Chat error: {}".format(exc)
+        text = self.enforce_chat_action_boundary(text)
         self.chat_messages.append({"role": "assistant", "content": text})
         history = list(history or [])
         history.append({"role": "user", "content": message})
         history.append({"role": "assistant", "content": text})
         return "", history
+
+    def enforce_chat_action_boundary(self, text):
+        if ACTION_CLAIM_RE.search(text) and HARDWARE_WORD_RE.search(text):
+            return (
+                "SAFETY CORRECTION: No microscope hardware action was executed "
+                "from this chat response. Chat is advisory only; use the GUI "
+                "control-level selector, arm checkbox, and explicit action "
+                "buttons to make live changes.\n\n"
+                + text
+        )
+        return text
+
+    def direct_safety_reply(self, message):
+        text = str(message)
+        if re.search(r"\bbias\b", text, re.IGNORECASE):
+            nums = re.findall(r"[-+]?\d+(?:\.\d+)?", text)
+            if nums:
+                target = float(nums[-1])
+                if abs(target) > self.safety_limits()["level1_max_abs_bias_V"]:
+                    return (
+                        "I did not change the bias. A target of {:.3g} V is "
+                        "outside the Level 1 automatic limit of +/-1 V. Use "
+                        "manual GXSM control or a future Level 2/3 workflow "
+                        "after defining the required safety procedure."
+                    ).format(target)
+                return (
+                    "I did not change the bias from chat. To set {:.3g} V, use "
+                    "the Armed Actions tab: select Level 1, enter the bias, "
+                    "check the arm box, and press Set Bias."
+                ).format(target)
+        return None
 
     def set_control_level(self, choice):
         text = str(choice)
@@ -662,6 +717,10 @@ def build_ui(backend):
         control_level.change(backend.set_control_level, control_level, [status, level_report])
 
         with gr.Tab("Chat"):
+            gr.Markdown(
+                "Chat is advisory only. It cannot execute microscope actions. "
+                "Use Control Level plus Armed Actions for live changes."
+            )
             chat = gr.Chatbot(label="Ollama chat", height=420)
             prompt = gr.Textbox(label="Prompt", placeholder="Ask for interpretation or a proposed next step")
             prompt.submit(backend.chat, [prompt, chat], [prompt, chat])
