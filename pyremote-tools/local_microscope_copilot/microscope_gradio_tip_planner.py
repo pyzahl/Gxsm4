@@ -495,6 +495,10 @@ class TipPlannerGuiMixin:
                 )
             except Exception:
                 hazard.setdefault("world_mapping_error", True)
+        line_artifact_suppression = self.runner.data.get(
+            "last_major_bump_line_artifact_suppression",
+            {},
+        )
         clean_patch = self.runner.find_clean_patch(
             image,
             patch_x=max(16, min(64, int(round(float(patch_A) / max(pixel, 1e-9))))),
@@ -531,6 +535,8 @@ class TipPlannerGuiMixin:
             "pixel_size_A": pixel,
             "tip_quality": quality,
             "hazards": hazards,
+            "line_artifact_suppression": line_artifact_suppression,
+            "abnormal_contrast_lines": line_artifact_suppression.get("suppressed_lines", []),
             "flat_candidates": candidates[:int(max_candidates)],
             "best_flat_candidate": candidates[0] if candidates else None,
             "best_candidate": candidates[0] if candidates else None,

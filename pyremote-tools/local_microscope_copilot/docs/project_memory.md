@@ -208,6 +208,12 @@ Possible poor-tip signs:
 - Step edges blurry over too large a spatial width.
 - Large or asymmetric blobs after tuning actions can mark bad interaction sites.
 
+One or a few scan lines with a whole-line Z/contrast offset followed by return
+to normal are transient tip-state artifacts, for example molecule pickup/drop or
+push during scanning.  Do not interpret such full-line offsets as a stable
+hazard zone along the line.  They should be recorded separately as abnormal
+contrast/line artifacts and masked before large-blob hazard detection.
+
 Small blobs with height below roughly `3 A` may be molecules and should not by
 themselves stop a planner loop. Larger/taller blobs or broad hazards should be
 avoided when choosing work sites.

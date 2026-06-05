@@ -2121,12 +2121,18 @@ class MicroscopeActionRunner:
         pixel_size_A=1.0,
         molecule_height_A=3.0,
         large_blob_diameter_A=40.0,
+        ignore_transient_line_offsets=True,
+        line_offset_sigma_threshold=5.0,
+        max_transient_line_group_px=4,
     ):
         """
         Detect large protrusions/bumps in the current image.
 
         These locations are remembered so future clean-patch selection and tip
         tuning can avoid risky features that may damage or contaminate the tip.
+        Whole scan-line offsets from temporary tip changes are masked before
+        blob detection; they are transient image artifacts, not stable spatial
+        hazard zones.
         """
         arr = np.asarray(image, dtype=float)
         ny, nx = arr.shape
@@ -2152,7 +2158,27 @@ class MicroscopeActionRunner:
 
         score = np.abs(flat - median) / robust_sigma
         mask = score >= sigma_threshold
+        suppressed_lines = []
+        if ignore_transient_line_offsets:
+            suppressed_lines = self._transient_line_offset_groups(
+                leveled,
+                sigma_threshold=line_offset_sigma_threshold,
+                max_group_px=max_transient_line_group_px,
+            )
+            for group in suppressed_lines:
+                y0 = int(group["y0_px"])
+                y1 = int(group["y1_px"])
+                mask[max(0, y0):min(ny, y1 + 1), :] = False
         candidates = np.argwhere(mask)
+        self.data["last_major_bump_line_artifact_suppression"] = {
+            "enabled": bool(ignore_transient_line_offsets),
+            "suppressed_lines": suppressed_lines,
+            "rule": (
+                "Short groups of scan lines with large whole-line median "
+                "offsets are treated as temporary tip change/pickup/drop/push "
+                "artifacts and are not counted as blob hazards."
+            ),
+        }
         if candidates.size == 0:
             return []
         order = np.argsort(score[mask])[::-1]
@@ -2205,13 +2231,97 @@ class MicroscopeActionRunner:
                         "classification_note": (
                             "Molecule candidates are abs(dZ)<3 A. Large blob "
                             "hazards are taller features with estimated "
-                            "diameter >=40 A."
+                            "diameter >=40 A. Whole-line transient offsets are "
+                            "suppressed before this classification."
                         ),
                     }
                 )
             if len(bumps) >= max_bumps:
                 break
         return bumps
+
+    def _transient_line_offset_groups(
+        self,
+        leveled_image,
+        sigma_threshold=5.0,
+        max_group_px=4,
+        baseline_window=31,
+    ):
+        """Detect short whole-line offset artifacts in a plane-leveled image."""
+        arr = np.asarray(leveled_image, dtype=float)
+        if arr.ndim != 2 or arr.shape[0] < 4:
+            return []
+        line_median = np.nanmedian(arr, axis=1)
+        baseline = self._running_median_1d(line_median, window=baseline_window)
+        residual = line_median - baseline
+        sigma = self._robust_sigma(residual)
+        if not np.isfinite(sigma) or sigma <= 0:
+            return []
+        score = np.abs(residual) / sigma
+        mask = score >= float(sigma_threshold)
+        groups = self._contiguous_true_groups(mask)
+        reports = []
+        for y0, y1 in groups:
+            width = int(y1 - y0 + 1)
+            if width > int(max_group_px):
+                continue
+            reports.append(
+                {
+                    "y0_px": int(y0),
+                    "y1_px": int(y1),
+                    "line_count": width,
+                    "score": float(np.nanmax(score[y0:y1 + 1])),
+                    "median_offset_A": float(np.nanmedian(residual[y0:y1 + 1])),
+                    "classification": "transient_tip_state_line_offset",
+                    "interpretation": (
+                        "Temporary tip change/pickup/drop/push of molecules; "
+                        "not a stable landscape hazard zone."
+                    ),
+                }
+            )
+        return reports
+
+    def _running_median_1d(self, values, window=31):
+        arr = np.asarray(values, dtype=float)
+        n = len(arr)
+        if n == 0:
+            return arr
+        window = max(3, int(window))
+        if window % 2 == 0:
+            window += 1
+        half = window // 2
+        out = np.empty(n, dtype=float)
+        for idx in range(n):
+            lo = max(0, idx - half)
+            hi = min(n, idx + half + 1)
+            out[idx] = np.nanmedian(arr[lo:hi])
+        return out
+
+    def _robust_sigma(self, values):
+        arr = np.asarray(values, dtype=float)
+        arr = arr[np.isfinite(arr)]
+        if len(arr) == 0:
+            return 0.0
+        median = np.nanmedian(arr)
+        mad = np.nanmedian(np.abs(arr - median))
+        sigma = 1.4826 * mad
+        if sigma > 0 and np.isfinite(sigma):
+            return float(sigma)
+        std = np.nanstd(arr)
+        return float(std) if std > 0 and np.isfinite(std) else 0.0
+
+    def _contiguous_true_groups(self, mask):
+        groups = []
+        start = None
+        for idx, value in enumerate(mask):
+            if value and start is None:
+                start = idx
+            elif not value and start is not None:
+                groups.append((start, idx - 1))
+                start = None
+        if start is not None:
+            groups.append((start, len(mask) - 1))
+        return groups
 
     def _connected_component(self, mask, start_y, start_x, max_pixels=20000):
         """Return 8-connected mask component coordinates for one seed pixel."""

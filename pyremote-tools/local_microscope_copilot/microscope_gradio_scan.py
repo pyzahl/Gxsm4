@@ -155,6 +155,22 @@ class ScanGuiMixin:
             else:
                 ax.plot(x_A, y_A, "x", color="#ff9f1c", ms=7, mew=1.4)
 
+        abnormal_lines = landscape.get("abnormal_contrast_lines") or []
+        for line in abnormal_lines[:8]:
+            y0 = line.get("y0_px")
+            y1 = line.get("y1_px", y0)
+            if y0 is None:
+                continue
+            _x0, y_top = self.pixel_to_local_A(0, y0, image, extent)
+            _x1, y_bottom = self.pixel_to_local_A(0, y1, image, extent)
+            ax.axhspan(
+                min(y_top, y_bottom),
+                max(y_top, y_bottom),
+                color="#d81b60",
+                alpha=0.16,
+                lw=0,
+            )
+
         candidates = (
             landscape.get("candidates")
             or landscape.get("flat_candidates")
@@ -208,6 +224,8 @@ class ScanGuiMixin:
             large = len([h for h in hazards if h.get("count_for_offset_stop")])
             molecules = len([h for h in hazards if h.get("feature_class") == "molecule_candidate"])
             summary_lines.append("large hazards: {}, molecules: {}".format(large, molecules))
+        if abnormal_lines:
+            summary_lines.append("transient line artifacts: {}".format(len(abnormal_lines)))
         if candidates:
             summary_lines.append("flat candidates: {}".format(len(candidates)))
 
@@ -588,6 +606,10 @@ class ScanGuiMixin:
                     )
                 except Exception:
                     hazard.setdefault("world_mapping_error", True)
+            line_artifact_suppression = self.runner.data.get(
+                "last_major_bump_line_artifact_suppression",
+                {},
+            )
             clean_patch = self.runner.find_clean_patch(
                 image,
                 patch_x=max(16, min(48, int(round(70.0 / max(pixel, 1e-9))))),
@@ -617,6 +639,8 @@ class ScanGuiMixin:
                 "fetch_meta": meta,
                 "pixel_size_A": pixel,
                 "hazards": hazards,
+                "line_artifact_suppression": line_artifact_suppression,
+                "abnormal_contrast_lines": line_artifact_suppression.get("suppressed_lines", []),
                 "flat_candidates": candidates,
                 "candidates": candidates,
                 "best_candidate": candidates[0] if candidates else None,
