@@ -1742,11 +1742,29 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             return None
         return parsed["value"], "nA"
 
+    def parse_scan_points_request(self, text):
+        parsed = self.parse_si_quantity(text, "points")
+        if parsed is not None:
+            return int(round(parsed["value"]))
+        text_l = str(text).lower()
+        if not re.search(r"\b(points?|px|pixels?|counts?)\b", text_l):
+            return None
+        match = re.search(
+            r"(?:points?|px|pixels?|counts?)\D*(\d+)\b",
+            text_l,
+        )
+        if not match:
+            match = re.search(
+                r"\b(\d+)\D*(?:points?|px|pixels?|counts?)\b",
+                text_l,
+            )
+        return None if not match else int(match.group(1))
+
     def parse_scan_geometry_request(self, text):
         text_l = text.lower()
         range_parsed = self.parse_si_quantity(text_l, "length_A")
-        points_parsed = self.parse_si_quantity(text_l, "points")
-        if range_parsed is None and points_parsed is None:
+        points_value = self.parse_scan_points_request(text_l)
+        if range_parsed is None and points_value is None:
             return None
         range_A = (
             float(range_parsed["value"])
@@ -1754,8 +1772,8 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             else self.read_float_parameter("RangeX", fallback=700.0)
         )
         points = (
-            int(round(points_parsed["value"]))
-            if points_parsed is not None
+            int(points_value)
+            if points_value is not None
             else int(self.read_float_parameter("PointsX", fallback=400))
         )
         return range_A, points
