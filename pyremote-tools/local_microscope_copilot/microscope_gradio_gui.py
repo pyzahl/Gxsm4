@@ -607,7 +607,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             if parsed is None:
                 return (
                     "I did not change scan geometry. Include explicit units, "
-                    "for example `700 A 400 points` or `70 nm 400 px`."
+                    "for example `700 A`, `400 points`, or `70 nm 400 px`."
                 )
             range_A, points = parsed
             plan.append(
@@ -876,7 +876,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         if parsed is None:
             return (
                 "I did not change scan geometry. Include explicit units, "
-                "for example `700 A 400 points` or `70 nm 400 px`."
+                "for example `700 A`, `400 points`, or `70 nm 400 px`."
             )
         range_A, points = parsed
         self.chat_context["last_action_domain"] = "scan"
@@ -1046,17 +1046,23 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             "voltage": {
                 "base_unit": "V",
                 "units": {
+                    "V": 1.0,
                     "v": 1.0,
                     "volt": 1.0,
                     "volts": 1.0,
+                    "mV": 1e-3,
                     "mv": 1e-3,
                     "millivolt": 1e-3,
                     "millivolts": 1e-3,
+                    "uV": 1e-6,
                     "uv": 1e-6,
                     "µv": 1e-6,
+                    "µV": 1e-6,
                     "microvolt": 1e-6,
                     "microvolts": 1e-6,
+                    "MV": 1e6,
                     "kv": 1e3,
+                    "kV": 1e3,
                 },
             },
             "current": {
@@ -1158,22 +1164,24 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
     def parse_si_quantity(self, text, kind):
         spec = self.si_quantity_specs()[kind]
         units = spec["units"]
+        number_pattern = r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?"
         unit_pattern = "|".join(
             re.escape(unit) for unit in sorted(units, key=len, reverse=True)
         )
         pattern = re.compile(
-            r"([-+]?\d+(?:\.\d+)?)\s*({})(?![a-zA-Z/µÅå])".format(unit_pattern),
+            r"({})\s*({})(?![a-zA-Z/µÅå])".format(number_pattern, unit_pattern),
             re.IGNORECASE,
         )
         matches = list(pattern.finditer(str(text)))
         if not matches:
             return None
         match = matches[-1]
-        unit = match.group(2).lower()
+        unit_text = match.group(2)
+        unit_key = unit_text if unit_text in units else unit_text.lower()
         return {
-            "value": float(match.group(1)) * units[unit],
+            "value": float(match.group(1)) * units[unit_key],
             "raw_value": float(match.group(1)),
-            "unit": match.group(2),
+            "unit": unit_text,
             "base_unit": spec["base_unit"],
             "text": match.group(0),
         }
@@ -1184,9 +1192,16 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         ).format(label, expected)
 
     def voltage_unit_scale(self, unit):
-        unit = str(unit or "V").lower()
-        if unit in ("mv", "millivolt", "millivolts"):
+        unit_text = str(unit or "V")
+        unit_l = unit_text.lower()
+        if unit_text == "MV":
+            return 1e6
+        if unit_text in ("mV",) or unit_l in ("mv", "millivolt", "millivolts"):
             return 0.001
+        if unit_text in ("uV", "µV") or unit_l in ("uv", "µv", "microvolt", "microvolts"):
+            return 1e-6
+        if unit_text == "kV" or unit_l == "kv":
+            return 1e3
         return 1.0
 
     def parse_last_voltage_literal_V(self, text):
@@ -1206,8 +1221,10 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
 
         delta_match = re.search(
             r"\b(?:increase|raise|decrease|lower|up|down)\b[^-+\d]*"
-            r"([-+]?\d+(?:\.\d+)?)\s*(mv|millivolts?|v|volts?)\b",
-            text_l,
+            r"([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)\s*"
+            r"(MV|mV|uV|µV|kV|mv|millivolts?|v|volts?)\b",
+            str(text),
+            re.IGNORECASE,
         )
         if delta_match and current is not None:
             delta = float(delta_match.group(1)) * self.voltage_unit_scale(delta_match.group(2))
@@ -1594,7 +1611,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             if parsed is None:
                 return (
                     "I did not change scan geometry. Include explicit units, "
-                    "for example `700 A 400 points` or `70 nm 400 px`."
+                    "for example `700 A`, `400 points`, or `70 nm 400 px`."
                 )
             range_A, points = parsed
             return self.execute_chat_level1_action(
@@ -1729,10 +1746,18 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         text_l = text.lower()
         range_parsed = self.parse_si_quantity(text_l, "length_A")
         points_parsed = self.parse_si_quantity(text_l, "points")
-        if range_parsed is None or points_parsed is None:
+        if range_parsed is None and points_parsed is None:
             return None
-        range_A = float(range_parsed["value"])
-        points = int(round(points_parsed["value"]))
+        range_A = (
+            float(range_parsed["value"])
+            if range_parsed is not None
+            else self.read_float_parameter("RangeX", fallback=700.0)
+        )
+        points = (
+            int(round(points_parsed["value"]))
+            if points_parsed is not None
+            else int(self.read_float_parameter("PointsX", fallback=400))
+        )
         return range_A, points
 
     def read_float_parameter(self, refname, fallback):
