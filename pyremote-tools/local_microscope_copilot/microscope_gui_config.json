@@ -24,8 +24,14 @@
         "gvp_u_V": 5.0,
         "pac_ampl_mV": 10.0,
         "pac_dfreq_Hz": 20.0,
-        "xy_raw_V": 10.0
-      }
+        "x_raw_V": 5.0,
+        "y_raw_V": 5.0,
+        "z_raw_V": 5.0,
+        "xy_raw_V": 5.0,
+        "z_monitor_A": 1000.0,
+        "z_gvp_offset_A": 25.0
+      },
+      "xy_range_A": 1000.0
     },
     "scan_image": {
       "channel": 0,

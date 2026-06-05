@@ -2238,8 +2238,10 @@ class MicroscopeActionRunner:
         range_y = float(self.connect().get("RangeY"))
         points_x = float(self.connect().get("PointsX"))
         points_y = float(self.connect().get("PointsY"))
-        local_x_A = float((px - points_x / 2.0) * (range_x / points_x))
-        local_y_A = float((points_y / 2.0 - py) * (range_y / points_y))
+        step_x = range_x / max(points_x - 1.0, 1.0)
+        step_y = range_y / max(points_y - 1.0, 1.0)
+        local_x_A = float(px * step_x - range_x / 2.0)
+        local_y_A = float(range_y / 2.0 - py * step_y)
         return {
             "ScanX_A": local_x_A,
             "ScanY_A": local_y_A,
@@ -2252,8 +2254,8 @@ class MicroscopeActionRunner:
                 "Line numbers count downward from top=0, while physical "
                 "local ScanY is positive upward."
             ),
-            "pixel_size_x_A": float(range_x / points_x),
-            "pixel_size_y_A": float(range_y / points_y),
+            "pixel_size_x_A": float(step_x),
+            "pixel_size_y_A": float(step_y),
         }
 
     def move_to_scan_xy_fields(self, scan_x_A, scan_y_A, wait_after_s=2.0):
@@ -4552,11 +4554,13 @@ class LandscapeNavigationController:
         offset_x = float(settings.get("OffsetX", 0.0))
         offset_y = float(settings.get("OffsetY", 0.0))
         rotation_deg = float(settings.get("Rotation", 0.0))
-        local_x = (float(px) - points_x / 2.0) * (range_x / points_x)
-        local_y = (points_y / 2.0 - float(py)) * (range_y / points_y)
+        step_x = range_x / max(points_x - 1.0, 1.0)
+        step_y = range_y / max(points_y - 1.0, 1.0)
+        local_x = float(px) * step_x - range_x / 2.0
+        local_y = range_y / 2.0 - float(py) * step_y
         theta = np.deg2rad(rotation_deg)
-        world_dx = local_x * np.cos(theta) - local_y * np.sin(theta)
-        world_dy = local_x * np.sin(theta) + local_y * np.cos(theta)
+        world_dx = local_x * np.cos(theta) + local_y * np.sin(theta)
+        world_dy = -local_x * np.sin(theta) + local_y * np.cos(theta)
         return {
             "world_x_A": float(offset_x + world_dx),
             "world_y_A": float(offset_y + world_dy),
@@ -5117,8 +5121,8 @@ class LandscapeNavigationController:
             shift_y,
         )
         theta = np.deg2rad(rotation_deg)
-        world_dx = local_dx * np.cos(theta) - local_dy * np.sin(theta)
-        world_dy = local_dx * np.sin(theta) + local_dy * np.cos(theta)
+        world_dx = local_dx * np.cos(theta) + local_dy * np.sin(theta)
+        world_dy = -local_dx * np.sin(theta) + local_dy * np.cos(theta)
         target = {
             "OffsetX": float(old_offset_x + world_dx),
             "OffsetY": float(old_offset_y + world_dy),
@@ -5501,8 +5505,8 @@ class LandscapeNavigationController:
         corners = []
         for local_x in (-0.5 * rx, 0.5 * rx):
             for local_y in (-0.5 * ry, 0.5 * ry):
-                world_x = ox + local_x * np.cos(theta) - local_y * np.sin(theta)
-                world_y = oy + local_x * np.sin(theta) + local_y * np.cos(theta)
+                world_x = ox + local_x * np.cos(theta) + local_y * np.sin(theta)
+                world_y = oy - local_x * np.sin(theta) + local_y * np.cos(theta)
                 corners.append({"world_x_A": float(world_x), "world_y_A": float(world_y)})
         x_values = [corner["world_x_A"] for corner in corners]
         y_values = [corner["world_y_A"] for corner in corners]

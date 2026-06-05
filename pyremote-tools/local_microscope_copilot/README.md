@@ -186,23 +186,17 @@ readback first. Requests outside Level-1 safety limits are blocked before
 Ollama is involved, and language-model replies are still prevented from
 claiming hardware actions that did not pass through the deterministic gate.
 
-The `Live Microscope State Monitor` tab includes a read-only fast XYZ monitor that updates
-about 5 times per second from `gxsm4process.rt_query_xyz()` and displays
-`XYZ_monitor["monitor"]`. These XYZ monitor values are controller Volts, not
-Angstroms. The GUI also reports rough X/Y Angstrom context by comparing monitor
-Volts against `OffsetX/Y + ScanX/Y`; use the configured piezo scale when exact
-conversion is required. The live display includes visual bars with adjustable
-external amplifier gain factors; defaults are X/Y = 12x and Z = 24x, so
-effective piezo voltage is `controller_monitor_V * gain`. Bias, current, GVP U,
-PAC amplitude, and PAC dFreq are shown from `rt_query_rpspmc()` with 6
-significant digit formatting. PAC amplitude uses a +/-10 mV gauge. A 2D XY
-panel shows controller X/Y Volts and overlays known large hazards from the
-latest planner analysis and landscape memory. When
-`gxsm.get_instrument_gains()` is available, the overlay converts local
-hazard coordinates with `controller_V = local_A / AV / Vgain`, where
-`get_instrument_gains()` returns `[VX, VY, VZ, AVX, AVY, AVZ]`. If live
-instrument gains are unavailable, the display falls back to monitor calibration
-or a scan-frame-normalized overlay.
+The `Live Microscope State Monitor` tab includes a read-only fast XYZ monitor
+that updates about 5 times per second from `gxsm4process.rt_query_xyz()` fast
+SHM mapped controller Volts. Visible X/Y/Z values are converted to Angstroms
+with `gxsm.get_instrument_gains()` using `A = Vmonitor * AVxyz`, where
+the current dict return provides `Vxyz` and `AVxyz`. Raw controller Volts and
+effective piezo Volts remain in the JSON report. Bias, current, GVP U, PAC
+amplitude, and PAC dFreq are shown from `rt_query_rpspmc()` with 6 significant
+digit formatting. PAC amplitude uses a +/-10 mV gauge. A 2D XY panel is scaled
+in controller/world Angstroms using the configured maximum controller voltage,
+default +/-5 V, converted with `AVxyz`. `AVxyz` already includes the active instrument gains. Known large hazards are overlaid directly in that same Angstrom
+coordinate system.
 
 The `Tip Tune Planner` tab keeps a bottom-page activity/status ledger with the
 current action, next pending action, timestamps, completion status, blocked

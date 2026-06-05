@@ -383,9 +383,13 @@ Top-level tabs and purpose:
 - `Live Microscope State Monitor`: read-only fast XYZ, RPSPMC, bias, current,
   GVP U, PAC amplitude, PAC dFreq, and 2D XY visual indication. The XY panel
   overlays known large hazards from latest planner analysis and landscape
-  memory. Hazard projection prefers `gxsm.get_instrument_gains()` with
-  `controller_V = A / AV / Vgain`; if unavailable it falls back to a fitted
-  affine GVP monitor calibration, then a scan-frame-normalized display.
+  memory. The visible XY panel is in controller/world Angstroms, not controller
+  Volts. Visible X/Y/Z values must stay sourced from the fast SHM mapped
+  `rt_query_xyz()` controller Volts, then converted to Angstroms with
+  `A = Vmonitor * AVxyz` from `gxsm.get_instrument_gains()`. The bar and XY
+  panel limits use the configured maximum controller voltage, default +/-5 V,
+  converted with `AVxyz`. `AVxyz` already includes the active instrument gains. The GVP monitor fields are useful reference
+  values, but not the source of truth for this live monitor.
 - `Scan Image`: fetch/auto-refresh scan image and last-line profile.
 - `Tip / Landscape Analysis`: analyze current scan, show topo plus dFreq image,
   rank flat candidates, mark hazards, read/mark current tip, select candidate,

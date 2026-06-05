@@ -184,6 +184,16 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             "updated_at": None,
             "error": None,
         }
+        self.dconf_scan_range_cache = {
+            "values": None,
+            "updated_at": None,
+            "error": None,
+        }
+        self.dconf_xyz_limit_cache = {
+            "values": None,
+            "updated_at": None,
+            "error": None,
+        }
         self.init_tip_planner_state()
         self.chat_messages = [{"role": "system", "content": DEFAULT_SYSTEM_PROMPT}]
 
@@ -1570,8 +1580,8 @@ User request: __USER_REQUEST__
         theta = np.deg2rad(rotation)
         local_dx = parsed["local_dx_A"]
         local_dy = parsed["local_dy_A"]
-        world_dx = local_dx * np.cos(theta) - local_dy * np.sin(theta)
-        world_dy = local_dx * np.sin(theta) + local_dy * np.cos(theta)
+        world_dx = local_dx * np.cos(theta) + local_dy * np.sin(theta)
+        world_dy = -local_dx * np.sin(theta) + local_dy * np.cos(theta)
         target_x = current_x + world_dx
         target_y = current_y + world_dy
         target = {
@@ -2806,10 +2816,18 @@ User request: __USER_REQUEST__
             except Exception as exc:
                 gvp_monitor = {"error": "{}: {}".format(type(exc).__name__, exc)}
             monitor = xyz.get("monitor") or [None, None, None]
+            monitor_min = xyz.get("monitor_min") or [None, None, None]
+            monitor_max = xyz.get("monitor_max") or [None, None, None]
             values = {
                 "x_monitor_V": monitor[0] if len(monitor) > 0 else None,
                 "y_monitor_V": monitor[1] if len(monitor) > 1 else None,
                 "z_monitor_V": monitor[2] if len(monitor) > 2 else None,
+                "x_monitor_min_V": monitor_min[0] if len(monitor_min) > 0 else None,
+                "y_monitor_min_V": monitor_min[1] if len(monitor_min) > 1 else None,
+                "z_monitor_min_V": monitor_min[2] if len(monitor_min) > 2 else None,
+                "x_monitor_max_V": monitor_max[0] if len(monitor_max) > 0 else None,
+                "y_monitor_max_V": monitor_max[1] if len(monitor_max) > 1 else None,
+                "z_monitor_max_V": monitor_max[2] if len(monitor_max) > 2 else None,
                 "bias_V": rpspmc.get("bias"),
                 "current_nA": rpspmc.get("current"),
                 "gvp_u_V": (rpspmc.get("gvp") or {}).get("u"),
@@ -2818,7 +2836,45 @@ User request: __USER_REQUEST__
                 "rpspmc_time_s": rpspmc.get("time"),
                 "gvp_x_A": gvp_monitor.get("dsp-GVP-XS-MONITOR"),
                 "gvp_y_A": gvp_monitor.get("dsp-GVP-YS-MONITOR"),
+                "gvp_zs_A": gvp_monitor.get("dsp-GVP-ZS-MONITOR"),
             }
+            values["x_monitor_A_from_gains"] = self.controller_volts_to_angstrom("X", values["x_monitor_V"])
+            values["y_monitor_A_from_gains"] = self.controller_volts_to_angstrom("Y", values["y_monitor_V"])
+            values["z_monitor_A_from_gains"] = self.controller_volts_to_angstrom("Z", values["z_monitor_V"])
+            for axis in ("x", "y", "z"):
+                values["{}_monitor_min_A".format(axis)] = self.controller_volts_to_angstrom(
+                    axis.upper(),
+                    values.get("{}_monitor_min_V".format(axis)),
+                )
+                values["{}_monitor_max_A".format(axis)] = self.controller_volts_to_angstrom(
+                    axis.upper(),
+                    values.get("{}_monitor_max_V".format(axis)),
+                )
+                min_a = self.float_or_none(values.get("{}_monitor_min_A".format(axis)))
+                max_a = self.float_or_none(values.get("{}_monitor_max_A".format(axis)))
+                if min_a is not None and max_a is not None:
+                    values["{}_monitor_abs_limit_A".format(axis)] = max(abs(min_a), abs(max_a))
+            values["x_monitor_A_if_amp_gain_applied"] = self.mul_or_none(
+                values["x_monitor_A_from_gains"],
+                (instrument_gains.get("values") or {}).get("X_amplifier_gain", 1.0),
+            )
+            values["y_monitor_A_if_amp_gain_applied"] = self.mul_or_none(
+                values["y_monitor_A_from_gains"],
+                (instrument_gains.get("values") or {}).get("Y_amplifier_gain", 1.0),
+            )
+            values["z_monitor_A_if_amp_gain_applied"] = self.mul_or_none(
+                values["z_monitor_A_from_gains"],
+                (instrument_gains.get("values") or {}).get("Z_amplifier_gain", 1.0),
+            )
+            values["x_monitor_A"] = self.float_or_none(values["x_monitor_A_from_gains"])
+            values["y_monitor_A"] = self.float_or_none(values["y_monitor_A_from_gains"])
+            values["z_monitor_A"] = self.float_or_none(values["z_monitor_A_from_gains"])
+            values["xy_monitor_A_source"] = (
+                "rt_query_xyz fast SHM volts converted with gxsm.get_instrument_gains()"
+            )
+            values["z_monitor_A_source"] = (
+                "rt_query_xyz fast SHM volts converted with gxsm.get_instrument_gains()"
+            )
             self.update_live_xy_calibration(values)
             values["x_effective_piezo_V"] = self.mul_or_none(values["x_monitor_V"], gains["x"])
             values["y_effective_piezo_V"] = self.mul_or_none(values["y_monitor_V"], gains["y"])
@@ -2828,6 +2884,7 @@ User request: __USER_REQUEST__
                 "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
                 "units": {
                     "xyz_monitor": "Volts, not Angstroms",
+                    "xyz_monitor_A": "Angstroms from rt_query_xyz fast SHM controller volts via gxsm.get_instrument_gains(): A = Vmonitor * AVxyz",
                     "xyz_effective_piezo": "Volts after external amplifier gain",
                     "bias": "V",
                     "current": "nA",
@@ -2843,16 +2900,10 @@ User request: __USER_REQUEST__
                 "instrument_gains": instrument_gains,
                 "rpspmc": rpspmc,
             }
-            return (
-                values["x_monitor_V"],
-                values["y_monitor_V"],
-                values["z_monitor_V"],
-                html,
-                self.jsonable(report),
-            )
+            return html, self.jsonable(report)
         except Exception as exc:
             report = {"error": str(exc), "traceback": traceback.format_exc()}
-            return None, None, None, self.live_monitor_html({}, {}), report
+            return self.live_monitor_html({}, {}), report
 
     def read_instrument_gains_cached(self, max_age_s=10.0):
         now = time.time()
@@ -2887,6 +2938,36 @@ User request: __USER_REQUEST__
         return dict(self.instrument_gains_cache)
 
     def parse_instrument_gains(self, values):
+        if isinstance(values, dict):
+            vxyz = list(values.get("Vxyz") or values.get("Vxyz0") or [])
+            avxyz = list(values.get("AVxyz") or values.get("AVxyz0") or [])
+            parsed = {
+                "X_amplifier_gain": float(vxyz[0]) if len(vxyz) > 0 else None,
+                "Y_amplifier_gain": float(vxyz[1]) if len(vxyz) > 1 else None,
+                "Z_amplifier_gain": float(vxyz[2]) if len(vxyz) > 2 else None,
+                "X_A_per_controller_V": float(avxyz[0]) if len(avxyz) > 0 else None,
+                "Y_A_per_controller_V": float(avxyz[1]) if len(avxyz) > 1 else None,
+                "Z_A_per_controller_V": float(avxyz[2]) if len(avxyz) > 2 else None,
+                "X_A_to_V": float(avxyz[0]) if len(avxyz) > 0 else None,
+                "Y_A_to_V": float(avxyz[1]) if len(avxyz) > 1 else None,
+                "Z_A_to_V": float(avxyz[2]) if len(avxyz) > 2 else None,
+                "raw_names": ["Vxyz", "AVxyz"],
+                "BiasGain": values.get("BiasGain"),
+                "IVC-nAmpere2V": values.get("IVC-nAmpere2V"),
+                "IVC-A/V": values.get("IVC-A/V"),
+                "nNewton2V": values.get("nNewton2V"),
+                "dHertz2V": values.get("dHertz2V"),
+                "eV2V": values.get("eV2V"),
+                "note": (
+                    "gxsm.get_instrument_gains() returned a dict. Vxyz are "
+                    "X/Y/Z amplifier gains. For rt_query_xyz() fast SHM "
+                    "monitor volts, AVxyz are used directly as Angstrom per "
+                    "monitor Volt: A = Vmonitor * AVxyz. Vxyz is displayed as "
+                    "the external amplifier gain/reference, not applied again."
+                ),
+            }
+            return parsed
+
         seq = list(values)
         parsed = {
             "X_amplifier_gain": float(seq[0]) if len(seq) > 0 else None,
@@ -2904,6 +2985,215 @@ User request: __USER_REQUEST__
         }
         return parsed
 
+    def controller_volts_to_angstrom(self, axis, raw_V):
+        try:
+            if raw_V is None:
+                return None
+            gains = self.instrument_gains_cache.get("values") or {}
+            axis_name = str(axis).upper()
+            a_per_controller_v = gains.get("{}_A_per_controller_V".format(axis_name))
+            if a_per_controller_v is not None:
+                value = float(raw_V) * float(a_per_controller_v)
+                return float(value) if np.isfinite(value) else None
+            gain = gains.get("{}_amplifier_gain".format(axis_name))
+            a_to_v = gains.get("{}_A_to_V".format(axis_name))
+            if gain is None or a_to_v is None:
+                return None
+            gain = float(gain)
+            a_to_v = float(a_to_v)
+            if abs(gain) < 1e-12 or abs(a_to_v) < 1e-12:
+                return None
+            value = float(raw_V) * gain * a_to_v
+            return float(value) if np.isfinite(value) else None
+        except Exception:
+            return None
+
+    def read_dconf_scan_range_cached(self, max_age_s=10.0):
+        now = time.time()
+        updated = self.dconf_scan_range_cache.get("updated_at")
+        if (
+            self.dconf_scan_range_cache.get("values") is not None
+            and updated is not None
+            and now - float(updated) <= float(max_age_s)
+        ):
+            return dict(self.dconf_scan_range_cache)
+        values = {}
+        error = None
+        try:
+            cfg = self.controller_default("gxsm_dconf", {})
+            main_window_path = str(cfg.get("main_window_path", cfg.get("current_path", "")))
+            main_window_keys = dict(cfg.get("main_window_keys", cfg.get("current_keys", {})))
+            for name in ("RangeX", "RangeY"):
+                key = main_window_keys.get(name)
+                if not key:
+                    continue
+                rec = self.dconf_read_value(main_window_path, key)
+                if rec.get("value") is not None:
+                    values[name] = float(rec["value"])
+        except Exception as exc:
+            error = "{}: {}".format(type(exc).__name__, exc)
+        if not values:
+            try:
+                settings = self.runner._scan_settings(0)
+                for name in ("RangeX", "RangeY"):
+                    if settings.get(name) is not None:
+                        values[name] = float(settings[name])
+            except Exception as exc:
+                error = error or "{}: {}".format(type(exc).__name__, exc)
+        self.dconf_scan_range_cache = {
+            "values": values or None,
+            "updated_at": now,
+            "updated_at_text": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "error": error,
+            "source": "GXSM dconf main-window range-x/range-y, fallback runner scan settings",
+        }
+        return dict(self.dconf_scan_range_cache)
+
+    def live_xy_range_A(self):
+        rec = self.read_dconf_scan_range_cached()
+        values = rec.get("values") or {}
+        candidates = []
+        for key in ("RangeX", "RangeY"):
+            try:
+                val = abs(float(values.get(key)))
+                if np.isfinite(val) and val > 0:
+                    candidates.append(val)
+            except Exception:
+                pass
+        if not candidates:
+            try:
+                settings = self.live_xy_scan_settings()
+                for key in ("RangeX", "RangeY"):
+                    val = abs(float(settings.get(key)))
+                    if np.isfinite(val) and val > 0:
+                        candidates.append(val)
+            except Exception:
+                pass
+        if not candidates:
+            fallback = self.gui_default("live_readouts.xy_range_A", 1000.0)
+            candidates.append(float(fallback))
+        range_A = max(candidates)
+        return max(float(range_A), 1e-9), rec
+
+    def live_scan_half_ranges_A(self):
+        rec = self.read_dconf_scan_range_cached()
+        values = rec.get("values") or {}
+        fallback = None
+        try:
+            fallback = self.live_xy_scan_settings()
+        except Exception:
+            fallback = {}
+
+        def one_axis(name, default):
+            for source in (values,):
+                try:
+                    val = abs(float(source.get(name)))
+                    if np.isfinite(val) and val > 0:
+                        return 0.5 * val
+                except Exception:
+                    pass
+            for source in (fallback,):
+                try:
+                    val = abs(float(source.get(name)))
+                    if np.isfinite(val) and val > 0:
+                        return 0.5 * val
+                except Exception:
+                    pass
+            return float(default)
+
+        default_half = 0.5 * float(self.gui_default("live_readouts.xy_range_A", 1000.0))
+        x_half = one_axis("RangeX", default_half)
+        y_half = one_axis("RangeY", default_half)
+        return {
+            "x_half_A": max(float(x_half), 1e-9),
+            "y_half_A": max(float(y_half), 1e-9),
+            "max_half_A": max(float(x_half), float(y_half), 1e-9),
+            "source": rec,
+        }
+
+    def read_dconf_xyz_limits_cached(self, max_age_s=10.0):
+        now = time.time()
+        updated = self.dconf_xyz_limit_cache.get("updated_at")
+        if (
+            self.dconf_xyz_limit_cache.get("values") is not None
+            and updated is not None
+            and now - float(updated) <= float(max_age_s)
+        ):
+            return dict(self.dconf_xyz_limit_cache)
+        values = {}
+        error = None
+        try:
+            half = self.live_scan_half_ranges_A()
+            values["x_abs_limit_A"] = half["x_half_A"]
+            values["y_abs_limit_A"] = half["y_half_A"]
+            values["xy_source"] = "GXSM dconf main-window range-x/range-y current values"
+        except Exception as exc:
+            error = "{}: {}".format(type(exc).__name__, exc)
+        try:
+            cfg = self.controller_default("gxsm_dconf", {})
+            adjustment_path = str(cfg.get("adjustment_path", ""))
+            z_key = dict(cfg.get("adjustment_keys", {})).get(
+                "dsp-adv-dsp-zpos-ref",
+                "dsp-adv-dsp-zpos-ref",
+            )
+            rec = self.dconf_read_value(adjustment_path, z_key)
+            if isinstance(rec.get("value"), list) and len(rec["value"]) >= 2:
+                upper = float(rec["value"][0])
+                lower = float(rec["value"][1])
+                values["z_abs_limit_A"] = max(abs(upper), abs(lower))
+                values["z_adjustment_range_A"] = [min(lower, upper), max(lower, upper)]
+                values["z_source"] = rec.get("path")
+        except Exception as exc:
+            error = error or "{}: {}".format(type(exc).__name__, exc)
+        self.dconf_xyz_limit_cache = {
+            "values": values or None,
+            "updated_at": now,
+            "updated_at_text": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "error": error,
+            "source": "GXSM dconf XYZ display limits",
+        }
+        return dict(self.dconf_xyz_limit_cache)
+
+    def axis_A_per_controller_V(self, axis):
+        try:
+            gains = self.instrument_gains_cache.get("values") or {}
+            val = gains.get("{}_A_per_controller_V".format(str(axis).upper()))
+            if val is not None:
+                val = float(val)
+                if np.isfinite(val) and abs(val) > 1e-12:
+                    return abs(val)
+        except Exception:
+            pass
+        return None
+
+    def axis_A_per_configured_controller_V(self, axis):
+        try:
+            gains = self.instrument_gains_cache.get("values") or {}
+            axis_name = str(axis).upper()
+            av = gains.get("{}_A_to_V".format(axis_name))
+            if av is None:
+                return self.axis_A_per_controller_V(axis_name)
+            av = float(av)
+            if not np.isfinite(av) or abs(av) < 1e-12:
+                return None
+            return abs(av)
+        except Exception:
+            return None
+
+    def z_local_gauge_limit_A(self, values, gauge_limits):
+        return self.live_monitor_axis_limit_A(values, "z", gauge_limits.get("z_monitor_A", 1000.0))
+
+    def live_monitor_axis_limit_A(self, values, axis, fallback):
+        axis = str(axis).lower()
+        gauge_limits = self.gui_default("live_readouts.gauge_limits", {})
+        raw_limit = self.float_or_none(gauge_limits.get("{}_raw_V".format(axis)))
+        if raw_limit is None:
+            raw_limit = self.float_or_none(gauge_limits.get("xy_raw_V"))
+        scale = self.axis_A_per_configured_controller_V(axis.upper())
+        if raw_limit is not None and scale is not None:
+            return max(abs(float(raw_limit) * float(scale)), 1e-9)
+        return max(abs(float(fallback)), 1e-9)
+
     def mul_or_none(self, value, factor):
         try:
             if value is None:
@@ -2911,6 +3201,22 @@ User request: __USER_REQUEST__
             return float(value) * float(factor)
         except Exception:
             return None
+
+    def float_or_none(self, value):
+        try:
+            if value is None:
+                return None
+            val = float(value)
+            return float(val) if np.isfinite(val) else None
+        except Exception:
+            return None
+
+    def first_float(self, *values):
+        for value in values:
+            val = self.float_or_none(value)
+            if val is not None:
+                return val
+        return None
 
     def fmt6(self, value):
         if value is None:
@@ -3132,8 +3438,8 @@ User request: __USER_REQUEST__
         dx = float(world_x_A) - offset_x
         dy = float(world_y_A) - offset_y
         theta = np.deg2rad(rotation_deg)
-        local_x = dx * np.cos(theta) + dy * np.sin(theta)
-        local_y = -dx * np.sin(theta) + dy * np.cos(theta)
+        local_x = dx * np.cos(theta) - dy * np.sin(theta)
+        local_y = dx * np.sin(theta) + dy * np.cos(theta)
         return float(local_x), float(local_y)
 
     def cluster_live_xy_hazard_points(self, points, panel_px=180.0, threshold_px=18.0):
@@ -3196,89 +3502,31 @@ User request: __USER_REQUEST__
             float(local_y) / (0.5 * range_y) * float(limit),
         )
 
-    def live_xy_hazard_overlay(self, values, limit):
+    def live_xy_hazard_overlay(self, values, half_range_A):
         try:
-            settings = self.live_xy_scan_settings()
-            gain_values = (self.instrument_gains_cache.get("values") or {})
-            x_gain = gain_values.get("X_amplifier_gain")
-            y_gain = gain_values.get("Y_amplifier_gain")
-            x_A_to_V = gain_values.get("X_A_to_V")
-            y_A_to_V = gain_values.get("Y_A_to_V")
-            has_instrument_gains = (
-                x_gain is not None
-                and y_gain is not None
-                and x_A_to_V is not None
-                and y_A_to_V is not None
-                and abs(float(x_gain)) > 1e-12
-                and abs(float(y_gain)) > 1e-12
-                and abs(float(x_A_to_V)) > 1e-12
-                and abs(float(y_A_to_V)) > 1e-12
-            )
-            slope_x = self.live_xy_calibration.get("x_slope_A_per_V")
-            slope_y = self.live_xy_calibration.get("y_slope_A_per_V")
-            intercept_x = self.live_xy_calibration.get("x_intercept_A")
-            intercept_y = self.live_xy_calibration.get("y_intercept_A")
-            has_affine = not (
-                slope_x is None or slope_y is None
-                or intercept_x is None or intercept_y is None
-                or abs(float(slope_x)) < 1e-9
-                or abs(float(slope_y)) < 1e-9
-                )
+            half_range_A = max(abs(float(half_range_A)), 1e-9)
             hazards = self.known_large_hazards_for_live_xy()
             markers = []
             marker_points = []
             visible = 0
             projected = 0
             for idx, hazard in enumerate(hazards, start=1):
-                if (
-                    hazard.get("source") == "latest_planner_analysis"
-                    and hazard.get("local_scan_x_A") is not None
-                    and hazard.get("local_scan_y_A") is not None
-                ):
-                    local_x = float(hazard["local_scan_x_A"])
-                    local_y = float(hazard["local_scan_y_A"])
-                else:
-                    local_x, local_y = self.world_to_current_local_scan_A(
-                        hazard["world_x_A"],
-                        hazard["world_y_A"],
-                        settings,
-                )
-                if has_instrument_gains:
-                    hvx = local_x / float(x_A_to_V) / float(x_gain)
-                    hvy = local_y / float(y_A_to_V) / float(y_gain)
-                    mode = "instrument gain"
-                elif has_affine:
-                    hvx = self.local_scan_A_to_raw_V("x", local_x)
-                    hvy = self.local_scan_A_to_raw_V("y", local_y)
-                    mode = "affine controller-voltage"
-                else:
-                    hvx, hvy = self.fallback_scan_frame_hazard_voltage(
-                        local_x,
-                        local_y,
-                        settings,
-                        limit,
-                    )
-                    mode = "scan-frame normalized fallback"
-                if hvx is None or hvy is None:
-                    continue
-                if not (np.isfinite(hvx) and np.isfinite(hvy)):
+                world_x = float(hazard["world_x_A"])
+                world_y = float(hazard["world_y_A"])
+                if not (np.isfinite(world_x) and np.isfinite(world_y)):
                     continue
                 projected += 1
-                if abs(hvx) > float(limit) or abs(hvy) > float(limit):
+                if abs(world_x) > half_range_A or abs(world_y) > half_range_A:
                     continue
                 visible += 1
-                left = 50.0 + 50.0 * max(-1.0, min(1.0, hvx / float(limit)))
-                top = 50.0 - 50.0 * max(-1.0, min(1.0, hvy / float(limit)))
+                left = 50.0 + 50.0 * max(-1.0, min(1.0, world_x / half_range_A))
+                top = 50.0 - 50.0 * max(-1.0, min(1.0, world_y / half_range_A))
                 title = (
-                    "known large hazard #{idx}: world=({wx:.4g}, {wy:.4g}) A, "
-                    "panel=({vx:.4g}, {vy:.4g}) V, mode={mode}"
+                    "known large hazard #{idx}: world/controller=({wx:.4g}, {wy:.4g}) A"
                 ).format(
                     idx=idx,
-                    wx=float(hazard["world_x_A"]),
-                    wy=float(hazard["world_y_A"]),
-                    vx=hvx,
-                    vy=hvy,
-                    mode=mode,
+                    wx=world_x,
+                    wy=world_y,
                 )
                 marker_points.append(
                     {
@@ -3289,96 +3537,74 @@ User request: __USER_REQUEST__
                 )
                 markers.append(
                     "<div title=\"{title}\" style=\"position:absolute;left:{left:.3f}%;top:{top:.3f}%;"
-                    "width:10px;height:10px;margin-left:-5px;margin-top:-5px;"
-                    "border-radius:50%;background:#c62828;box-shadow:0 0 0 1px white,0 0 0 2px #7f0000;"
-                    "opacity:.85\"></div>".format(
+                    "width:9px;height:9px;margin-left:-4.5px;margin-top:-4.5px;"
+                    "pointer-events:none;opacity:.9\">"
+                    "<span style=\"position:absolute;left:4px;top:-1px;width:1.5px;height:11px;"
+                    "background:#c62828;transform:rotate(45deg);box-shadow:0 0 0 1px white\"></span>"
+                    "<span style=\"position:absolute;left:4px;top:-1px;width:1.5px;height:11px;"
+                    "background:#c62828;transform:rotate(-45deg);box-shadow:0 0 0 1px white\"></span>"
+                    "</div>".format(
                         title=html.escape(title),
                         left=left,
                         top=top,
                     )
                 )
             outlines, outline_count = self.cluster_live_xy_hazard_points(marker_points)
-            if has_instrument_gains:
-                note = (
-                    "Known large hazards visible: {} / {}; projected: {}; outlined regions: {}; "
-                    "using gxsm.get_instrument_gains(): controller V = A / AV / Vgain; "
-                    "X gain={:.4g}, AVX={:.4g}; Y gain={:.4g}, AVY={:.4g}; updated {}."
-                ).format(
-                    visible,
-                    len(hazards),
-                    projected,
-                    outline_count,
-                    float(x_gain),
-                    float(x_A_to_V),
-                    float(y_gain),
-                    float(y_A_to_V),
-                    self.instrument_gains_cache.get("updated_at_text") or "n/a",
-                )
-            elif has_affine:
-                note = (
-                    "Known large hazards visible: {} / {}; projected: {}; outlined regions: {}; "
-                    "affine fit X={:.4g} A/V + {:.4g} A, Y={:.4g} A/V + {:.4g} A, updated {}."
-                ).format(
-                    visible,
-                    len(hazards),
-                    projected,
-                    outline_count,
-                    float(slope_x),
-                    float(intercept_x),
-                    float(slope_y),
-                    float(intercept_y),
-                    self.live_xy_calibration.get("updated_at") or "n/a",
-                )
-            else:
-                gain_error = self.instrument_gains_cache.get("error")
-                gain_note = (
-                    " Instrument gain readback unavailable: {}.".format(gain_error)
-                    if gain_error else ""
-                )
-                note = (
-                    "Known large hazards visible: {} / {}; projected: {}; outlined regions: {}; "
-                    "using scan-frame normalized fallback until instrument gains or affine controller-voltage calibration are available.{}"
-                ).format(visible, len(hazards), projected, outline_count, gain_note)
+            note = (
+                "Known large hazards visible: {} / {}; projected in controller/world coordinates: {}; "
+                "outlined regions: {}; plotted directly in the same Angstrom coordinates as fast SHM X/Y."
+            ).format(visible, len(hazards), projected, outline_count)
             return "\n".join([outlines] + markers), note
         except Exception as exc:
             return "", "Hazard overlay unavailable: {}: {}".format(type(exc).__name__, exc)
 
     def xy_position_html(self, values, raw_limit_V=10.0):
-        configured_limit = self.gui_default(
-            "live_readouts.gauge_limits.xy_raw_V",
-            raw_limit_V,
-        )
-        limit = max(abs(float(configured_limit)), 1e-9)
+        half_ranges = self.live_scan_half_ranges_A()
+        x_limit = self.live_monitor_axis_limit_A(values, "x", half_ranges["x_half_A"])
+        y_limit = self.live_monitor_axis_limit_A(values, "y", half_ranges["y_half_A"])
+        half_range_A = max(float(x_limit), float(y_limit), 1e-9)
         try:
-            x = float(values.get("x_monitor_V"))
-            y = float(values.get("y_monitor_V"))
+            x = float(values.get("x_monitor_A"))
+            y = float(values.get("y_monitor_A"))
             finite = np.isfinite(x) and np.isfinite(y)
         except Exception:
             x = 0.0
             y = 0.0
             finite = False
-        xpct = 50.0 + 50.0 * max(-1.0, min(1.0, x / limit))
-        ypct = 50.0 - 50.0 * max(-1.0, min(1.0, y / limit))
+        xpct = 50.0 + 50.0 * max(-1.0, min(1.0, x / half_range_A))
+        ypct = 50.0 - 50.0 * max(-1.0, min(1.0, y / half_range_A))
         color = "#1b7f3a" if finite else "#777"
-        hazard_overlay, hazard_note = self.live_xy_hazard_overlay(values, limit)
+        hazard_overlay, hazard_note = self.live_xy_hazard_overlay(values, half_range_A)
+        gains = self.instrument_gains_cache.get("values") or {}
+        gain_note = self.instrument_gains_cache.get("error")
+        scale_note = (
+            "scale from configured +/- controller voltage limit converted with AVxyz"
+        )
         return """
 <div style="border:1px solid #d0d0d0;border-radius:6px;padding:10px;background:#fff;margin-top:10px">
-  <div style="font-weight:700;margin-bottom:6px">Live XY controller-voltage position</div>
+  <div style="font-weight:700;margin-bottom:6px">Live XY Controller/World Position</div>
   <div style="font-size:12px;color:#555;margin-bottom:8px">
-    Crosshair uses raw X/Y monitor Volts from <code>rt_query_xyz()</code>,
-    normalized to +/-{limit} V. External amplifier gains are not applied here.
+    Crosshair uses raw X/Y controller Volts from the fast SHM
+    <code>rt_query_xyz()</code> monitor, converted by
+    <code>A = Vmonitor * AVxyz</code>.
+    Plot scale is +/-{half_range} A ({scale_note}).
   </div>
   <div style="display:grid;grid-template-columns:190px 1fr;gap:12px;align-items:center">
     <div style="font-variant-numeric:tabular-nums;font-size:13px">
-      X raw: {x_text} V<br>
-      Y raw: {y_text} V<br>
-      X piezo: {xe_text} V<br>
-      Y piezo: {ye_text} V<br>
-      <span style="color:#c62828">red dots/outline: known large hazards</span>
+      X local: {x_A_text} A<br>
+      Y local: {y_A_text} A<br>
+      X raw: {x_V_text} V<br>
+      Y raw: {y_V_text} V<br>
+      XY source: {xy_source}<br>
+      AVX/VX: {avx_text} / {vx_text}<br>
+      AVY/VY: {avy_text} / {vy_text}<br>
+      <span style="color:#c62828">red x/outline: known large hazards</span>
     </div>
     <div style="position:relative;width:180px;height:180px;background:#f7f7f7;border:1px solid #aaa">
       <div style="position:absolute;left:50%;top:0;width:1px;height:100%;background:#bbb"></div>
       <div style="position:absolute;left:0;top:50%;width:100%;height:1px;background:#bbb"></div>
+      <div style="position:absolute;left:4px;bottom:3px;font-size:10px;color:#777">-{half_range_short} A</div>
+      <div style="position:absolute;right:4px;bottom:3px;font-size:10px;color:#777">+{half_range_short} A</div>
       {hazard_overlay}
       <div style="position:absolute;left:{xpct:.3f}%;top:{ypct:.3f}%;width:12px;height:12px;margin-left:-6px;margin-top:-6px;border-radius:50%;background:{color};box-shadow:0 0 0 2px white,0 0 0 3px #444"></div>
       <div style="position:absolute;left:4px;top:3px;font-size:10px;color:#555">+Y</div>
@@ -3388,27 +3614,44 @@ User request: __USER_REQUEST__
   <div style="font-size:11px;color:#666;margin-top:8px">{hazard_note}</div>
 </div>
 """.format(
-            limit=self.fmt6(limit),
-            x_text=self.fmt6(values.get("x_monitor_V")),
-            y_text=self.fmt6(values.get("y_monitor_V")),
-            xe_text=self.fmt6(values.get("x_effective_piezo_V")),
-            ye_text=self.fmt6(values.get("y_effective_piezo_V")),
+            half_range=self.fmt6(half_range_A),
+            half_range_short=self.fmt6(half_range_A),
+            scale_note=html.escape(scale_note),
+            x_A_text=self.fmt6(values.get("x_monitor_A")),
+            y_A_text=self.fmt6(values.get("y_monitor_A")),
+            x_V_text=self.fmt6(values.get("x_monitor_V")),
+            y_V_text=self.fmt6(values.get("y_monitor_V")),
+            xy_source=html.escape(str(values.get("xy_monitor_A_source") or "n/a")),
+            avx_text=self.fmt6(gains.get("X_A_to_V")),
+            vx_text=self.fmt6(gains.get("X_amplifier_gain")),
+            avy_text=self.fmt6(gains.get("Y_A_to_V")),
+            vy_text=self.fmt6(gains.get("Y_amplifier_gain")),
             xpct=xpct,
             ypct=ypct,
             color=color,
             hazard_overlay=hazard_overlay,
-            hazard_note=html.escape(hazard_note),
+            hazard_note=html.escape(
+                "{}{}".format(
+                    hazard_note,
+                    " Instrument gain readback unavailable: {}.".format(gain_note)
+                    if gain_note else "",
+                )
+            ),
         )
 
     def live_monitor_html(self, values, gains):
-        x_label = "X piezo"
-        y_label = "Y piezo"
-        z_label = "Z piezo"
+        x_label = "X local"
+        y_label = "Y local"
+        z_label = "Z local"
         gauge_limits = self.gui_default("live_readouts.gauge_limits", {})
+        half_ranges = self.live_scan_half_ranges_A()
+        x_limit_A = self.live_monitor_axis_limit_A(values, "x", half_ranges["x_half_A"])
+        y_limit_A = self.live_monitor_axis_limit_A(values, "y", half_ranges["y_half_A"])
+        z_limit_A = self.z_local_gauge_limit_A(values, gauge_limits)
         rows = [
-            self.gauge_row(x_label, values.get("x_effective_piezo_V"), "V", gauge_limits.get("piezo_V", 100.0), bipolar=True),
-            self.gauge_row(y_label, values.get("y_effective_piezo_V"), "V", gauge_limits.get("piezo_V", 100.0), bipolar=True),
-            self.gauge_row(z_label, values.get("z_effective_piezo_V"), "V", gauge_limits.get("piezo_V", 100.0), bipolar=True),
+            self.gauge_row(x_label, values.get("x_monitor_A"), "A", x_limit_A, bipolar=True),
+            self.gauge_row(y_label, values.get("y_monitor_A"), "A", y_limit_A, bipolar=True),
+            self.gauge_row(z_label, values.get("z_monitor_A"), "A", z_limit_A, bipolar=True),
             self.gauge_row("Bias", values.get("bias_V"), "V", gauge_limits.get("bias_V", 5.0), bipolar=True),
             self.gauge_row("Current", values.get("current_nA"), "nA", gauge_limits.get("current_nA", 0.1), bipolar=True),
             self.gauge_row("GVP U", values.get("gvp_u_V"), "V", gauge_limits.get("gvp_u_V", 5.0), bipolar=True),
@@ -3420,8 +3663,13 @@ User request: __USER_REQUEST__
 <div style="border:1px solid #d0d0d0;border-radius:6px;padding:10px;background:#fafafa">
   <div style="font-weight:700;margin-bottom:6px">Live Microscope Monitor</div>
   <div style="font-size:12px;color:#555;margin-bottom:8px">
-    XYZ values are controller Volts from <code>rt_query_xyz()</code>, not Angstroms.
-    X/Y/Z gauge values are effective piezo Volts after multiplying by the external amplifier gain.
+    X/Y/Z use raw controller Volts from the fast SHM
+    <code>rt_query_xyz()</code> monitor, converted with
+    <code>gxsm.get_instrument_gains()</code>.
+    Raw controller Volts and effective piezo Volts remain in the JSON report.
+    X/Y/Z local gauge ranges use fixed configured controller-voltage limits,
+    default +/-5 V, converted with AVxyz. AVxyz already includes the active
+    instrument gains.
     Bias/current/GVP/PAC values are from <code>rt_query_rpspmc()</code>.
     Numbers use 6 significant digits.
   </div>
@@ -4058,8 +4306,9 @@ def build_ui(backend):
         with gr.Tab("Live Microscope State Monitor"):
             gr.Markdown(
                 "Fast XYZ monitor updates at 5 Hz from "
-                "`gxsm4process.rt_query_xyz()` and displays "
-                "`XYZ_monitor['monitor']` in controller Volts, not Angstroms. "
+                "`gxsm4process.rt_query_xyz()` fast SHM mapped controller Volts. "
+                "Visible X/Y/Z values are converted to Angstroms with "
+                "`gxsm.get_instrument_gains()`. "
                 "The X/Y/Z gain fields are external amplifier factors used to "
                 "compute effective piezo voltage from controller output voltage."
             )
@@ -4080,17 +4329,13 @@ def build_ui(backend):
                     value=gd("live_readouts.xyz_gain_z", "24"),
                     label="Z external amplifier gain",
                 )
-            with gr.Row():
-                xyz_x = gr.Number(label="X monitor (V)", interactive=False)
-                xyz_y = gr.Number(label="Y monitor (V)", interactive=False)
-                xyz_z = gr.Number(label="Z monitor (V)", interactive=False)
             live_gauges = gr.HTML(label="Fast monitor gauges")
             xyz_report = gr.JSON(label="Fast XYZ monitor report")
             xyz_timer = gr.Timer(value=gd("live_readouts.xyz_timer_s", 0.2), active=True)
             xyz_timer.tick(
                 backend.read_fast_live_dashboard,
                 inputs=[xyz_gain_x, xyz_gain_y, xyz_gain_z],
-                outputs=[xyz_x, xyz_y, xyz_z, live_gauges, xyz_report],
+                outputs=[live_gauges, xyz_report],
             )
 
         with gr.Tab("Scan Image"):

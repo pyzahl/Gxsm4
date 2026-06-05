@@ -947,15 +947,18 @@ with Control Level 1+ and chat arm to load only. Include the exact phrase
 - `interpret_dFreq(dFreq_Hz)`
 
 `read_xyz_monitor()` uses `gxsm4process.rt_query_xyz()` and returns
-`XYZ_monitor["monitor"]` in controller Volts, not Angstroms. Convert with the
-configured piezo scale. For rough live context, compare X/Y monitor Volts with
-`OffsetX/Y + ScanX/Y`; this is only an estimate unless monitor zero/origin and
-the configured scale are known. In the GUI, the live XYZ gain fields are
-external amplifier factors, not min/max display scales. Defaults are X/Y = 12x
-and Z = 24x, so effective piezo voltage is `controller_monitor_V * gain`. The
-same live dashboard also shows RPSPMC `bias` in V, `current` in nA, `gvp.u` in
-V, `pac.ampl` in mV with a +/-10 mV gauge, and `pac.dfreq` in Hz. A 2D panel
-shows the raw X/Y controller-voltage position.
+`XYZ_monitor["monitor"]` in fast SHM mapped controller Volts, not Angstroms.
+The GUI uses these raw fast values as the live XYZ source of truth and converts
+them to Angstroms with `gxsm.get_instrument_gains()`:
+`A = Vmonitor * AVxyz`. The current gain call returns a dict with
+`Vxyz` and `AVxyz`; older flat-list returns should still be accepted. The live
+XYZ gain fields are still external amplifier factors used for the raw/effective
+voltage report, not min/max display scales. The same live dashboard also shows
+RPSPMC `bias` in V, `current` in nA, `gvp.u` in V, `pac.ampl` in mV with a
++/-10 mV gauge, and `pac.dfreq` in Hz. The 2D XY panel is scaled in local scan
+Angstroms using the configured maximum controller voltage, default +/-5 V,
+converted with `AVxyz * Vxyz`. The live SHM reading itself uses `AVxyz` only.
+Known large hazards are plotted directly in the same controller/world Angstrom coordinates.
 - `move_to(x, y, wait_after_s=0.0)`
 - `call_gxsm(method_name, *args, ...)`
 - `sleep(seconds)`

@@ -555,8 +555,8 @@ class TipPlannerGuiMixin:
         theta = np.deg2rad(float(target.get("Rotation", target.get("Rotation_deg", 0.0)) or 0.0))
         dx = float(world_x_A) - ox
         dy = float(world_y_A) - oy
-        local_x = dx * np.cos(theta) + dy * np.sin(theta)
-        local_y = -dx * np.sin(theta) + dy * np.cos(theta)
+        local_x = dx * np.cos(theta) - dy * np.sin(theta)
+        local_y = dx * np.sin(theta) + dy * np.cos(theta)
         return abs(local_x) <= 0.5 * rx and abs(local_y) <= 0.5 * ry
 
     def _memory_hazard_items(self, current_analysis):
@@ -698,8 +698,8 @@ class TipPlannerGuiMixin:
             dx = hx - old_offset_x
             dy = hy - old_offset_y
             theta = np.deg2rad(rotation_deg)
-            hazard_local_x = dx * np.cos(theta) + dy * np.sin(theta)
-            hazard_local_y = -dx * np.sin(theta) + dy * np.cos(theta)
+            hazard_local_x = dx * np.cos(theta) - dy * np.sin(theta)
+            hazard_local_y = dx * np.sin(theta) + dy * np.cos(theta)
             target_local = 0.5 * new_range + margin
             desired_local_shift_x = 0.0
             desired_local_shift_y = 0.0
@@ -719,8 +719,8 @@ class TipPlannerGuiMixin:
                     step_x,
                     step_y,
                 )
-            world_shift_x = desired_local_shift_x * np.cos(theta) - desired_local_shift_y * np.sin(theta)
-            world_shift_y = desired_local_shift_x * np.sin(theta) + desired_local_shift_y * np.cos(theta)
+            world_shift_x = desired_local_shift_x * np.cos(theta) + desired_local_shift_y * np.sin(theta)
+            world_shift_y = -desired_local_shift_x * np.sin(theta) + desired_local_shift_y * np.cos(theta)
             make_target(
                 old_offset_x + world_shift_x,
                 old_offset_y + world_shift_y,
