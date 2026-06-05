@@ -852,6 +852,12 @@ class TipPlannerGuiMixin:
         return tip
 
     def tip_planner_read_tip_position(self):
+        operation_blocked = self.acquire_microscope_operation(
+            "tip planner read current tip position",
+            blocking=False,
+        )
+        if operation_blocked:
+            return self._tip_planner_last_plot(), self.jsonable(operation_blocked)
         try:
             tip = self._read_tip_planner_tip_position()
             report = {
@@ -859,8 +865,10 @@ class TipPlannerGuiMixin:
                 "current_tip_position": tip,
                 "selected_candidate_index": self.tip_planner_state.get("selected_candidate_index"),
             }
+            self.release_microscope_operation()
             return self._tip_planner_last_plot(), self.jsonable(report)
         except Exception as exc:
+            self.release_microscope_operation()
             return (
                 self.blank_tip_planner_figure(exc),
                 {"error": str(exc), "traceback": traceback.format_exc()},
@@ -871,10 +879,15 @@ class TipPlannerGuiMixin:
             import gradio as gr
         except Exception:
             gr = None
-        if not enabled:
-            update = gr.update() if gr else None
-            return update, update
-        return self.tip_planner_read_tip_position()
+        update = gr.update() if gr else None
+        report = {
+            "status": "disabled",
+            "reason": (
+                "Automatic tip-position refresh is disabled so timer callbacks "
+                "do not call GXSM/SHM. Use Read / Mark Current Tip."
+            ),
+        }
+        return update, report
 
     def _candidate_local_xy(self, candidate):
         scan_x = candidate.get("scan_x_A")
@@ -952,10 +965,6 @@ class TipPlannerGuiMixin:
 
     def tip_planner_move_to_candidate_update_plot(self, candidate_index, arm):
         result = self.tip_planner_move_to_candidate(candidate_index, arm)
-        try:
-            self._read_tip_planner_tip_position()
-        except Exception:
-            pass
         return self._tip_planner_last_plot(), result
 
     def tip_planner_analyze_current_scan(
@@ -977,6 +986,22 @@ class TipPlannerGuiMixin:
             },
             pending_next="select or move to a flat candidate",
         )
+        operation_blocked = self.acquire_microscope_operation(
+            "tip planner analyze current scan",
+            blocking=False,
+        )
+        if operation_blocked:
+            self.finish_tip_planner_activity(
+                activity,
+                status="blocked",
+                result=operation_blocked,
+                pending_next="wait for current microscope operation to finish",
+            )
+            return (
+                self.blank_tip_planner_figure(operation_blocked["reason"]),
+                self.tip_planner_progress_figure(),
+                self.jsonable(operation_blocked),
+            )
         try:
             prefix = str(self.output_dir / str(output_prefix))
             image, meta = self.runner.fetch_scan_image_to_line(
@@ -1057,10 +1082,12 @@ class TipPlannerGuiMixin:
                 },
                 pending_next="select candidate or run planner loop",
             )
+            self.release_microscope_operation()
             return fig, self.tip_planner_progress_figure(), self.jsonable(report)
         except Exception as exc:
             self.fail_tip_planner_activity(activity, exc, pending_next="inspect error and retry analysis")
             report = {"error": str(exc), "traceback": traceback.format_exc()}
+            self.release_microscope_operation()
             return (
                 self.blank_tip_planner_figure(exc),
                 self.tip_planner_progress_figure(),
@@ -1074,6 +1101,12 @@ class TipPlannerGuiMixin:
         cancelled = self.require_arm(arm, "move the tip to a flat candidate")
         if cancelled:
             return cancelled
+        operation_blocked = self.acquire_microscope_operation(
+            "tip planner move to selected candidate",
+            blocking=False,
+        )
+        if operation_blocked:
+            return self.jsonable(operation_blocked)
         activity = self.start_tip_planner_activity(
             "move tip to selected flat candidate",
             details={"candidate_index": int(candidate_index)},
@@ -1088,6 +1121,7 @@ class TipPlannerGuiMixin:
                     result={"reason": "scan or GVP busy", "scan_status": busy},
                     pending_next="stop scan/GVP or wait until ready",
                 )
+                self.release_microscope_operation()
                 return {
                     "blocked": "move tip to flat candidate",
                     "reason": (
@@ -1139,9 +1173,11 @@ class TipPlannerGuiMixin:
                 },
                 pending_next="start scan, execute GVP, or rerun analysis",
             )
+            self.release_microscope_operation()
             return self.jsonable(result)
         except Exception as exc:
             self.fail_tip_planner_activity(activity, exc, pending_next="inspect move error")
+            self.release_microscope_operation()
             return {"error": str(exc), "traceback": traceback.format_exc()}
 
     def tip_planner_plan_offset_shift(self, direction, new_range_A, overlap_A):
@@ -1202,6 +1238,12 @@ class TipPlannerGuiMixin:
         cancelled = self.require_arm(arm, "shift scan offset")
         if cancelled:
             return cancelled
+        operation_blocked = self.acquire_microscope_operation(
+            "tip planner apply offset shift",
+            blocking=False,
+        )
+        if operation_blocked:
+            return self.jsonable(operation_blocked)
         activity = self.start_tip_planner_activity(
             "apply offset shift",
             details={
@@ -1238,6 +1280,7 @@ class TipPlannerGuiMixin:
                     result=result,
                     pending_next="choose a smaller/safer offset shift that fits XY limits",
                 )
+                self.release_microscope_operation()
                 return result
             rec = self.nav.setup_exploration_scan_frame(
                 plan["OffsetX"],
@@ -1271,10 +1314,159 @@ class TipPlannerGuiMixin:
                 },
                 pending_next="wait for enough scan lines, then analyze",
             )
+            self.release_microscope_operation()
             return self.jsonable(result)
         except Exception as exc:
             self.fail_tip_planner_activity(activity, exc, pending_next="inspect offset shift error")
+            self.release_microscope_operation()
             return {"error": str(exc), "traceback": traceback.format_exc()}
+
+    def tip_planner_compute_apply_hazard_avoiding_offset(
+        self,
+        new_range_A,
+        overlap_A,
+        points,
+        start_after_shift,
+        arm,
+    ):
+        blocked = self.require_control_level(1, "compute and set blob-avoiding scan offset")
+        if blocked:
+            return self._tip_planner_last_plot(), self.tip_planner_progress_figure(), blocked
+        cancelled = self.require_arm(arm, "compute and set blob-avoiding scan offset")
+        if cancelled:
+            return self._tip_planner_last_plot(), self.tip_planner_progress_figure(), cancelled
+        operation_blocked = self.acquire_microscope_operation(
+            "tip planner compute and set blob-avoiding offset",
+            blocking=False,
+        )
+        if operation_blocked:
+            return (
+                self._tip_planner_last_plot(),
+                self.tip_planner_progress_figure(),
+                self.jsonable(operation_blocked),
+            )
+        activity = self.start_tip_planner_activity(
+            "compute and set blob-avoiding scan offset",
+            details={
+                "new_range_A": float(new_range_A),
+                "overlap_A": float(overlap_A),
+                "points": int(points),
+                "start_after_shift": bool(start_after_shift),
+            },
+            pending_next="collect new scan and analyze landscape",
+        )
+        try:
+            analysis = self.tip_planner_state.get("last_analysis")
+            if not analysis:
+                raise ValueError("Run Tip Tune Planner analysis first so large blobs are known.")
+            hazard_plan = self.propose_hazard_avoiding_offset_shift(
+                analysis,
+                new_range_A=float(new_range_A),
+                overlap_A=float(overlap_A),
+            )
+            plan = hazard_plan.get("recommended_plan") or {}
+            if not plan:
+                result = {
+                    "blocked": "blob_avoiding_offset",
+                    "reason": "No recommended hazard-avoiding offset plan was generated.",
+                    "hazard_avoiding_offset_plan": hazard_plan,
+                }
+                self.finish_tip_planner_activity(
+                    activity,
+                    status="blocked",
+                    result=result,
+                    pending_next="rerun analysis or clear history after hyper jump",
+                )
+                self.release_microscope_operation()
+                return self._tip_planner_last_plot(), self.tip_planner_progress_figure(), self.jsonable(result)
+            if not plan.get("reachable"):
+                result = {
+                    "blocked": "blob_avoiding_offset",
+                    "reason": (
+                        plan.get("footprint_reachable", {}).get("reason")
+                        or "Computed scan frame is outside reachable OffsetX/Y limits."
+                    ),
+                    "hazard_avoiding_offset_plan": hazard_plan,
+                }
+                self.finish_tip_planner_activity(
+                    activity,
+                    status="blocked",
+                    result=result,
+                    pending_next="reduce scan range/overlap or clear history after hyper jump",
+                )
+                self.release_microscope_operation()
+                return self._tip_planner_last_plot(), self.tip_planner_progress_figure(), self.jsonable(result)
+            avoidance = plan.get("hazard_avoidance") or plan.get("avoidance_summary") or {}
+            if int(avoidance.get("inside_count", 0) or 0) > 0:
+                result = {
+                    "blocked": "blob_avoiding_offset",
+                    "reason": "Computed plan still contains known large hazards inside the new frame.",
+                    "hazard_avoiding_offset_plan": hazard_plan,
+                }
+                self.finish_tip_planner_activity(
+                    activity,
+                    status="blocked",
+                    result=result,
+                    pending_next="try smaller range or clear landscape history after hyper jump",
+                )
+                self.release_microscope_operation()
+                return self._tip_planner_last_plot(), self.tip_planner_progress_figure(), self.jsonable(result)
+            busy = self.scan_is_busy_report()
+            if busy.get("busy"):
+                self.runner.connect().stopscan()
+                time.sleep(3.0)
+            rec = self.nav.setup_exploration_scan_frame(
+                plan["OffsetX"],
+                plan["OffsetY"],
+                range_A=float(plan.get("RangeX", new_range_A)),
+                points=int(points),
+                rotation_deg=plan.get("Rotation"),
+            )
+            result = {
+                "event": "compute_and_set_blob_avoiding_scan_offset",
+                "hazard_avoiding_offset_plan": hazard_plan,
+                "applied_plan": plan,
+                "setup_record": rec.__dict__,
+                "scan_status_before_offset": busy,
+                "stopped_scan_before_shift": bool(busy.get("busy")),
+            }
+            if start_after_shift:
+                result["startscan_return"] = (
+                    self.runner.connect().startscan()
+                    if not self.runner.dry_run else "dry-run"
+                )
+            self.append_tip_planner_log(
+                {
+                    "event": "compute_apply_blob_avoiding_offset",
+                    "status": "ok",
+                    "OffsetX": plan.get("OffsetX"),
+                    "OffsetY": plan.get("OffsetY"),
+                    "hazard_inside_count": avoidance.get("inside_count"),
+                    "hazard_near_count": avoidance.get("near_count"),
+                    "started_scan": bool(start_after_shift),
+                }
+            )
+            self.finish_tip_planner_activity(
+                activity,
+                status="completed",
+                result={
+                    "OffsetX": plan.get("OffsetX"),
+                    "OffsetY": plan.get("OffsetY"),
+                    "method": plan.get("method"),
+                    "started_scan": bool(start_after_shift),
+                },
+                pending_next="wait for enough scan lines, then analyze",
+            )
+            self.release_microscope_operation()
+            return self._tip_planner_last_plot(), self.tip_planner_progress_figure(), self.jsonable(result)
+        except Exception as exc:
+            self.fail_tip_planner_activity(activity, exc, pending_next="inspect blob-avoiding offset error")
+            self.release_microscope_operation()
+            return (
+                self._tip_planner_last_plot(),
+                self.tip_planner_progress_figure(),
+                {"error": str(exc), "traceback": traceback.format_exc()},
+            )
 
     def choose_tip_action_plan(self, cycle_index, quality):
         peaks = [
@@ -1360,6 +1552,16 @@ class TipPlannerGuiMixin:
             report = {"cancelled": "Type '{}' to run the planner loop.".format(self.TIP_LOOP_CONFIRMATION)}
             return self.blank_tip_planner_figure(report["cancelled"]), self.tip_planner_progress_figure(), report
 
+        operation_blocked = self.acquire_microscope_operation(
+            "tip tune planner loop",
+            blocking=False,
+        )
+        if operation_blocked:
+            return (
+                self.blank_tip_planner_figure(operation_blocked["reason"]),
+                self.tip_planner_progress_figure(),
+                operation_blocked,
+            )
         self.tip_planner_state["stop_requested"] = False
         started = time.time()
         loop_activity = self.start_tip_planner_activity(
@@ -1702,6 +1904,7 @@ class TipPlannerGuiMixin:
                     result={"status": loop_report.get("status")},
                     pending_next="idle",
                 )
+            self.release_microscope_operation()
             return last_fig, self.tip_planner_progress_figure(), self.jsonable(loop_report)
         except Exception as exc:
             loop_report["status"] = "error"
@@ -1720,6 +1923,7 @@ class TipPlannerGuiMixin:
                 )
             if loop_activity.get("status") == "in_progress":
                 self.fail_tip_planner_activity(loop_activity, exc, pending_next="inspect planner error")
+            self.release_microscope_operation()
             return (
                 last_fig,
                 self.tip_planner_progress_figure(),

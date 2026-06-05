@@ -19,6 +19,37 @@ gxsm = gxsm4.gxsm_process(verbose=0)
 `gxsm_process` connects to GXSM4 through the PySHM/RPSPMC bridge. It discovers
 the running GXSM4 process, maps shared memory, and exposes a simple method API.
 
+PySHM is a single transaction buffer owned by GXSM4's `pyremote.cpp`
+counterpart. The external Python side writes a method name and pickled
+arguments into `/gxsm4_py_shm_data_block`, signals GXSM4, waits for the status
+flag to return ready, then copies and unpickles the returned payload. Do not
+interleave PySHM requests. The wrapper uses a process-local `RLock` plus the
+cross-process lock file `/tmp/gxsm4_pyshm_transaction.lock` by default; set
+`GXSM_PYSHM_LOCK_FILE` to share a different lock path.
+
+Returned NumPy arrays, especially from `get_slice`, are pickled by GXSM4's
+embedded Python/NumPy. For live use, run the external GUI/scripts with a Python
+and NumPy ABI compatible with the GXSM4 build. The copilot venv should use
+system site packages and should not install a separate pip NumPy wheel.
+
+Advanced troubleshooting note: if `get_slice` or another large PySHM data
+request causes a crash, timeout, corrupted return, or NumPy/pickle exception,
+do not start by debugging the image-analysis code. First verify the transport
+layer:
+
+- Only one PySHM request may be active at a time; no threaded/interleaved
+  `gxsm.get`, `gxsm.set`, `gxsm.action`, `get_slice`, or GVP requests.
+- All external tools that talk to PySHM should use the same lock path
+  (`GXSM_PYSHM_LOCK_FILE`, default `/tmp/gxsm4_pyshm_transaction.lock`).
+- The external Python and NumPy must match the ABI expected by the GXSM4
+  embedded Python/NumPy that created the returned object.
+- Prefer chunked `get_slice` reads and immediately copy returned arrays into
+  local NumPy arrays before further processing.
+
+This is an advanced issue. Beginners should first reproduce with one simple,
+single-process script using the system Python/NumPy before adding Gradio,
+timers, planner loops, or other automation.
+
 ## Core API
 
 ### GUI Refname Access
@@ -108,6 +139,11 @@ gxsm.put_data_pkt(value, ch, x, y, v, t)
 gxsm.get_slice(ch, v, t, yi, yn)
 gxsm.get_slice_v(ch, x, t, yi, yn)
 ```
+
+`get_slice` and `get_slice_v` can return large NumPy arrays through the same
+PySHM pickle block. Keep them sequential and chunked; do not call them from
+timer threads or in parallel with `gxsm.get`, `gxsm.set`, `gxsm.action`, GVP
+execution, or other PySHM methods.
 
 The controller fetches a scan image from the top down in chunks:
 

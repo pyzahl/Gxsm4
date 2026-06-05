@@ -859,6 +859,12 @@ in one place:
   `Sgvp == 1` means busy. A stopped scan may still have any current-line value
   from `waitscan(False)`; only a changing value over a few seconds indicates
   active scanning.
+- `Compute And Set Blob-Avoiding Scan Offset`: uses the latest planner
+  analysis plus remembered landscape hazards to compute a reachable new
+  `OffsetX/Y` frame that keeps large blobs out of the next scan window. This is
+  Level 1 and arm-gated. It stops the current scan first if needed, applies the
+  computed scan geometry, and can optionally start the next scan using the
+  Offset Search settings.
 - `Plan Offset Shift`: proposes a partially overlapping `OffsetX`/`OffsetY`
   world-coordinate shift for finding a cleaner area if the current image has
   too many large blobs. The newer planner can also compute a hazard-avoiding
@@ -957,8 +963,16 @@ voltage report, not min/max display scales. The same live dashboard also shows
 RPSPMC `bias` in V, `current` in nA, `gvp.u` in V, `pac.ampl` in mV with a
 +/-10 mV gauge, and `pac.dfreq` in Hz. The 2D XY panel is scaled in local scan
 Angstroms using the configured maximum controller voltage, default +/-5 V,
-converted with `AVxyz * Vxyz`. The live SHM reading itself uses `AVxyz` only.
-Known large hazards are plotted directly in the same controller/world Angstrom coordinates.
+converted with `AVxyz`; `AVxyz` already includes the instrument gains. Known
+large hazards are plotted directly in the same controller/world Angstrom
+coordinates.
+
+GUI concurrency rule: the live monitor timer may call only the fast read-only
+SHM monitor paths `rt_query_xyz()` and `rt_query_rpspmc()`, protected by the
+`gxsm4process` process-local `threading.RLock`. Timer callbacks must not call
+PySHM command paths such as `gxsm.get`, `gxsm.set`, `gxsm.action`, or
+`get_slice`. Scan-image fetches and current-tip marker reads are manual button
+actions to avoid overlapping large PySHM data transfers.
 - `move_to(x, y, wait_after_s=0.0)`
 - `call_gxsm(method_name, *args, ...)`
 - `sleep(seconds)`

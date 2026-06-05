@@ -124,7 +124,7 @@ start_gradio() {
     fi
     if [[ ! -x "${VENV_PY}" ]]; then
         echo "ERROR: ${VENV_PY} not found. Create/install the GUI venv first:" >&2
-        echo "  python3 -m venv .venv" >&2
+        echo "  python3 -m venv --system-site-packages .venv" >&2
         echo "  .venv/bin/python -m pip install -r requirements-gui.txt" >&2
         return 1
     fi

@@ -15,7 +15,11 @@
       "xyz_gain_x": "12",
       "xyz_gain_y": "12",
       "xyz_gain_z": "24",
-      "xyz_timer_s": 0.2,
+      "fast_shm_timer_s": 0.2,
+      "instrument_gains_default": {
+        "Vxyz": [12.0, 12.0, 24.0],
+        "AVxyz": [552.0, 552.0, 189.60000228881836]
+      },
       "line_count_range": [8, 2048],
       "gauge_limits": {
         "piezo_V": 100.0,
@@ -44,9 +48,7 @@
       "lines": 160,
       "output_prefix": "gui_scan_analysis",
       "candidate_index": 1,
-      "arm_tip_move": false,
-      "auto_tip_position": false,
-      "tip_position_refresh_s": 1.0
+      "arm_tip_move": false
     },
     "tip_planner": {
       "arm_action": false,
@@ -57,8 +59,6 @@
       "max_large_hazards": 8,
       "output_prefix": "gui_tip_planner",
       "candidate_index": 1,
-      "auto_tip_position": false,
-      "tip_position_refresh_s": 1.0,
       "activity_refresh_s": 1.0,
       "clear_history_reason": "operator hyper jump / new world",
       "shift_direction": "image_left_below",

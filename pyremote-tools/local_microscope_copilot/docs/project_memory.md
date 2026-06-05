@@ -277,7 +277,11 @@ SPM advice.
 - `microscope_gradio_scan.py`: scan plotting and analysis GUI mixin.
 - `microscope_gradio_gvp.py`: GVP load/execute/plot GUI mixin.
 - `microscope_gradio_tip_planner.py`: tip tune planner GUI mixin.
-- `gxsm4process.py`: local bundled GXSM pyremote transport copy.
+- `gxsm4process.py`: local bundled GXSM pyremote transport copy. PySHM
+  command calls and fast monitor SHM snapshots are serialized with a
+  process-local `threading.RLock`. PySHM command calls also take the
+  cross-process lock file `/tmp/gxsm4_pyshm_transaction.lock` by default, so
+  separate external scripts using this wrapper do not interleave requests.
 - `microscope_controller_config.json`: safety/controller config.
 - `microscope_gui_config.json`: GUI defaults/display config.
 - `local_microscope_copilot_config.json`: local model/service config.
@@ -286,6 +290,13 @@ The Gradio Control Level tab includes a read-only `Read GXSM dconf Settings /
 Limits` button that reads configured main-window keys, PACPLL/controller keys,
 and adjustment-limit keys, then compares known copilot limits against GXSM
 adjustment ranges.
+
+Relevant GXSM C++ counterpart: `plug-ins/common/pyremote.cpp` implements
+`remote_getslice`, `remote_getslice_v`, the method table entries for
+`get_slice`/`get_slice_v`, and `PySHMServer_Run`. It uses one shared method
+name/argument/return pickle block, so every PySHM request must complete its full
+handshake before another one starts. The Python wrapper copies returned pickle
+bytes out of SHM before unpickling.
 
 ## Current Handoff Snapshot, 2026-06-05
 
@@ -321,19 +332,26 @@ Recent GUI changes that were restarted and operator-tested as OK:
 - JSON result panels were moved toward the bottom of each page.
 - Scan image plots preserve scan aspect ratio and partial scans are not
   stretched into a square.
-- The Scan Image tab can auto-refresh about once per second and shows a
-  last-line profile.
+- The Scan Image tab manually fetches the current image and shows a last-line
+  profile. Optional auto-refresh is available and uses the GUI microscope
+  operation gate; it skips cycles while the Tip Tune Planner or another PySHM
+  action owns the lane.
 - The Tip/Landscape Analysis and Tip Tune Planner paths share flat-candidate
   state.
 - Candidate plots can show numbered flat locations, selected location, hazards,
   and current tip position.
 - `Read / Mark Current Tip` reads `dsp-GVP-XS-MONITOR` and
   `dsp-GVP-YS-MONITOR` and overlays a red current-tip marker.
-- The current-tip marker can auto-refresh when the checkbox is enabled.
+- The current-tip marker is updated by explicit `Read / Mark Current Tip`
+  clicks; timer-driven tip-marker reads are intentionally disabled.
 - Clicking the analysis/planner image selects the nearest flat candidate when
   the installed Gradio event supplies plot click coordinates.
 - `Move Tip To Selected Candidate` writes local `ScanX/ScanY` only after the
   existing Level-1 arm gate and readiness check pass.
+- `Compute And Set Blob-Avoiding Scan Offset` sits below the candidate move
+  controls. It uses the latest planner analysis and remembered large hazards to
+  compute and apply a reachable OffsetX/Y scan frame that avoids big blobs,
+  using the Offset Search range/overlap/points/start settings.
 
 Operator-tested readiness rule for local ScanX/Y moves and GVP execution:
 
@@ -388,9 +406,15 @@ Top-level tabs and purpose:
   `rt_query_xyz()` controller Volts, then converted to Angstroms with
   `A = Vmonitor * AVxyz` from `gxsm.get_instrument_gains()`. The bar and XY
   panel limits use the configured maximum controller voltage, default +/-5 V,
-  converted with `AVxyz`. `AVxyz` already includes the active instrument gains. The GVP monitor fields are useful reference
-  values, but not the source of truth for this live monitor.
-- `Scan Image`: fetch/auto-refresh scan image and last-line profile.
+  converted with `AVxyz`. `AVxyz` already includes the active instrument gains.
+  The GVP monitor fields are useful reference values, but not the source of
+  truth for this live monitor. The live timer may call only the fast read-only
+  SHM monitor paths `rt_query_xyz()` and `rt_query_rpspmc()`, using
+  cached/default gains. The manual full-refresh button updates PySHM-backed
+  instrument gains and GVP monitor values.
+- `Scan Image`: manually fetch scan image and last-line profile, or enable
+  gated auto-refresh. The timer must never overlap `get_slice` with planner,
+  GVP, or other PySHM actions; if the operation lock is busy it skips.
 - `Tip / Landscape Analysis`: analyze current scan, show topo plus dFreq image,
   rank flat candidates, mark hazards, read/mark current tip, select candidate,
   and move tip to selected candidate when safe.
@@ -398,7 +422,10 @@ Top-level tabs and purpose:
   and bounded iterative scan/analyze/move/tune loops. The bottom of the page
   shows an activity/status ledger with current action, next pending action,
   reasons for blocked/error states, timestamps, elapsed times, and persistent
-  JSONL/state logs.
+  JSONL/state logs. The planner loop owns the GUI microscope-operation lock
+  while running so its own updated reads are sequential and not interleaved by
+  other button/chat PySHM actions. The activity refresh timer is UI/log-only;
+  PySHM reads such as current-tip markers remain manual button actions.
 - `Scan Leveling`: measure residual fast-axis slope and apply armed correction.
 - `GVP`: load bias-pulse or tip-tune Z-dip templates, execute loaded GVP, plot
   ZS/current/dFreq over time, emergency GVP STOP.

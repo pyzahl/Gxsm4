@@ -17,6 +17,7 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
 import traceback
 
@@ -179,11 +180,34 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             "sample_count": {"x": 0, "y": 0},
         }
         self.live_xy_calibration_samples = {"x": [], "y": []}
+        self.microscope_operation_lock = threading.RLock()
+        self.microscope_operation_owner = None
+        self.microscope_operation_depth = 0
         self.instrument_gains_cache = {
             "values": None,
             "updated_at": None,
             "error": None,
         }
+        self.load_default_instrument_gains_cache()
+        self.live_connection_error = None
+        if self.live:
+            operation_blocked = self.acquire_microscope_operation(
+                "initial live GXSM connection",
+                blocking=True,
+            )
+            try:
+                if operation_blocked:
+                    self.live_connection_error = operation_blocked
+                else:
+                    self.runner.connect()
+            except Exception as exc:
+                self.live_connection_error = {
+                    "error": "{}: {}".format(type(exc).__name__, exc),
+                    "traceback": traceback.format_exc(),
+                }
+            finally:
+                if not operation_blocked:
+                    self.release_microscope_operation()
         self.dconf_scan_range_cache = {
             "values": None,
             "updated_at": None,
@@ -213,6 +237,48 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
 
     def controller_limits(self):
         return dict(self.controller_default("safety_limits", {}))
+
+    def acquire_microscope_operation(self, name, blocking=False):
+        thread_id = threading.get_ident()
+        acquired = self.microscope_operation_lock.acquire(blocking=bool(blocking))
+        if not acquired:
+            return {
+                "blocked": "microscope_operation_busy",
+                "requested_operation": name,
+                "current_operation": self.microscope_operation_owner,
+                "reason": (
+                    "Another GUI hardware operation is active. Planner and "
+                    "PySHM/get_slice actions are serialized to avoid overlap."
+                ),
+            }
+        if (
+            self.microscope_operation_owner
+            and self.microscope_operation_owner.get("thread_id") == thread_id
+        ):
+            self.microscope_operation_depth += 1
+            return None
+        self.microscope_operation_owner = {
+            "name": str(name),
+            "thread_id": thread_id,
+            "started_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+        self.microscope_operation_depth = 1
+        return None
+
+    def release_microscope_operation(self):
+        self.microscope_operation_depth = max(0, int(self.microscope_operation_depth) - 1)
+        if self.microscope_operation_depth == 0:
+            self.microscope_operation_owner = None
+        self.microscope_operation_lock.release()
+
+    def run_microscope_operation(self, name, callback, blocking=False):
+        operation_blocked = self.acquire_microscope_operation(name, blocking=blocking)
+        if operation_blocked:
+            return self.jsonable(operation_blocked)
+        try:
+            return callback()
+        finally:
+            self.release_microscope_operation()
 
     def clamp_config_value(self, value, config_key, default_range):
         limits = self.controller_default(config_key, default_range)
@@ -2799,7 +2865,62 @@ User request: __USER_REQUEST__
             report = {"error": str(exc), "traceback": traceback.format_exc()}
             return None, None, None, report
 
-    def read_fast_live_dashboard(self, gain_x_V=12.0, gain_y_V=12.0, gain_z_V=24.0):
+    def load_default_instrument_gains_cache(self):
+        default_gains = self.gui_default("live_readouts.instrument_gains_default", {})
+        if not default_gains:
+            default_gains = {
+                "Vxyz": [12.0, 12.0, 24.0],
+                "AVxyz": [552.0, 552.0, 189.60000228881836],
+            }
+        try:
+            parsed = self.parse_instrument_gains(default_gains)
+            self.instrument_gains_cache = {
+                "values": parsed,
+                "raw": default_gains,
+                "updated_at": None,
+                "updated_at_text": "default",
+                "error": None,
+                "source": "gui live_readouts.instrument_gains_default",
+            }
+        except Exception as exc:
+            self.instrument_gains_cache = {
+                "values": None,
+                "raw": default_gains,
+                "updated_at": None,
+                "updated_at_text": "default",
+                "error": "{}: {}".format(type(exc).__name__, exc),
+                "source": "gui live_readouts.instrument_gains_default",
+            }
+
+    def read_fast_live_dashboard_fast_shm(self, gain_x_V=12.0, gain_y_V=12.0, gain_z_V=24.0):
+        if self.live and self.runner.gxsm is None:
+            report = {
+                "error": "live_gxsm_connection_unavailable",
+                "reason": (
+                    "Fast SHM timer mode will not create a GXSM connection "
+                    "because gxsm_process initialization uses PySHM setup. "
+                    "Use Full Refresh / Update Gains or restart live mode."
+                ),
+                "startup_connection_error": self.live_connection_error,
+            }
+            return self.live_monitor_html({}, {}), self.jsonable(report)
+        return self.read_fast_live_dashboard(
+            gain_x_V,
+            gain_y_V,
+            gain_z_V,
+            include_pyshm=False,
+        )
+
+    def read_fast_live_dashboard(self, gain_x_V=12.0, gain_y_V=12.0, gain_z_V=24.0, include_pyshm=True):
+        operation_locked = False
+        if include_pyshm:
+            operation_blocked = self.acquire_microscope_operation(
+                "full live monitor refresh",
+                blocking=False,
+            )
+            if operation_blocked:
+                return self.live_monitor_html({}, {}), self.jsonable(operation_blocked)
+            operation_locked = True
         try:
             gains = {
                 "x": max(abs(float(gain_x_V)), 1e-9),
@@ -2808,13 +2929,22 @@ User request: __USER_REQUEST__
             }
             xyz = self.runner.read_xyz_monitor()
             rpspmc = self.runner.read_rpspmc_monitor()
-            instrument_gains = self.read_instrument_gains_cached()
+            if include_pyshm:
+                instrument_gains = self.read_instrument_gains_cached()
+            else:
+                instrument_gains = dict(self.instrument_gains_cache)
             gvp_monitor = {}
-            try:
-                self.runner.get_live_tip_position_monitor(collect_as="live_dashboard_gvp_position")
-                gvp_monitor = self.runner.data.get("live_dashboard_gvp_position", {}) or {}
-            except Exception as exc:
-                gvp_monitor = {"error": "{}: {}".format(type(exc).__name__, exc)}
+            if include_pyshm:
+                try:
+                    self.runner.get_live_tip_position_monitor(collect_as="live_dashboard_gvp_position")
+                    gvp_monitor = self.runner.data.get("live_dashboard_gvp_position", {}) or {}
+                except Exception as exc:
+                    gvp_monitor = {"error": "{}: {}".format(type(exc).__name__, exc)}
+            else:
+                gvp_monitor = {
+                    "status": "skipped",
+                    "reason": "fast SHM timer mode uses rt_query_xyz and rt_query_rpspmc only",
+                }
             monitor = xyz.get("monitor") or [None, None, None]
             monitor_min = xyz.get("monitor_min") or [None, None, None]
             monitor_max = xyz.get("monitor_max") or [None, None, None]
@@ -2898,11 +3028,17 @@ User request: __USER_REQUEST__
                 "GVP_position_monitor": gvp_monitor,
                 "live_xy_calibration": self.live_xy_calibration,
                 "instrument_gains": instrument_gains,
+                "include_pyshm": bool(include_pyshm),
                 "rpspmc": rpspmc,
             }
+            if operation_locked:
+                self.release_microscope_operation()
+                operation_locked = False
             return html, self.jsonable(report)
         except Exception as exc:
             report = {"error": str(exc), "traceback": traceback.format_exc()}
+            if operation_locked:
+                self.release_microscope_operation()
             return self.live_monitor_html({}, {}), report
 
     def read_instrument_gains_cached(self, max_age_s=10.0):
@@ -3935,6 +4071,12 @@ User request: __USER_REQUEST__
         cancelled = self.require_arm(arm, "start scan")
         if cancelled:
             return cancelled
+        return self.run_microscope_operation(
+            "start scan",
+            lambda: self._start_scan_unlocked(),
+        )
+
+    def _start_scan_unlocked(self):
         try:
             rec = self.runner.call_gxsm("startscan", name="start_scan")
             return self.jsonable(rec.__dict__)
@@ -3948,6 +4090,12 @@ User request: __USER_REQUEST__
         cancelled = self.require_arm(arm, "stop scan")
         if cancelled:
             return cancelled
+        return self.run_microscope_operation(
+            "stop scan",
+            lambda: self._stop_scan_unlocked(),
+        )
+
+    def _stop_scan_unlocked(self):
         try:
             rec = self.runner.call_gxsm("stopscan", name="stop_scan")
             return self.jsonable(rec.__dict__)
@@ -3961,6 +4109,12 @@ User request: __USER_REQUEST__
         cancelled = self.require_arm(arm, "set bias")
         if cancelled:
             return cancelled
+        return self.run_microscope_operation(
+            "set bias",
+            lambda: self._set_bias_unlocked(bias_V),
+        )
+
+    def _set_bias_unlocked(self, bias_V):
         try:
             rec = self.runner.set_live_bias(
                 float(bias_V),
@@ -3977,6 +4131,12 @@ User request: __USER_REQUEST__
         cancelled = self.require_arm(arm, "set current setpoint")
         if cancelled:
             return cancelled
+        return self.run_microscope_operation(
+            "set current setpoint",
+            lambda: self._set_current_unlocked(current, unit),
+        )
+
+    def _set_current_unlocked(self, current, unit):
         try:
             rec = self.runner.set_live_current_setpoint(
                 float(current),
@@ -3994,6 +4154,12 @@ User request: __USER_REQUEST__
         cancelled = self.require_arm(arm, "set scan speed")
         if cancelled:
             return cancelled
+        return self.run_microscope_operation(
+            "set scan speed",
+            lambda: self._set_scan_speed_unlocked(speed_A_s, range_A),
+        )
+
+    def _set_scan_speed_unlocked(self, speed_A_s, range_A):
         try:
             rec = self.runner.set_live_scan_speed(
                 speed_A_per_s=float(speed_A_s),
@@ -4305,12 +4471,15 @@ def build_ui(backend):
 
         with gr.Tab("Live Microscope State Monitor"):
             gr.Markdown(
-                "Fast XYZ monitor updates at 5 Hz from "
+                "Auto-updating fast live-state monitor from "
                 "`gxsm4process.rt_query_xyz()` fast SHM mapped controller Volts. "
                 "Visible X/Y/Z values are converted to Angstroms with "
-                "`gxsm.get_instrument_gains()`. "
+                "cached/default `gxsm.get_instrument_gains()` values. "
                 "The X/Y/Z gain fields are external amplifier factors used to "
-                "compute effective piezo voltage from controller output voltage."
+                "compute effective piezo voltage from controller output voltage. "
+                "The timer reads only the fast SHM monitors. Use the manual "
+                "full refresh button to update instrument gains/GVP monitor "
+                "details via PySHM."
             )
             with gr.Row():
                 gain_choices = gd("live_readouts.xyz_gain_choices", ["1", "3", "6", "12", "24"])
@@ -4329,10 +4498,16 @@ def build_ui(backend):
                     value=gd("live_readouts.xyz_gain_z", "24"),
                     label="Z external amplifier gain",
                 )
+                live_refresh_btn = gr.Button("Full Refresh / Update Gains")
             live_gauges = gr.HTML(label="Fast monitor gauges")
             xyz_report = gr.JSON(label="Fast XYZ monitor report")
-            xyz_timer = gr.Timer(value=gd("live_readouts.xyz_timer_s", 0.2), active=True)
+            xyz_timer = gr.Timer(value=gd("live_readouts.fast_shm_timer_s", 0.2), active=True)
             xyz_timer.tick(
+                backend.read_fast_live_dashboard_fast_shm,
+                inputs=[xyz_gain_x, xyz_gain_y, xyz_gain_z],
+                outputs=[live_gauges, xyz_report],
+            )
+            live_refresh_btn.click(
                 backend.read_fast_live_dashboard,
                 inputs=[xyz_gain_x, xyz_gain_y, xyz_gain_z],
                 outputs=[live_gauges, xyz_report],
@@ -4346,8 +4521,16 @@ def build_ui(backend):
                     label="Recent/full lines to fetch",
                     precision=0,
                 )
-                scan_auto = gr.Checkbox(value=gd("scan_image.auto_refresh", False), label="Auto refresh")
+                scan_auto = gr.Checkbox(
+                    value=gd("scan_image.auto_refresh", False),
+                    label="Auto refresh",
+                )
                 fetch_btn = gr.Button("Fetch And Plot")
+            gr.Markdown(
+                "Auto refresh uses the same PySHM operation gate as manual "
+                "fetch. If the Tip Tune Planner or another PySHM action is "
+                "running, auto refresh skips that cycle instead of overlapping."
+            )
             scan_plot = gr.Plot(label="Scan image")
             scan_profile = gr.Plot(label="Last scan-line profile")
             scan_meta = gr.JSON(label="Scan metadata")
@@ -4377,15 +4560,12 @@ def build_ui(backend):
                 )
                 ana_arm = gr.Checkbox(value=gd("analysis.arm_tip_move", False), label="Arm tip move")
                 ana_read_tip_btn = gr.Button("Read / Mark Current Tip")
-                ana_auto_tip = gr.Checkbox(
-                    value=gd("analysis.auto_tip_position", False),
-                    label="Auto update current tip marker",
-                )
                 ana_move_btn = gr.Button("Move Tip To Selected Candidate")
             gr.Markdown(
                 "Click the analyzed image to select the nearest flat candidate. "
                 "The move writes local ScanX/ScanY only, and is refused unless "
-                "the scan/GVP state is ready."
+                "the scan/GVP state is ready. Current-tip markers are updated "
+                "only by explicit button click."
             )
             ana_plot = gr.Plot(label="Analyzed image")
             ana_path = gr.Textbox(label="Saved report path", interactive=False)
@@ -4403,12 +4583,6 @@ def build_ui(backend):
                 backend.tip_planner_move_to_candidate_update_plot,
                 [ana_candidate_index, ana_arm],
                 [ana_plot, ana_report],
-            )
-            ana_tip_timer = gr.Timer(value=gd("analysis.tip_position_refresh_s", 1.0), active=True)
-            ana_tip_timer.tick(
-                backend.tip_planner_auto_read_tip_position,
-                inputs=ana_auto_tip,
-                outputs=[ana_plot, ana_report],
             )
             if hasattr(ana_plot, "select"):
                 def _analysis_plot_select(evt):
@@ -4442,15 +4616,15 @@ def build_ui(backend):
                 with gr.Row():
                     planner_candidate_index = gr.Number(value=gd("tip_planner.candidate_index", 1), label="Candidate #", precision=0)
                     planner_read_tip_btn = gr.Button("Read / Mark Current Tip")
-                    planner_auto_tip = gr.Checkbox(
-                        value=gd("tip_planner.auto_tip_position", False),
-                        label="Auto update current tip marker",
-                    )
                     planner_move_btn = gr.Button("Move Tip To Selected Candidate")
+                planner_hazard_shift_btn = gr.Button(
+                    "Compute And Set Blob-Avoiding Scan Offset",
+                )
                 gr.Markdown(
                     "Click the annotated image to select the nearest numbered "
                     "flat candidate. Movement still requires Control Level 1, "
-                    "the planner arm checkbox, and a stopped scan/GVP state."
+                    "the planner arm checkbox, and a stopped scan/GVP state. "
+                    "Current-tip markers are updated only by explicit button click."
                 )
 
             with gr.Accordion("Offset Search For Cleaner Area", open=False):
@@ -4550,14 +4724,19 @@ def build_ui(backend):
                 [planner_candidate_index, planner_arm],
                 [planner_plot, planner_report],
             )
+            planner_hazard_shift_btn.click(
+                backend.tip_planner_compute_apply_hazard_avoiding_offset,
+                [
+                    shift_range,
+                    shift_overlap,
+                    shift_points,
+                    start_after_shift,
+                    planner_arm,
+                ],
+                [planner_plot, planner_progress, planner_report],
+            )
             planner_read_tip_btn.click(
                 backend.tip_planner_read_tip_position,
-                outputs=[planner_plot, planner_report],
-            )
-            planner_tip_timer = gr.Timer(value=gd("tip_planner.tip_position_refresh_s", 1.0), active=True)
-            planner_tip_timer.tick(
-                backend.tip_planner_auto_read_tip_position,
-                inputs=planner_auto_tip,
                 outputs=[planner_plot, planner_report],
             )
             if hasattr(planner_plot, "select"):

@@ -31,13 +31,14 @@ import faulthandler; faulthandler.enable()
 version = "1.0.0"
 
 import time
-#import fcntl
+import fcntl
 #from threading import Timer
 
 import struct
 import array
 import math
 import pickle
+import copy
 
 import numpy as np
 
@@ -50,6 +51,7 @@ import signal
 
 import threading
 import asyncio
+from contextlib import contextmanager
 
 METH_ERR_CODE = ['OK', 'E:RESULT EXCEEDS SHM SIZE', 'E:PySHM Init Error', 'E:PySHM unsupported method flags', 'E:PySHM invalid method name', 'E:PySHM Unknow Error Code']
 
@@ -63,6 +65,11 @@ class gxsm_process():
 
                 self.verbose  = verbose
                 self.pyshm_timeout_s = float(os.environ.get("GXSM_PYSHM_TIMEOUT_S", "90.0"))
+                self.pyshm_file_lock_path = os.environ.get(
+                        "GXSM_PYSHM_LOCK_FILE",
+                        "/tmp/gxsm4_pyshm_transaction.lock",
+                )
+                self.pyshm_file_lock_fd = None
                 #self.Masyncio = use_asyncio
                 
                 print ('Gxsm4 Process Class Init. PySHM + RPSPMC Monitors. V {}'.format(self.version()))
@@ -90,8 +97,12 @@ class gxsm_process():
                 #        # Acquire a asyncio lock
                 #        self.mutex = asyncio.Lock()
                 #else:
-                # Acquire a thread lock
-                self.mutex = threading.Lock()
+                # Serialize all PySHM and fast monitor SHM access from Python
+                # worker threads. RLock avoids self-deadlock if a helper nests
+                # through another gxsm call in the same thread. This is a
+                # process-local lock; separate Python processes must still
+                # coordinate externally or avoid concurrent GXSM SHM access.
+                self.mutex = threading.RLock()
 
                 # look for gxsm4 process and open PySHM -- external pyremote interface
                 self.set_gxsm4_PID()
@@ -108,6 +119,16 @@ class gxsm_process():
         def debug_print (self, vlevel, *message):
                 if self.verbose >= vlevel:
                         print (*message)
+
+        @contextmanager
+        def pyshm_transaction_lock(self):
+                if self.pyshm_file_lock_fd is None:
+                        self.pyshm_file_lock_fd = open(self.pyshm_file_lock_path, "a+")
+                fcntl.flock(self.pyshm_file_lock_fd.fileno(), fcntl.LOCK_EX)
+                try:
+                        yield
+                finally:
+                        fcntl.flock(self.pyshm_file_lock_fd.fileno(), fcntl.LOCK_UN)
         
         # find and set gxsm4 process id (PID) used for signaling or if given use specific PID
         # all PySHM requires one gxsm4 process -- warning: currently undefined behavior in case of multiple gxsm4 instances!
@@ -170,7 +191,7 @@ class gxsm_process():
         def exec_pyshm_method(self, method, args):
                 self.debug_print (1, 'exec_pyshm_method: {} ({}) '.format(method, args))
                 #async with self.mutex:
-                with self.mutex:
+                with self.mutex, self.pyshm_transaction_lock():
                         if not hasattr(self, "gxsm_pyshm"):
                                 raise RuntimeError("GXSM4 PySHM is not available; cannot call gxsm.{}.".format(method))
                         pyshm_status = np.frombuffer(self.gxsm_pyshm.buf, dtype=np.int64, count=1, offset=100)
@@ -188,6 +209,15 @@ class gxsm_process():
                         # pickle arguments and copy to SHM
                         args_data =  pickle.dumps(args)
                         self.debug_print (2, 'args.len: {}'.format(len(args_data)))
+                        max_payload_len = len(self.gxsm_pyshm.buf) - (128 + 8)
+                        if len(args_data) > max_payload_len:
+                                raise ValueError(
+                                        "gxsm.{} argument pickle exceeds PySHM payload size: {} > {}".format(
+                                                method,
+                                                len(args_data),
+                                                max_payload_len,
+                                        )
+                                )
                         pyshm_object_len[0] = len(args_data) # object size
                         self.gxsm_pyshm.buf[128+8 : 128+8+len(args_data)] = args_data
 
@@ -234,7 +264,17 @@ class gxsm_process():
 
                         pyshm_pickles_bytes_len = int(np.frombuffer(self.gxsm_pyshm.buf, dtype=np.uint64, count=1, offset=128)[0])
                         self.debug_print (1, 'return data len: {}'.format(pyshm_pickles_bytes_len))
-                        ret = pickle.loads(self.gxsm_pyshm.buf[128+8 : 128+8+pyshm_pickles_bytes_len])
+                        max_payload_len = len(self.gxsm_pyshm.buf) - (128 + 8)
+                        if pyshm_pickles_bytes_len < 0 or pyshm_pickles_bytes_len > max_payload_len:
+                                raise RuntimeError(
+                                        "gxsm.{} returned invalid PySHM pickle length: {} > {}".format(
+                                                method,
+                                                pyshm_pickles_bytes_len,
+                                                max_payload_len,
+                                        )
+                                )
+                        ret_payload = bytes(self.gxsm_pyshm.buf[128+8 : 128+8+pyshm_pickles_bytes_len])
+                        ret = pickle.loads(ret_payload)
                 return ret
 
         ### PySHM wrapper functions for full PyRemote Gxsm4 level embedded python compatibility
@@ -579,7 +619,8 @@ class gxsm_process():
         ########### RPSPMC ONLY
         # Read complete RPSPMC HwI Monitoring Block
         def read_status(self):
-                try:
+                with self.mutex:
+                 try:
 
                         ### NEW FAST SHM XYZ.. postions:
                         #define VEC___T  0 // Sec FPGA
@@ -621,18 +662,18 @@ class gxsm_process():
 
                         gxsm_shares=np.ndarray((101), dtype=np.double, buffer=self.gxsm_shm.buf) # flat array all shares 
                         xyz=np.ndarray((9,), dtype=np.double, buffer=self.gxsm_shm.buf[8:],).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
-                        self.XYZ_monitor['monitor']=xyz[0]
-                        self.XYZ_monitor['monitor_max']=xyz[1]
-                        self.XYZ_monitor['monitor_min']=xyz[2]
+                        self.XYZ_monitor['monitor']=xyz[0].copy().tolist()
+                        self.XYZ_monitor['monitor_max']=xyz[1].copy().tolist()
+                        self.XYZ_monitor['monitor_min']=xyz[2].copy().tolist()
                         self.debug_print (1, )
                         self.debug_print (1, 'rpspmc XYZ monitors:')
                         self.debug_print (1, self.XYZ_monitor)
 
-                        self.rpspmc['bias']         = gxsm_shares[10]
-                        self.rpspmc['current']      = gxsm_shares[19]
-                        self.rpspmc['gvp']['u']     = gxsm_shares[13]
-                        self.rpspmc['pac']['ampl']  = gxsm_shares[44]
-                        self.rpspmc['pac']['dfreq'] = gxsm_shares[43]
+                        self.rpspmc['bias']         = float(gxsm_shares[10])
+                        self.rpspmc['current']      = float(gxsm_shares[19])
+                        self.rpspmc['gvp']['u']     = float(gxsm_shares[13])
+                        self.rpspmc['pac']['ampl']  = float(gxsm_shares[44])
+                        self.rpspmc['pac']['dfreq'] = float(gxsm_shares[43])
 
                         self.rpspmc['zservo']['mode']        = gxsm_shares[50]
                         self.rpspmc['zservo']['setpoint']    = gxsm_shares[51]
@@ -661,7 +702,7 @@ class gxsm_process():
                         #self.rpspmc['scan']['offset']['xy_slew'] = gxsm_shares[81]
                         #self.rpspmc['scan']['offset']['z_slew']  = gxsm_shares[82]
                         
-                        self.rpspmc['time']         = gxsm_shares[100]
+                        self.rpspmc['time']         = float(gxsm_shares[100])
                         self.debug_print (1, )
                         self.debug_print (1, 'All RPSPMC Control Monitors:')
                         self.debug_print (1, self.rpspmc)
@@ -673,34 +714,40 @@ class gxsm_process():
                         self.debug_print (1, self.rpspmc['zservo'])
                         self.debug_print (1, )
                         
-                except AttributeError:
+                 except AttributeError:
                         # just try open again
                         self.get_gxsm4rpspmc_shm_block()
 
         def rt_query_xyz(self):
-                try:
+                with self.mutex:
+                 try:
                         gxsm_shares=np.ndarray((101), dtype=np.double, buffer=self.gxsm_shm.buf) # flat array all shares 
                         xyz=np.ndarray((9,), dtype=np.double, buffer=self.gxsm_shm.buf[8:],).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
                         #xyz=np.ndarray((9,), dtype=np.double, buffer=self.gxsm_shm.buf).reshape((3,3)).T  # X Mi Ma, Y Mi Ma, Z Mi Ma
-                        self.XYZ_monitor['monitor']=xyz[0]
-                        self.XYZ_monitor['monitor_max']=xyz[1]
-                        self.XYZ_monitor['monitor_min']=xyz[2]
+                        self.XYZ_monitor['monitor']=xyz[0].copy().tolist()
+                        self.XYZ_monitor['monitor_max']=xyz[1].copy().tolist()
+                        self.XYZ_monitor['monitor_min']=xyz[2].copy().tolist()
 
-                except AttributeError:
+                 except AttributeError:
                         # just try open again
                         self.get_gxsm4rpspmc_shm_block()
 
-                return self.XYZ_monitor
+                 return {
+                        'monitor': list(self.XYZ_monitor['monitor']),
+                        'monitor_max': list(self.XYZ_monitor['monitor_max']),
+                        'monitor_min': list(self.XYZ_monitor['monitor_min']),
+                 }
 
         def rt_query_rpspmc(self):
-                try:
+                with self.mutex:
+                 try:
                         gxsm_shares=np.ndarray((101), dtype=np.double, buffer=self.gxsm_shm.buf) # flat array all shares 
-                        self.rpspmc['bias']         = gxsm_shares[10]
-                        self.rpspmc['current']      = gxsm_shares[19]
-                        self.rpspmc['gvp']['u']     = gxsm_shares[13]
-                        self.rpspmc['pac']['ampl']  = gxsm_shares[44]
-                        self.rpspmc['pac']['dfreq'] = gxsm_shares[43]
-                        self.rpspmc['time']         = gxsm_shares[100]
+                        self.rpspmc['bias']         = float(gxsm_shares[10])
+                        self.rpspmc['current']      = float(gxsm_shares[19])
+                        self.rpspmc['gvp']['u']     = float(gxsm_shares[13])
+                        self.rpspmc['pac']['ampl']  = float(gxsm_shares[44])
+                        self.rpspmc['pac']['dfreq'] = float(gxsm_shares[43])
+                        self.rpspmc['time']         = float(gxsm_shares[100])
                         self.rpspmc['zservo']['mode']        = gxsm_shares[50]
                         self.rpspmc['zservo']['setpoint']    = gxsm_shares[51]
                         self.rpspmc['zservo']['cp']          = gxsm_shares[52]
@@ -727,13 +774,13 @@ class gxsm_process():
                         self.rpspmc['scan']['offset']['z']   = gxsm_shares[80]
                         #self.rpspmc['scan']['offset']['xy_slew'] = gxsm_shares[81]
                         #self.rpspmc['scan']['offset']['z_slew']  = gxsm_shares[82]
-                        self.rpspmc['zservo']['setpoint']    = gxsm_shares[51]
+                        self.rpspmc['zservo']['setpoint']    = float(gxsm_shares[51])
 
-                except AttributeError:
+                 except AttributeError:
                         # just try open again
                         self.get_gxsm4rpspmc_shm_block()
 
-                return self.rpspmc
+                 return copy.deepcopy(self.rpspmc)
 
 
 

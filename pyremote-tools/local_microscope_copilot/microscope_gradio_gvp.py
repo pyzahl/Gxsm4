@@ -17,6 +17,12 @@ class GvpGuiMixin:
         cancelled = self.require_arm(arm, "load a GVP program")
         if cancelled:
             return cancelled
+        return self.run_microscope_operation(
+            "load bias-pulse GVP",
+            lambda: self._load_bias_pulse_unlocked(pulse_du_V),
+        )
+
+    def _load_bias_pulse_unlocked(self, pulse_du_V):
         try:
             rec = self.runner.load_gvp_bias_pulse(float(pulse_du_V))
             return self.jsonable(rec.__dict__)
@@ -30,6 +36,12 @@ class GvpGuiMixin:
         cancelled = self.require_arm(arm, "load a tip-tune GVP program")
         if cancelled:
             return cancelled
+        return self.run_microscope_operation(
+            "load tip-tune Z-dip GVP",
+            lambda: self._load_tip_tune_gvp_unlocked(contact_bias_V, dip_depth_A, ramp_time_s),
+        )
+
+    def _load_tip_tune_gvp_unlocked(self, contact_bias_V, dip_depth_A, ramp_time_s):
         try:
             current_scan_bias = self.read_float_parameter("dsp-fbs-bias", fallback=0.1)
             rec = self.runner.load_gvp_tip_dip(
@@ -83,6 +95,12 @@ class GvpGuiMixin:
         phrase = self.safety_limits()["gvp_execute_extra_confirmation"]
         if str(confirm_text).strip() != phrase:
             return {"cancelled": "Type '{}' to execute loaded GVP.".format(phrase)}
+        return self.run_microscope_operation(
+            "execute loaded GVP",
+            self._execute_loaded_gvp_unlocked,
+        )
+
+    def _execute_loaded_gvp_unlocked(self):
         try:
             rec = self.runner.action("DSP_VP_VP_EXECUTE")
             return self.jsonable(rec.__dict__)
@@ -140,6 +158,12 @@ class GvpGuiMixin:
         if str(confirm_text).strip() != phrase:
             report = {"cancelled": "Type '{}' to execute loaded GVP.".format(phrase)}
             return self.gvp_trace_figure(None, report), report
+        operation_blocked = self.acquire_microscope_operation(
+            "execute loaded GVP with plot",
+            blocking=False,
+        )
+        if operation_blocked:
+            return self.gvp_trace_figure(None, operation_blocked), self.jsonable(operation_blocked)
         try:
             report = {
                 "command_order": (
@@ -193,9 +217,11 @@ class GvpGuiMixin:
             )
             report["analysis"] = self.jsonable(analysis)
             fig = self.gvp_trace_figure(data, report)
+            self.release_microscope_operation()
             return fig, report
         except Exception as exc:
             report = {"error": str(exc), "traceback": traceback.format_exc()}
+            self.release_microscope_operation()
             return self.gvp_trace_figure(None, report), report
 
     def find_vpdata_signal(self, vpdata, candidates):

@@ -323,6 +323,18 @@ class ScanGuiMixin:
         return fig, report
 
     def fetch_scan_plot_with_profile(self, channel, chunk_lines):
+        operation_blocked = self.acquire_microscope_operation(
+            "fetch scan image",
+            blocking=False,
+        )
+        if operation_blocked:
+            fig, ax = plt.subplots(figsize=(6, 4), constrained_layout=True)
+            ax.text(0.5, 0.5, operation_blocked["reason"], ha="center", va="center", wrap=True)
+            ax.set_axis_off()
+            profile_fig, profile_ax = plt.subplots(figsize=(6, 2.5), constrained_layout=True)
+            profile_ax.text(0.5, 0.5, operation_blocked["reason"], ha="center", va="center", wrap=True)
+            profile_ax.set_axis_off()
+            return fig, profile_fig, self.jsonable(operation_blocked)
         try:
             image, meta = self.runner.fetch_scan_image_to_line(
                 channel=int(channel),
@@ -350,6 +362,7 @@ class ScanGuiMixin:
                 "fetched_y_count": int(meta.get("fetched_y_count", image.shape[0])),
                 "timestamp": time.time(),
             }
+            self.release_microscope_operation()
             return fig, profile_fig, report
         except Exception as exc:
             fig, ax = plt.subplots(figsize=(6, 4), constrained_layout=True)
@@ -358,6 +371,7 @@ class ScanGuiMixin:
             profile_fig, profile_ax = plt.subplots(figsize=(6, 2.5), constrained_layout=True)
             profile_ax.text(0.5, 0.5, str(exc), ha="center", va="center", wrap=True)
             profile_ax.set_axis_off()
+            self.release_microscope_operation()
             return fig, profile_fig, {"error": str(exc), "traceback": traceback.format_exc()}
 
     def plot_last_scan_line_profile(self, image, meta, extent):
@@ -395,18 +409,32 @@ class ScanGuiMixin:
             import gradio as gr
         except Exception:
             gr = None
+        update = gr.update() if gr else None
         if not enabled:
-            update = gr.update() if gr else None
             return update, update, update
+        operation_blocked = self.acquire_microscope_operation(
+            "auto refresh scan image",
+            blocking=False,
+        )
+        if operation_blocked:
+            report = dict(operation_blocked)
+            report["status"] = "skipped_busy"
+            report["note"] = (
+                "Auto scan refresh skipped because another PySHM operation, "
+                "such as the Tip Tune Planner, owns the microscope lane."
+            )
+            return update, update, self.jsonable(report)
         try:
             channel = int(channel)
             y_current = self.current_scan_line_index(channel)
             previous = self.scan_view_state.get(channel, {}).get("y_current")
             if previous is not None and int(previous) == int(y_current):
-                update = gr.update() if gr else None
+                self.release_microscope_operation()
                 return update, update, update
+            self.release_microscope_operation()
             return self.fetch_scan_plot_with_profile(channel, chunk_lines)
         except Exception as exc:
+            self.release_microscope_operation()
             fig, ax = plt.subplots(figsize=(6, 4), constrained_layout=True)
             ax.text(0.5, 0.5, str(exc), ha="center", va="center", wrap=True)
             ax.set_axis_off()

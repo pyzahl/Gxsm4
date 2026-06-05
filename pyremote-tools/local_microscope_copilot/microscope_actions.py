@@ -1354,10 +1354,10 @@ class MicroscopeActionRunner:
             y_current = int(float(gxsm.y_current()))
         y0 = max(0, min(ny - 1, y_current) - int(line_count) + 1)
         yn = max(1, min(int(line_count), y_current - y0 + 1))
-        strip = np.asarray(gxsm.get_slice(channel, 0, 0, y0, yn), dtype=float)
+        strip = self.get_slice_array(gxsm, channel, 0, 0, y0, yn)
         settings = self._scan_settings(channel)
-        pixel_size_x_A = float(settings["RangeX"]) / float(settings["PointsX"])
-        x_A = (np.arange(strip.shape[1]) - strip.shape[1] / 2.0) * pixel_size_x_A
+        pixel_size_x_A = float(settings["RangeX"]) / max(float(settings["PointsX"]) - 1.0, 1.0)
+        x_A = np.arange(strip.shape[1]) * pixel_size_x_A - float(settings["RangeX"]) / 2.0
         profile = np.nanmean(strip, axis=0)
         ok = np.isfinite(profile)
         if ok.sum() < 3:
@@ -1401,6 +1401,19 @@ class MicroscopeActionRunner:
             )
         self.data["last_fast_axis_slope"] = report
         return report
+
+    def get_slice_array(self, gxsm, channel, v, t, yi, yn):
+        """
+        Fetch a GXSM slice and immediately normalize it into local NumPy memory.
+
+        `gxsm.get_slice()` returns through the PySHM pickle path and may contain
+        a NumPy array produced on the GXSM side.  Copying with the local/system
+        NumPy instance avoids keeping references to a foreign unpickled array
+        object and gives downstream analysis a plain C-contiguous float64 block.
+        """
+        raw = gxsm.get_slice(channel, v, t, yi, yn)
+        arr = np.array(raw, dtype=np.float64, copy=True, order="C")
+        return arr
 
     def auto_correct_scan_slope_from_recent_lines(
         self,
@@ -1566,7 +1579,7 @@ class MicroscopeActionRunner:
         chunks = []
         for yi in range(0, y_count, chunk_lines):
             yn = min(chunk_lines, y_count - yi)
-            block = np.asarray(gxsm.get_slice(channel, 0, 0, yi, yn), dtype=float)
+            block = self.get_slice_array(gxsm, channel, 0, 0, yi, yn)
             if block.ndim != 2:
                 raise RuntimeError(
                     "Unexpected get_slice block shape at yi={}: {}".format(

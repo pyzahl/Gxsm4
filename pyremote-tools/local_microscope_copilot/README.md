@@ -81,9 +81,14 @@ Install the optional GUI dependencies:
 
 ```bash
 cd local_microscope_copilot
-python3 -m venv .venv
+python3 -m venv --system-site-packages .venv
 .venv/bin/python -m pip install -r requirements-gui.txt
 ```
+
+For live GXSM4 use, the venv must see the same system Python and NumPy ABI that
+GXSM4 was compiled/linked against. Do not install a separate pip NumPy wheel in
+`.venv`; NumPy should resolve to the system package, for example
+`/usr/lib/python3/dist-packages/numpy`.
 
 Start the GUI on localhost:
 
@@ -154,7 +159,17 @@ The GUI loads three JSON files by default:
   THV endpoint, GVP timing/defaults, tip-loop bounds, and read-only GXSM dconf
   key mappings for current values/adjustment limits.
 - `microscope_gui_config.json`: front-end defaults such as scan-line fetch
-  counts, refresh timers, gains, form defaults, and visual gauge ranges.
+  counts, gains, form defaults, and visual gauge ranges.
+
+Safety/concurrency rule: the live monitor timer may read only the fast
+read-only SHM monitor block through `rt_query_xyz()` and `rt_query_rpspmc()`.
+PySHM command paths such as `gxsm.get`, `gxsm.set`, `gxsm.action`, and
+`get_slice` must never overlap. The optional scan-image auto refresh uses the
+GUI microscope-operation gate and skips refresh cycles while the Tip Tune
+Planner or another PySHM action is active. Current-tip marker reads remain
+explicit button actions. PySHM commands use a process-local lock plus the
+cross-process lock file `/tmp/gxsm4_pyshm_transaction.lock`; external scripts
+should use the same wrapper/lock path.
 
 Override paths when needed:
 
@@ -187,16 +202,19 @@ Ollama is involved, and language-model replies are still prevented from
 claiming hardware actions that did not pass through the deterministic gate.
 
 The `Live Microscope State Monitor` tab includes a read-only fast XYZ monitor
-that updates about 5 times per second from `gxsm4process.rt_query_xyz()` fast
-SHM mapped controller Volts. Visible X/Y/Z values are converted to Angstroms
-with `gxsm.get_instrument_gains()` using `A = Vmonitor * AVxyz`, where
-the current dict return provides `Vxyz` and `AVxyz`. Raw controller Volts and
+that updates about 5 times per second from `gxsm4process.rt_query_xyz()` and
+`rt_query_rpspmc()` fast SHM mapped controller Volts. The timer uses cached or
+configured instrument gains only. Use `Full Refresh / Update Gains` to refresh
+`gxsm.get_instrument_gains()` and the GVP monitor values through PySHM. Visible
+X/Y/Z values are converted to Angstroms with `A = Vmonitor * AVxyz`, where the
+current dict return provides `Vxyz` and `AVxyz`. Raw controller Volts and
 effective piezo Volts remain in the JSON report. Bias, current, GVP U, PAC
-amplitude, and PAC dFreq are shown from `rt_query_rpspmc()` with 6 significant
-digit formatting. PAC amplitude uses a +/-10 mV gauge. A 2D XY panel is scaled
-in controller/world Angstroms using the configured maximum controller voltage,
-default +/-5 V, converted with `AVxyz`. `AVxyz` already includes the active instrument gains. Known large hazards are overlaid directly in that same Angstrom
-coordinate system.
+amplitude, and PAC dFreq are shown with 6 significant digit formatting. PAC
+amplitude uses a +/-10 mV gauge. A 2D XY panel is scaled in controller/world
+Angstroms using the configured maximum controller voltage, default +/-5 V,
+converted with `AVxyz`. `AVxyz` already includes the active instrument gains.
+Known large hazards are overlaid directly in that same Angstrom coordinate
+system.
 
 The `Tip Tune Planner` tab keeps a bottom-page activity/status ledger with the
 current action, next pending action, timestamps, completion status, blocked

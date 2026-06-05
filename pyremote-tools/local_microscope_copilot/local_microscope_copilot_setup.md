@@ -41,9 +41,13 @@ Install the optional dependencies:
 
 ```bash
 cd local_microscope_copilot
-python3 -m venv .venv
+python3 -m venv --system-site-packages .venv
 .venv/bin/python -m pip install -r requirements-gui.txt
 ```
+
+Live GXSM4 use requires the GUI process to import the same system NumPy ABI that
+GXSM4 was compiled/linked against. Keep NumPy out of the venv and let
+`.venv/bin/python` resolve it from the system site packages.
 
 Start in dry-run mode:
 
