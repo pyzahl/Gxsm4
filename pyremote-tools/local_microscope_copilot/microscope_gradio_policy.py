@@ -235,9 +235,13 @@ Deterministic chat router:
   scan speed, feedback CP/CI, scan geometry, slopes, and GVP monitors.
 - Executes Level-1 scan start/stop and bounded parameter changes only when
   Control Level is 1+ and the chat arm checkbox is checked.
+- Optional LLM Intent Mode may ask the local model for strict JSON only; that
+  JSON is then reparsed through these same deterministic routes and gates.
 - Executes OffsetX and OffsetY as individually named world-coordinate
   Angstrom targets, for example `set offset x 100 A` or
   `set offset x 10 nm and offset y -20 nm`.
+- Understands shared OffsetX/Y absolute targets, for example
+  `set offset X and Y to 0 A`.
 - Executes relative image/frame shifts such as `shift image 100 A left`;
   the local image direction is rotated into world OffsetX/Y using Rotation.
 - Understands relative requests like "increase bias by 0.05 V", "make scan

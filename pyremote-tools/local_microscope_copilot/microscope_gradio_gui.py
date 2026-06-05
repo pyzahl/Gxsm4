@@ -145,7 +145,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
     def jsonable(self, value):
         return self.runner._jsonable(value)
 
-    def chat(self, message, history, chat_arm=False):
+    def chat(self, message, history, chat_arm=False, llm_intent_mode=True):
         if not message:
             return "", history
         direct = self.direct_safety_reply(message, chat_arm=chat_arm)
@@ -154,6 +154,13 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             history.append({"role": "user", "content": message})
             history.append({"role": "assistant", "content": direct})
             return "", history
+        if llm_intent_mode:
+            intent_reply = self.try_llm_intent_reply(message, chat_arm=chat_arm)
+            if intent_reply is not None:
+                history = list(history or [])
+                history.append({"role": "user", "content": message})
+                history.append({"role": "assistant", "content": intent_reply})
+                return "", history
         level_note = "Current GUI control setting: {}. {}".format(
             CONTROL_LEVELS.get(self.control_level, self.control_level),
             "Live GUI mode is enabled." if self.live else "GUI is in dry-run mode.",
@@ -223,6 +230,299 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             return read_reply
         return None
 
+    def try_llm_intent_reply(self, message, chat_arm=False):
+        if not self.looks_like_microscope_intent_request(str(message).lower()):
+            return None
+        try:
+            intent = self.request_llm_intent(message)
+        except requests.ConnectionError:
+            return "Could not connect to Ollama for intent parsing. Start it with: `ollama serve`."
+        except Exception as exc:
+            return "LLM intent parsing failed safely: {}".format(exc)
+        if intent is None:
+            return (
+                "I could not map that request to a known microscope intent. "
+                "No hardware action was executed."
+            )
+        return self.execute_llm_intent(intent, original_message=message, chat_arm=chat_arm)
+
+    def request_llm_intent(self, message):
+        prompt = self.build_llm_intent_prompt(message)
+        reply = requests.post(
+            self.config.get("ollama_host", "http://127.0.0.1:11434") + "/api/chat",
+            json={
+                "model": self.config.get("model", "qwen3:4b"),
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": (
+                            "You convert GXSM4 microscope chat requests into "
+                            "strict JSON only. Do not explain. Do not claim "
+                            "hardware actions. If unsure, use no_action."
+                        ),
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                "stream": False,
+                "format": "json",
+                "options": {"temperature": 0.0},
+            },
+            timeout=60,
+        )
+        reply.raise_for_status()
+        content = reply.json()["message"].get("content", "")
+        obj = self.parse_llm_intent_json(content)
+        if not isinstance(obj, dict):
+            return None
+        return obj
+
+    def build_llm_intent_prompt(self, message):
+        template = """
+Return exactly one JSON object with this shape:
+{
+  "intent": "one_allowed_intent",
+  "confidence": 0.0,
+  "parameters": {},
+  "rationale": "short"
+}
+
+Allowed intents:
+- set_parameter: parameters {"parameter": "bias|current_setpoint|scan_speed|rotation|offset_x|offset_y|feedback_cp|feedback_ci|slope_x|slope_y", "value": "number with required unit"}
+- set_offsets_xy: parameters {"value": "number with length unit"}
+- shift_image: parameters {"amount": "number with length unit", "direction": "left|right|up|down"}
+- set_scan_geometry: parameters {"range": "number with length unit, optional", "points": integer optional, "rotation": "number deg optional"}
+- start_scan: parameters {}
+- stop_scan: parameters {}
+- read_parameter: parameters {"parameter": "bias|current_setpoint|scan_speed|rotation|offset_x|offset_y|feedback_cp|feedback_ci|slope_x|slope_y|scan_geometry|all"}
+- analyze_scan: parameters {}
+- load_tip_pulse: parameters {"pulse": "number V optional"}
+- load_tip_dip: parameters {"contact_bias": "number V optional", "dip_depth": "number A optional", "ramp_time": "number s optional"}
+- no_action: parameters {"reason": "why"}
+
+Rules:
+- Preserve user units exactly; do not convert 200 mV to 200 V.
+- Physical values must include units. Unitless points/counts are allowed.
+- Rotation may be unitless and then means degrees.
+- For "set/apply bias", use set_parameter bias.
+- For "offset X and Y to 0A", use set_offsets_xy.
+- For "shift image/feature left/right/up/down", use shift_image.
+- Use confidence below 0.75 if not clear.
+
+User request: __USER_REQUEST__
+""".strip()
+        return template.replace("__USER_REQUEST__", json.dumps(str(message)))
+
+    def parse_llm_intent_json(self, content):
+        text = str(content).strip()
+        try:
+            return json.loads(text)
+        except Exception:
+            pass
+        start = text.find("{")
+        if start < 0:
+            return None
+        depth = 0
+        in_string = False
+        escape = False
+        for index, char in enumerate(text[start:], start=start):
+            if escape:
+                escape = False
+                continue
+            if char == "\\":
+                escape = True
+                continue
+            if char == '"':
+                in_string = not in_string
+                continue
+            if in_string:
+                continue
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        return json.loads(text[start : index + 1])
+                    except Exception:
+                        return None
+        return None
+
+    def execute_llm_intent(self, intent, original_message="", chat_arm=False):
+        name = str(intent.get("intent", "")).strip().lower()
+        params = intent.get("parameters") or {}
+        try:
+            confidence = float(intent.get("confidence", 0.0))
+        except Exception:
+            confidence = 0.0
+        if confidence < 0.75 or name in ("", "no_action", "clarify"):
+            reason = params.get("reason") if isinstance(params, dict) else ""
+            return (
+                "LLM intent mode did not execute anything. "
+                "The request was not mapped to a known action with enough confidence"
+                "{}".format(": {}.".format(reason) if reason else ".")
+            )
+        if not isinstance(params, dict):
+            return "LLM intent mode rejected the response: parameters must be a JSON object."
+
+        try:
+            if name == "set_parameter":
+                return self.execute_llm_set_parameter_intent(params, chat_arm=chat_arm)
+            if name == "set_offsets_xy":
+                value = str(params.get("value", "")).strip()
+                return self.route_absolute_offset_xy_write(
+                    "set offset x and y to {}".format(value),
+                    chat_arm=chat_arm,
+                )
+            if name == "shift_image":
+                amount = str(params.get("amount", "")).strip()
+                direction = str(params.get("direction", "")).strip().lower()
+                return self.route_relative_offset_shift(
+                    "shift image {} {}".format(amount, direction),
+                    chat_arm=chat_arm,
+                )
+            if name == "set_scan_geometry":
+                return self.execute_llm_scan_geometry_intent(params, chat_arm=chat_arm)
+            if name == "start_scan":
+                return self.execute_chat_level1_action(
+                    "start scan",
+                    "startscan",
+                    chat_arm,
+                    lambda: self.start_scan(arm=True),
+                )
+            if name == "stop_scan":
+                return self.execute_chat_level1_action(
+                    "stop scan",
+                    "stopscan",
+                    chat_arm,
+                    lambda: self.stop_scan(arm=True),
+                )
+            if name == "read_parameter":
+                return self.execute_llm_read_parameter_intent(params)
+            if name == "analyze_scan":
+                return self.try_chat_scan_analysis("analyze current scan")
+            if name == "load_tip_pulse":
+                pulse = str(params.get("pulse", "")).strip()
+                return self.direct_safety_reply(
+                    "load tip pulse {}".format(pulse).strip(),
+                    chat_arm=chat_arm,
+                )
+            if name == "load_tip_dip":
+                parts = ["load tip tune"]
+                if params.get("contact_bias"):
+                    parts.append("contact bias {}".format(params["contact_bias"]))
+                if params.get("dip_depth"):
+                    parts.append("dip {}".format(params["dip_depth"]))
+                if params.get("ramp_time"):
+                    parts.append("ramp {}".format(params["ramp_time"]))
+                return self.direct_safety_reply(" ".join(parts), chat_arm=chat_arm)
+        except Exception as exc:
+            return (
+                "LLM intent mode failed safely while validating `{}`: {}\n\n"
+                "No later action was executed."
+            ).format(name, exc)
+
+        return (
+            "LLM intent mode rejected unknown intent `{}`. "
+            "No hardware action was executed."
+        ).format(name)
+
+    def execute_llm_set_parameter_intent(self, params, chat_arm=False):
+        aliases = {
+            "bias": "bias",
+            "current": "current_setpoint",
+            "current_setpoint": "current_setpoint",
+            "scan_speed": "scan_speed",
+            "rotation": "rotation",
+            "offset_x": "offset_x",
+            "offset_y": "offset_y",
+            "feedback_cp": "feedback_cp",
+            "feedback_ci": "feedback_ci",
+            "cp": "feedback_cp",
+            "ci": "feedback_ci",
+            "slope_x": "slope_x",
+            "slope_y": "slope_y",
+        }
+        parameter = aliases.get(str(params.get("parameter", "")).strip().lower())
+        value = str(params.get("value", "")).strip()
+        if not parameter or parameter not in PARAM_SPECS:
+            return "LLM intent mode rejected an unknown parameter. No hardware action was executed."
+        if not value:
+            return "LLM intent mode rejected an empty parameter value. No hardware action was executed."
+        alias = PARAM_SPECS[parameter]["aliases"][0]
+        return self.route_parameter_write(
+            "set {} to {}".format(alias, value),
+            parameter,
+            chat_arm=chat_arm,
+        )
+
+    def execute_llm_scan_geometry_intent(self, params, chat_arm=False):
+        plan = []
+        range_text = str(params.get("range", "")).strip()
+        points = params.get("points", None)
+        rotation_text = str(params.get("rotation", "")).strip()
+        if range_text or points is not None:
+            text = "set scan geometry"
+            if range_text:
+                text += " {}".format(range_text)
+            if points is not None:
+                text += " {} points".format(points)
+            parsed = self.parse_scan_geometry_request(text)
+            if parsed is None:
+                return (
+                    "LLM intent mode rejected scan geometry because range/points "
+                    "could not be parsed with valid units."
+                )
+            range_A, point_count = parsed
+            plan.append(
+                {
+                    "action_name": "scan geometry",
+                    "target": "{} A, {} points".format(range_A, point_count),
+                    "callback": lambda range_A=range_A, point_count=point_count: self.set_scan_geometry(
+                        range_A,
+                        point_count,
+                        arm=True,
+                    ),
+                }
+            )
+        if rotation_text:
+            target = self.resolve_rotation_target_deg("rotation {}".format(rotation_text))
+            if target is None:
+                return "LLM intent mode rejected scan rotation because it was not parseable."
+            plan.append(
+                {
+                    "action_name": "scan rotation",
+                    "target": "{} deg".format(self.fmt6(target)),
+                    "callback": lambda target=target: self.set_rotation(target, arm=True),
+                }
+            )
+        if not plan:
+            return "LLM intent mode rejected empty scan geometry. No hardware action was executed."
+        return self.execute_chat_level1_plan(plan, chat_arm=chat_arm)
+
+    def execute_llm_read_parameter_intent(self, params):
+        parameter = str(params.get("parameter", "")).strip().lower()
+        if parameter in ("all", "scan_geometry", "geometry"):
+            return self.format_parameter_readback(list(KNOWN_READBACK_REFS))
+        aliases = {
+            "bias": "bias",
+            "current": "current_setpoint",
+            "current_setpoint": "current_setpoint",
+            "scan_speed": "scan_speed",
+            "rotation": "rotation",
+            "offset_x": "offset_x",
+            "offset_y": "offset_y",
+            "feedback_cp": "feedback_cp",
+            "feedback_ci": "feedback_ci",
+            "slope_x": "slope_x",
+            "slope_y": "slope_y",
+        }
+        key = aliases.get(parameter)
+        if not key or key not in PARAM_SPECS:
+            return "LLM intent mode could not map that readback to a known parameter."
+        return self.format_parameter_readback(
+            [(PARAM_SPECS[key]["label"], PARAM_SPECS[key]["refname"])]
+        )
+
     def route_chat_intent(self, text, chat_arm=False):
         text_l = text.lower().strip()
         if not text_l:
@@ -265,6 +565,12 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             keys = self.infer_parameter_keys(text_l, allow_context=True)
             if self.looks_like_scan_geometry_request(text_l):
                 return self.route_scan_geometry_write(text, chat_arm=chat_arm)
+            absolute_offset_xy_reply = self.route_absolute_offset_xy_write(
+                text,
+                chat_arm=chat_arm,
+            )
+            if absolute_offset_xy_reply is not None:
+                return absolute_offset_xy_reply
             if keys:
                 writable_keys = [
                     key for key in keys if PARAM_SPECS.get(key, {}).get("write")
@@ -852,6 +1158,20 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             )
         )
 
+    def looks_like_microscope_intent_request(self, text_l):
+        return bool(
+            re.search(
+                r"\b("
+                r"bias|voltage|volt|millivolt|sample|tunnel|current|setpoint|"
+                r"scan|scanning|image|offset|rotation|"
+                r"feedback|cp|ci|slope|gvp|tip|pulse|dip|tune|dfreq|"
+                r"start|stop|apply|set|change|adjust|shift|move|read|show|"
+                r"analyze|analyse|evaluate"
+                r")\b",
+                text_l,
+            )
+        )
+
     def looks_like_live_monitor_read(self, text_l):
         return (
             any(word in text_l for word in ("live", "fast", "rpspmc", "xyz"))
@@ -1066,6 +1386,57 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 lambda: self.set_feedback_cp_ci(cp, ci, arm=True),
             )
         return None
+
+    def route_absolute_offset_xy_write(self, text, chat_arm=False):
+        parsed = self.parse_absolute_offset_xy_write(text)
+        if parsed is None:
+            return None
+        if parsed.get("error"):
+            return parsed["error"]
+        target_x = parsed["offset_x_A"]
+        target_y = parsed["offset_y_A"]
+        target = {
+            "to_OffsetX_A": self.fmt6(target_x),
+            "to_OffsetY_A": self.fmt6(target_y),
+            "interpretation": parsed["interpretation"],
+        }
+        return self.execute_chat_level1_action(
+            "OffsetX/Y",
+            target,
+            chat_arm,
+            lambda target_x=target_x, target_y=target_y: self.set_offset_xy(
+                target_x,
+                target_y,
+                arm=True,
+            ),
+        )
+
+    def parse_absolute_offset_xy_write(self, text):
+        text_s = str(text)
+        text_l = text_s.lower()
+        if not re.search(r"\b(set|change|adjust|make|configure|apply|move)\b", text_l):
+            return None
+        shared_xy = bool(
+            re.search(r"\boffsets?\s*(?:x\s*(?:and|&|/)\s*y|xy|x/y)\b", text_l)
+            or re.search(r"\boffset\s*x\s*(?:and|&|/)\s*y\b", text_l)
+            or re.search(r"\boffset\s*y\s*(?:and|&|/)\s*x\b", text_l)
+        )
+        if not shared_xy:
+            return None
+        parsed = self.parse_si_quantity(text_s, "length_A")
+        if parsed is None:
+            return {
+                "error": self.missing_unit_message(
+                    "OffsetX/Y",
+                    "`0 A`, `100 A`, or `10 nm`",
+                )
+            }
+        value_A = float(parsed["value"])
+        return {
+            "offset_x_A": value_A,
+            "offset_y_A": value_A,
+            "interpretation": "same absolute world-coordinate value for OffsetX and OffsetY",
+        }
 
     def route_relative_offset_shift(self, text, chat_arm=False):
         parsed = self.parse_relative_offset_shift(text)
@@ -2899,12 +3270,20 @@ def build_ui(backend):
             gr.Markdown(
                 "Ollama replies are advisory. Clear Level 1 chat commands "
                 "(including start/stop scan and bounded parameter changes) can "
-                "execute only when Control Level is 1+ and chat action arm is checked."
+                "execute only when Control Level is 1+ and chat action arm is checked. "
+                "LLM Intent Mode, when enabled, asks the model only for a strict "
+                "JSON intent and then reparses it through the deterministic safety gates."
             )
             chat = gr.Chatbot(label="Ollama chat", height=420)
-            chat_arm = gr.Checkbox(value=False, label="Arm Level 1 chat actions")
+            with gr.Row():
+                chat_arm = gr.Checkbox(value=False, label="Arm Level 1 chat actions")
+                llm_intent_mode = gr.Checkbox(value=True, label="LLM Intent Mode")
             prompt = gr.Textbox(label="Prompt", placeholder="Ask for interpretation or a proposed next step")
-            prompt.submit(backend.chat, [prompt, chat, chat_arm], [prompt, chat])
+            prompt.submit(
+                backend.chat,
+                [prompt, chat, chat_arm, llm_intent_mode],
+                [prompt, chat],
+            )
 
         with gr.Tab("Live Readouts"):
             with gr.Row():
