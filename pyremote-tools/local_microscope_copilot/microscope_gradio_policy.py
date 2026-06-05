@@ -168,8 +168,22 @@ PARAM_SPECS = {
         "label": "rotation_deg",
         "refname": "Rotation",
         "unit": "deg",
-        "aliases": ("rotation", "scan rotation", "angle"),
-        "write": None,
+        "aliases": ("rotation", "scan rotation", "rotate", "scan angle", "angle"),
+        "write": "rotation",
+    },
+    "offset_x": {
+        "label": "offset_x_A",
+        "refname": "OffsetX",
+        "unit": "A",
+        "aliases": ("offset x", "offsetx", "scan offset x", "world offset x"),
+        "write": "offset_x",
+    },
+    "offset_y": {
+        "label": "offset_y_A",
+        "refname": "OffsetY",
+        "unit": "A",
+        "aliases": ("offset y", "offsety", "scan offset y", "world offset y"),
+        "write": "offset_y",
     },
     "slope_x": {
         "label": "scan_slope_x_A_per_A",
@@ -221,6 +235,11 @@ Deterministic chat router:
   scan speed, feedback CP/CI, scan geometry, slopes, and GVP monitors.
 - Executes Level-1 scan start/stop and bounded parameter changes only when
   Control Level is 1+ and the chat arm checkbox is checked.
+- Executes OffsetX and OffsetY as individually named world-coordinate
+  Angstrom targets, for example `set offset x 100 A` or
+  `set offset x 10 nm and offset y -20 nm`.
+- Executes relative image/frame shifts such as `shift image 100 A left`;
+  the local image direction is rotated into world OffsetX/Y using Rotation.
 - Understands relative requests like "increase bias by 0.05 V", "make scan
   speed 20% faster", and context pronouns like "set it to ..." after a read.
 - Routes tip/scan analysis to deterministic image analysis rather than asking

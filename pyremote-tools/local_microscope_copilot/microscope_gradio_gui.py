@@ -211,7 +211,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         if action_reply is not None:
             return action_reply
         if re.search(
-            r"\b(set|change|adjust|make|configure|apply)\b",
+            r"\b(set|change|adjust|make|configure|apply|rotate|move|shift)\b",
             text,
             re.IGNORECASE,
         ):
@@ -258,11 +258,27 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         if self.looks_like_live_monitor_read(text_l):
             self.chat_context["last_action_domain"] = "monitor"
             return self.format_live_monitor_readback()
+        offset_shift_reply = self.route_relative_offset_shift(text, chat_arm=chat_arm)
+        if offset_shift_reply is not None:
+            return offset_shift_reply
         if self.looks_like_write_request(text_l):
             keys = self.infer_parameter_keys(text_l, allow_context=True)
             if self.looks_like_scan_geometry_request(text_l):
                 return self.route_scan_geometry_write(text, chat_arm=chat_arm)
             if keys:
+                writable_keys = [
+                    key for key in keys if PARAM_SPECS.get(key, {}).get("write")
+                ]
+                if len(writable_keys) > 1:
+                    plan = []
+                    for key in writable_keys:
+                        entry = self.build_parameter_write_plan_entry(text, key)
+                        if isinstance(entry, str):
+                            return entry
+                        if entry:
+                            plan.append(entry)
+                    if plan:
+                        return self.execute_chat_level1_plan(plan, chat_arm=chat_arm)
                 return self.route_parameter_write(text, keys[0], chat_arm=chat_arm)
             if self.context_parameter_key():
                 return self.route_parameter_write(
@@ -714,6 +730,34 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                     arm=True,
                 ),
             }
+        if write_kind == "rotation":
+            target = self.resolve_rotation_target_deg(text)
+            if target is None:
+                return "I did not change scan rotation. Use an absolute angle, for example `45 deg` or `90`."
+            if not (-360.0 <= target <= 360.0):
+                return "I did not change scan rotation. Level 1 allows -360..360 deg."
+            return {
+                "action_name": "scan rotation",
+                "target": "{} deg".format(self.fmt6(target)),
+                "callback": lambda target=target: self.set_rotation(target, arm=True),
+            }
+        if write_kind in ("offset_x", "offset_y"):
+            axis = "x" if write_kind == "offset_x" else "y"
+            target = self.resolve_offset_target_A(text, axis)
+            if target is None:
+                return self.missing_unit_message(
+                    "Offset{}".format(axis.upper()),
+                    "`100 A` or `10 nm`",
+                )
+            return {
+                "action_name": "Offset{}".format(axis.upper()),
+                "target": "{} A".format(self.fmt6(target)),
+                "callback": lambda target=target, axis=axis: self.set_offset_axis(
+                    axis,
+                    target,
+                    arm=True,
+                ),
+            }
         if write_kind in ("slope_x", "slope_y"):
             target = self.resolve_slope_target_A_per_A(text, current_refname=spec["refname"])
             if target is None:
@@ -825,7 +869,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
     def looks_like_write_request(self, text_l):
         return bool(
             re.search(
-                r"\b(set|change|adjust|make|configure|apply|increase|decrease|raise|lower|faster|slower)\b",
+                r"\b(set|change|adjust|make|configure|apply|rotate|move|shift|increase|decrease|raise|lower|faster|slower)\b",
                 text_l,
             )
         )
@@ -950,6 +994,32 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 chat_arm,
                 lambda: self.set_scan_speed(target, range_A, arm=True),
             )
+        if write_kind == "rotation":
+            target = self.resolve_rotation_target_deg(text)
+            if target is None:
+                return "I did not change scan rotation. Use an absolute angle, for example `45 deg` or `90`."
+            if not (-360.0 <= target <= 360.0):
+                return "I did not change scan rotation. Level 1 allows -360..360 deg."
+            return self.execute_chat_level1_action(
+                "scan rotation",
+                "{} deg".format(self.fmt6(target)),
+                chat_arm,
+                lambda: self.set_rotation(target, arm=True),
+            )
+        if write_kind in ("offset_x", "offset_y"):
+            axis = "x" if write_kind == "offset_x" else "y"
+            target = self.resolve_offset_target_A(text, axis)
+            if target is None:
+                return self.missing_unit_message(
+                    "Offset{}".format(axis.upper()),
+                    "`100 A` or `10 nm`",
+                )
+            return self.execute_chat_level1_action(
+                "Offset{}".format(axis.upper()),
+                "{} A".format(self.fmt6(target)),
+                chat_arm,
+                lambda: self.set_offset_axis(axis, target, arm=True),
+            )
         if write_kind in ("slope_x", "slope_y"):
             target = self.resolve_slope_target_A_per_A(text, current_refname=spec["refname"])
             if target is None:
@@ -996,6 +1066,90 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 lambda: self.set_feedback_cp_ci(cp, ci, arm=True),
             )
         return None
+
+    def route_relative_offset_shift(self, text, chat_arm=False):
+        parsed = self.parse_relative_offset_shift(text)
+        if parsed is None:
+            return None
+        if parsed.get("error"):
+            return parsed["error"]
+        current_x = self.read_float_parameter("OffsetX", fallback=0.0)
+        current_y = self.read_float_parameter("OffsetY", fallback=0.0)
+        rotation = self.read_float_parameter("Rotation", fallback=0.0)
+        theta = np.deg2rad(rotation)
+        local_dx = parsed["local_dx_A"]
+        local_dy = parsed["local_dy_A"]
+        world_dx = local_dx * np.cos(theta) - local_dy * np.sin(theta)
+        world_dy = local_dx * np.sin(theta) + local_dy * np.cos(theta)
+        target_x = current_x + world_dx
+        target_y = current_y + world_dy
+        target = {
+            "from_OffsetX_A": self.fmt6(current_x),
+            "from_OffsetY_A": self.fmt6(current_y),
+            "to_OffsetX_A": self.fmt6(target_x),
+            "to_OffsetY_A": self.fmt6(target_y),
+            "rotation_deg": self.fmt6(rotation),
+            "local_dx_A": self.fmt6(local_dx),
+            "local_dy_A": self.fmt6(local_dy),
+            "world_dx_A": self.fmt6(world_dx),
+            "world_dy_A": self.fmt6(world_dy),
+        }
+        return self.execute_chat_level1_action(
+            "relative OffsetX/Y shift",
+            target,
+            chat_arm,
+            lambda target_x=target_x, target_y=target_y: self.set_offset_xy(
+                target_x,
+                target_y,
+                arm=True,
+            ),
+        )
+
+    def parse_relative_offset_shift(self, text):
+        text_s = str(text)
+        text_l = text_s.lower()
+        if not re.search(r"\b(shift|move|relocate)\b", text_l):
+            return None
+        if not re.search(r"\b(image|scan|view|frame|feature|features|offset|landscape)\b", text_l):
+            return None
+        directions = {
+            "left": (-1.0, 0.0),
+            "right": (1.0, 0.0),
+            "up": (0.0, 1.0),
+            "above": (0.0, 1.0),
+            "top": (0.0, 1.0),
+            "down": (0.0, -1.0),
+            "below": (0.0, -1.0),
+            "bottom": (0.0, -1.0),
+        }
+        direction_hits = [
+            name for name in directions if re.search(r"\b{}\b".format(name), text_l)
+        ]
+        if not direction_hits:
+            return None
+
+        amount = self.parse_si_quantity(text_s, "length_A")
+        if amount is None:
+            return {
+                "error": (
+                    "I did not shift OffsetX/Y. Please include an explicit "
+                    "length unit, for example `shift image 100 A left` or "
+                    "`shift scan down by 10 nm`."
+                )
+            }
+        amount_A = abs(float(amount["value"]))
+        local_dx = 0.0
+        local_dy = 0.0
+        for direction in direction_hits:
+            dx, dy = directions[direction]
+            local_dx += dx * amount_A
+            local_dy += dy * amount_A
+        return {
+            "amount_A": amount_A,
+            "directions": direction_hits,
+            "local_dx_A": local_dx,
+            "local_dy_A": local_dy,
+        }
 
     def resolve_numeric_target(
         self,
@@ -1291,6 +1445,62 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             relative_words=relative_words,
         )
 
+    def resolve_rotation_target_deg(self, text):
+        parsed = self.parse_si_quantity(text, "angle")
+        if parsed is not None:
+            return parsed["value"]
+        text_l = str(text).lower()
+        if not re.search(r"\b(rotation|scan rotation|rotate|scan angle|angle)\b", text_l):
+            return None
+        matches = re.findall(
+            r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?",
+            str(text),
+        )
+        return None if not matches else float(matches[-1])
+
+    def resolve_offset_target_A(self, text, axis):
+        axis = str(axis).lower()
+        if axis not in ("x", "y"):
+            return None
+        text_s = str(text)
+        text_l = text_s.lower()
+        if not re.search(
+            r"\b(?:offset\s*{}|offset{}|scan offset\s*{}|world offset\s*{})\b".format(
+                axis,
+                axis,
+                axis,
+                axis,
+            ),
+            text_l,
+        ):
+            return None
+
+        spec = self.si_quantity_specs()["length_A"]
+        units = spec["units"]
+        number_pattern = r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?"
+        unit_pattern = "|".join(
+            re.escape(unit) for unit in sorted(units, key=len, reverse=True)
+        )
+        axis_pattern = re.compile(
+            r"(?:offset\s*{}|offset{}|scan offset\s*{}|world offset\s*{})"
+            r"[^-+0-9eE]*({})\s*({})(?![a-zA-Z/µÅå])".format(
+                axis,
+                axis,
+                axis,
+                axis,
+                number_pattern,
+                unit_pattern,
+            ),
+            re.IGNORECASE,
+        )
+        matches = list(axis_pattern.finditer(text_s))
+        if not matches:
+            return None
+        match = matches[-1]
+        unit_text = match.group(2)
+        unit_key = unit_text if unit_text in units else unit_text.lower()
+        return float(match.group(1)) * units[unit_key]
+
     def resolve_slope_target_A_per_A(self, text, current_refname=None):
         return self.resolve_quantity_target(text, "slope", current_refname=current_refname)
 
@@ -1556,7 +1766,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             pass
 
     def try_chat_parameter_write(self, text, chat_arm=False):
-        if not re.search(r"\b(set|change|adjust|make|configure|apply)\b", text, re.IGNORECASE):
+        if not re.search(r"\b(set|change|adjust|make|configure|apply|rotate|move)\b", text, re.IGNORECASE):
             return None
         text_l = text.lower()
         if "bias" in text_l:
@@ -1620,6 +1830,26 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 chat_arm,
                 lambda: self.set_scan_geometry(range_A, points, arm=True),
             )
+        if re.search(r"\boffset\s*x\b|\boffsetx\b|\bscan offset x\b|\bworld offset x\b", text_l):
+            target = self.resolve_offset_target_A(text, "x")
+            if target is None:
+                return self.missing_unit_message("OffsetX", "`100 A` or `10 nm`")
+            return self.execute_chat_level1_action(
+                "OffsetX",
+                "{} A".format(self.fmt6(target)),
+                chat_arm,
+                lambda: self.set_offset_axis("x", target, arm=True),
+            )
+        if re.search(r"\boffset\s*y\b|\boffsety\b|\bscan offset y\b|\bworld offset y\b", text_l):
+            target = self.resolve_offset_target_A(text, "y")
+            if target is None:
+                return self.missing_unit_message("OffsetY", "`100 A` or `10 nm`")
+            return self.execute_chat_level1_action(
+                "OffsetY",
+                "{} A".format(self.fmt6(target)),
+                chat_arm,
+                lambda: self.set_offset_axis("y", target, arm=True),
+            )
         if "slope x" in text_l or "scan slope x" in text_l:
             target = self.resolve_slope_target_A_per_A(text, current_refname="dsp-adv-scan-slope-x")
             if target is None:
@@ -1665,12 +1895,14 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             if is_scan_action or is_load_action
             else "I did not change {}".format(action_name)
         )
+        action_display = str(action_name)
+        action_display = action_display[:1].upper() + action_display[1:]
         success_prefix = (
-            "{} executed".format(action_name.capitalize())
+            "{} executed".format(action_display)
             if is_scan_action
-            else "{} executed".format(action_name.capitalize())
+            else "{} executed".format(action_display)
             if is_load_action
-            else "{} change executed".format(action_name.capitalize())
+            else "{} change executed".format(action_display)
         )
         if self.control_level < 1:
             return (
@@ -1823,7 +2055,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             "level1_feedback_cp_ci_range_dB": [-120.0, -30.0],
             "level1_max_abs_gvp_bias_pulse_du_V": 4.0,
             "level1_scan_range_A": [10.0, 2000.0],
-            "level1_scan_points": [16, 1024],
+            "level1_scan_points": [16, 5000],
             "level1_max_abs_scan_slope": 0.1,
             "gvp_execute_extra_confirmation": "EXECUTE GVP",
             "level3_extra_confirmation": "EXECUTE LEVEL 3",
@@ -2472,6 +2704,41 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 raise ValueError("Rotation must be within -360..360 degrees for Level 1.")
             rec = self.runner.set_parameter("Rotation", rotation)
             return self.jsonable(rec.__dict__)
+        except Exception as exc:
+            return {"error": str(exc), "traceback": traceback.format_exc()}
+
+    def set_offset_axis(self, axis, offset_A, arm):
+        axis = str(axis).lower()
+        if axis not in ("x", "y"):
+            return {"error": "Offset axis must be `x` or `y`."}
+        label = "Offset{}".format(axis.upper())
+        blocked = self.require_control_level(1, "set {}".format(label))
+        if blocked:
+            return blocked
+        cancelled = self.require_arm(arm, "set {}".format(label))
+        if cancelled:
+            return cancelled
+        try:
+            offset = float(offset_A)
+            rec = self.runner.set_parameter(label, offset)
+            return self.jsonable(rec.__dict__)
+        except Exception as exc:
+            return {"error": str(exc), "traceback": traceback.format_exc()}
+
+    def set_offset_xy(self, offset_x_A, offset_y_A, arm):
+        blocked = self.require_control_level(1, "set OffsetX/Y")
+        if blocked:
+            return blocked
+        cancelled = self.require_arm(arm, "set OffsetX/Y")
+        if cancelled:
+            return cancelled
+        try:
+            x_rec = self.runner.set_parameter("OffsetX", float(offset_x_A))
+            y_rec = self.runner.set_parameter("OffsetY", float(offset_y_A))
+            return {
+                "OffsetX": self.jsonable(x_rec.__dict__),
+                "OffsetY": self.jsonable(y_rec.__dict__),
+            }
         except Exception as exc:
             return {"error": str(exc), "traceback": traceback.format_exc()}
 
