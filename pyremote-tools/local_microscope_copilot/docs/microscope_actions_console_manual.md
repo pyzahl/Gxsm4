@@ -861,7 +861,8 @@ in one place:
   active scanning.
 - `Plan Offset Shift`: proposes a partially overlapping `OffsetX`/`OffsetY`
   world-coordinate shift for finding a cleaner area if the current image has
-  too many large blobs.
+  too many large blobs. The newer planner can also compute a hazard-avoiding
+  target from the current large hazards plus remembered landscape hazards.
 - `Apply Offset Shift`: Level 1 and arm-gated. It stops the scan first when
   needed, applies `OffsetX/Y`, scan range, points, and optionally starts a new
   scan.
@@ -882,11 +883,25 @@ Feature classification for Tip Tune Planner:
 - `tall_local_feature`: taller but not broad enough to force offset search;
   avoided locally when selecting a clear site.
 
-Planner progress is appended to:
+Planner activity and current status are stored in:
 
 ```text
-gui_outputs/tip_planner_progress.jsonl
+gui_outputs/tip_planner_activity.jsonl
+gui_outputs/tip_planner_activity_state.json
 ```
+
+The bottom of the tab shows this same activity ledger: current action, next
+pending action, start/completion timestamps, elapsed time, blocked reason, and
+recommended next action. `Stop Tip Tune Planner Loop` requests cooperative
+cancellation and calls `stopscan()` when live; the loop exits at the next safe
+checkpoint. `Clear Planner / Landscape History` archives/resets landscape memory
+after a hyper jump or other new-world relocation.
+
+Large-hazard offset planning checks the full rotated scan footprint against the
+reachable XY offset limits. This prevents choosing an `OffsetX/Y` center that is
+inside limits while one or more scan-frame corners would still exceed the
+allowed world area. When possible, the blocked planner result includes the exact
+proposed new `OffsetX/Y` target, the reason, and the large-hazard count.
 
 The automatic planner currently uses a deterministic conservative policy:
 start with a gentle 2 V bias pulse, escalate to 3 V if needed, then consider a

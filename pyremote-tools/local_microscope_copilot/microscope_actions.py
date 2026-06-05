@@ -5140,6 +5140,16 @@ class LandscapeNavigationController:
                 old_offset_y + world_dy,
             ),
         }
+        target["footprint_reachable"] = self.scan_frame_fits_reachable_area(
+            target["OffsetX"],
+            target["OffsetY"],
+            target["RangeX"],
+            target["RangeY"],
+            rotation_deg=rotation_deg,
+        )
+        target["reachable"] = bool(
+            target["reachable"] and target["footprint_reachable"]["fits"]
+        )
         target["avoidance_summary"] = self._score_exploration_target_against_memory(
             target,
             memory,
@@ -5163,12 +5173,21 @@ class LandscapeNavigationController:
         This is hardware-changing on a live runner.  It does not start scanning.
         """
         started = time.time()
-        if not self.offset_is_reachable(offset_x_A, offset_y_A):
+        footprint = self.scan_frame_fits_reachable_area(
+            offset_x_A,
+            offset_y_A,
+            range_A,
+            range_A,
+            rotation_deg=0.0 if rotation_deg is None else rotation_deg,
+        )
+        if not footprint["fits"]:
             raise ValueError(
-                "Offset target ({}, {}) exceeds current +/-{} A reachable range.".format(
+                "Scan frame at Offset target ({}, {}) with range {} A does not fit inside current +/-{} A reachable XY area: {}".format(
                     offset_x_A,
                     offset_y_A,
+                    range_A,
                     self.CURRENT_OFFSET_REACHABLE_A,
+                    footprint["reason"],
                 )
             )
         if self.runner.dry_run:
@@ -5455,6 +5474,60 @@ class LandscapeNavigationController:
             abs(float(offset_x_A)) <= self.CURRENT_OFFSET_REACHABLE_A
             and abs(float(offset_y_A)) <= self.CURRENT_OFFSET_REACHABLE_A
         )
+
+    def scan_frame_fits_reachable_area(
+        self,
+        offset_x_A,
+        offset_y_A,
+        range_x_A,
+        range_y_A=None,
+        rotation_deg=0.0,
+        limit_A=None,
+    ):
+        """
+        Check whether the full scan footprint fits into reachable OffsetX/Y area.
+
+        The simple center check is not enough for exploration planning: GXSM may
+        accept a center OffsetX/Y while the requested scan range would extend
+        outside the current XY reachable area.  This checks the rotated world
+        coordinates of all four scan-frame corners against +/-limit_A.
+        """
+        limit = float(limit_A or self.CURRENT_OFFSET_REACHABLE_A)
+        ox = float(offset_x_A)
+        oy = float(offset_y_A)
+        rx = float(range_x_A)
+        ry = float(range_y_A if range_y_A is not None else range_x_A)
+        theta = np.deg2rad(float(rotation_deg or 0.0))
+        corners = []
+        for local_x in (-0.5 * rx, 0.5 * rx):
+            for local_y in (-0.5 * ry, 0.5 * ry):
+                world_x = ox + local_x * np.cos(theta) - local_y * np.sin(theta)
+                world_y = oy + local_x * np.sin(theta) + local_y * np.cos(theta)
+                corners.append({"world_x_A": float(world_x), "world_y_A": float(world_y)})
+        x_values = [corner["world_x_A"] for corner in corners]
+        y_values = [corner["world_y_A"] for corner in corners]
+        max_abs_x = max(abs(value) for value in x_values)
+        max_abs_y = max(abs(value) for value in y_values)
+        fits = max_abs_x <= limit and max_abs_y <= limit
+        margin_x = limit - max_abs_x
+        margin_y = limit - max_abs_y
+        reason = (
+            "full rotated footprint fits with margins X={:.3g} A, Y={:.3g} A"
+            if fits else
+            "full rotated footprint exceeds limit; margins X={:.3g} A, Y={:.3g} A"
+        ).format(margin_x, margin_y)
+        return {
+            "fits": bool(fits),
+            "limit_A": limit,
+            "center_reachable": self.offset_is_reachable(ox, oy),
+            "max_abs_corner_x_A": float(max_abs_x),
+            "max_abs_corner_y_A": float(max_abs_y),
+            "margin_x_A": float(margin_x),
+            "margin_y_A": float(margin_y),
+            "corners": corners,
+            "reason": reason,
+            "rule": "OffsetX/Y plus the full rotated scan half-range must fit within +/-limit_A.",
+        }
 
     def move_tip_to_best_local_work_area(self, analysis=None, wait_after_s=2.0):
         """

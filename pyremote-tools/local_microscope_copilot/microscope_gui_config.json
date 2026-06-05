@@ -53,6 +53,8 @@
       "candidate_index": 1,
       "auto_tip_position": false,
       "tip_position_refresh_s": 1.0,
+      "activity_refresh_s": 1.0,
+      "clear_history_reason": "operator hyper jump / new world",
       "shift_direction": "image_left_below",
       "shift_range_A": 800.0,
       "shift_overlap_A": 250.0,

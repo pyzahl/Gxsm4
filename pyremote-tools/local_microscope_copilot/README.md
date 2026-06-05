@@ -186,7 +186,7 @@ readback first. Requests outside Level-1 safety limits are blocked before
 Ollama is involved, and language-model replies are still prevented from
 claiming hardware actions that did not pass through the deterministic gate.
 
-The `Live Readouts` tab includes a read-only fast XYZ monitor that updates
+The `Live Microscope State Monitor` tab includes a read-only fast XYZ monitor that updates
 about 5 times per second from `gxsm4process.rt_query_xyz()` and displays
 `XYZ_monitor["monitor"]`. These XYZ monitor values are controller Volts, not
 Angstroms. The GUI also reports rough X/Y Angstrom context by comparing monitor
@@ -196,8 +196,23 @@ external amplifier gain factors; defaults are X/Y = 12x and Z = 24x, so
 effective piezo voltage is `controller_monitor_V * gain`. Bias, current, GVP U,
 PAC amplitude, and PAC dFreq are shown from `rt_query_rpspmc()` with 6
 significant digit formatting. PAC amplitude uses a +/-10 mV gauge. A 2D XY
-panel shows raw controller X/Y Volts. A manual `rt_query_rpspmc()` snapshot
-button is also available for richer controller monitor values.
+panel shows controller X/Y Volts and overlays known large hazards from the
+latest planner analysis and landscape memory. When
+`gxsm.get_instrument_gains()` is available, the overlay converts local
+hazard coordinates with `controller_V = local_A / AV / Vgain`, where
+`get_instrument_gains()` returns `[VX, VY, VZ, AVX, AVY, AVZ]`. If live
+instrument gains are unavailable, the display falls back to monitor calibration
+or a scan-frame-normalized overlay.
+
+The `Tip Tune Planner` tab keeps a bottom-page activity/status ledger with the
+current action, next pending action, timestamps, completion status, blocked
+reasons, and recommended next steps. It writes append-only history to
+`gui_outputs/tip_planner_activity.jsonl` and a current snapshot to
+`gui_outputs/tip_planner_activity_state.json`. Use `Stop Tip Tune Planner Loop`
+for cooperative cancellation, and `Clear Planner / Landscape History` after a
+hyper jump or new-world relocation. Large-hazard stops now include a computed
+hazard-avoiding offset target when possible, checked against the full rotated
+scan footprint rather than only the scan center.
 
 ### Control Levels
 

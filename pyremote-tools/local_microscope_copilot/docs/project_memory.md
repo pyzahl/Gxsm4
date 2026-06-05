@@ -108,6 +108,11 @@ Fast monitor/readout methods:
   controller Volts, not Angstrom.
 - `gxsm4process.rt_query_rpspmc()`: fast controller values including bias,
   current, GVP U, PAC amplitude, and PAC dFreq.
+- `gxsm.get_instrument_gains()`: returns `[VX, VY, VZ, AVX, AVY, AVZ]`.
+  `VX/VY/VZ` are instrument amplifier gains. `AVX/AVY/AVZ` are the
+  Angstrom-to-Volt conversion factors. To convert a local hazard coordinate to
+  raw controller volts for the live XY panel, use
+  `controller_X_V = X_A / AVX / VX` and similarly for Y/Z.
 
 ## Coordinate Conventions
 
@@ -293,16 +298,18 @@ Repository location used during development:
 
 - `/home/percy/VS/Gxsm4/pyremote-tools/local_microscope_copilot/`
 
-Known good baseline commit before the most recent GUI additions:
+Known good baseline commit before the most recent maintenance additions:
 
-- `76c8baf Externalize copilot configuration`
+- `77db01a Add tip position overlays and handoff memory`
 
 Important current local edits after that baseline:
 
 - `microscope_gradio_gui.py`
-- `microscope_gradio_scan.py`
 - `microscope_gradio_tip_planner.py`
+- `microscope_actions.py`
 - `microscope_gui_config.json`
+- `README.md`
+- `docs/microscope_actions_console_manual.md`
 - `docs/project_memory.md`
 
 Recent GUI changes that were restarted and operator-tested as OK:
@@ -374,13 +381,20 @@ Top-level tabs and purpose:
 - `Chat`: deterministic command router and optional LLM Intent Mode. Actions
   still need the correct level and arm checkbox.
 - `Live Microscope State Monitor`: read-only fast XYZ, RPSPMC, bias, current,
-  GVP U, PAC amplitude, PAC dFreq, and 2D XY visual indication.
+  GVP U, PAC amplitude, PAC dFreq, and 2D XY visual indication. The XY panel
+  overlays known large hazards from latest planner analysis and landscape
+  memory. Hazard projection prefers `gxsm.get_instrument_gains()` with
+  `controller_V = A / AV / Vgain`; if unavailable it falls back to a fitted
+  affine GVP monitor calibration, then a scan-frame-normalized display.
 - `Scan Image`: fetch/auto-refresh scan image and last-line profile.
 - `Tip / Landscape Analysis`: analyze current scan, show topo plus dFreq image,
   rank flat candidates, mark hazards, read/mark current tip, select candidate,
   and move tip to selected candidate when safe.
 - `Tip Tune Planner`: planner workflow for flat-site selection, offset search,
-  and bounded iterative scan/analyze/move/tune loops.
+  and bounded iterative scan/analyze/move/tune loops. The bottom of the page
+  shows an activity/status ledger with current action, next pending action,
+  reasons for blocked/error states, timestamps, elapsed times, and persistent
+  JSONL/state logs.
 - `Scan Leveling`: measure residual fast-axis slope and apply armed correction.
 - `GVP`: load bias-pulse or tip-tune Z-dip templates, execute loaded GVP, plot
   ZS/current/dFreq over time, emergency GVP STOP.
@@ -429,6 +443,31 @@ Candidate movement:
 - Requires the scan/GVP to be ready.
 - The instrument prohibits the local tip move while scanning.
 - Verify with `dsp-GVP-XS-MONITOR` and `dsp-GVP-YS-MONITOR`.
+
+Planner activity and stop controls:
+
+- The planner writes append-only activity events to
+  `gui_outputs/tip_planner_activity.jsonl`.
+- It also writes the current activity snapshot to
+  `gui_outputs/tip_planner_activity_state.json`.
+- The `Stop Tip Tune Planner Loop` button requests cooperative cancellation,
+  calls `stopscan()` when live, and the loop exits at the next safe checkpoint
+  with status `cancelled_by_operator`.
+- `Clear Planner / Landscape History` archives and resets landscape memory and
+  should be used after a hyper jump/new world relocation.
+
+Large hazard offset planning:
+
+- Large hazards are tracked from current analysis and prior landscape memory.
+- A `stopped_for_large_blob_hazard` decision now includes the blocked reason,
+  large hazard count, a computed hazard-avoiding offset plan, and a recommended
+  next action.
+- Offset shifts must pass a full scan-footprint check, not just center
+  `OffsetX/Y` reachability: all rotated frame corners must fit within the
+  current XY reachable area.
+- When auto-shift is enabled, the planner tries the computed hazard-avoiding
+  target first. Otherwise it tells the operator the exact proposed new
+  `OffsetX/Y` target and why it was selected.
 
 Coordinate reminder:
 
