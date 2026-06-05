@@ -8,6 +8,8 @@ import traceback
 import matplotlib.pyplot as plt
 import numpy as np
 
+from microscope_coordinates import ScanGeometry
+
 
 class TipPlannerGuiMixin:
     """GUI-facing orchestration for flat-site moves and iterative tip tuning."""
@@ -29,6 +31,7 @@ class TipPlannerGuiMixin:
             "activity_history": [],
             "activity_counter": 0,
             "stop_requested": False,
+            "loop_active": False,
         }
 
     def tip_planner_log_path(self):
@@ -121,6 +124,7 @@ class TipPlannerGuiMixin:
             "current_action": current,
             "pending_action": pending,
             "stop_requested": bool(self.tip_planner_state.get("stop_requested")),
+            "loop_active": bool(self.tip_planner_state.get("loop_active")),
             "recent_actions": history[-25:],
             "activity_log_path": str(self.tip_planner_activity_log_path()),
             "activity_state_path": str(self.tip_planner_activity_state_path()),
@@ -242,31 +246,30 @@ class TipPlannerGuiMixin:
 
     def request_stop_tip_planner_loop(self):
         self.tip_planner_state["stop_requested"] = True
+        self.tip_planner_state["loop_active"] = False
         activity = self.start_tip_planner_activity(
             "operator requested planner stop",
             details={"request": "stop tip tune planner loop"},
-            pending_next="planner loop will stop at next safe checkpoint",
+            pending_next="idle",
         )
-        stopscan_result = None
-        try:
-            if not self.runner.dry_run:
-                stopscan_result = self.runner.connect().stopscan()
-        except Exception as exc:
-            stopscan_result = "{}: {}".format(type(exc).__name__, exc)
         self.finish_tip_planner_activity(
             activity,
             status="completed",
             result={
                 "reason": "operator requested stop",
-                "stopscan_return": stopscan_result,
-                "note": "GVP emergency stop remains available in the GVP tab if a GVP is running.",
+                "note": (
+                    "Planner loop state was cleared in the GUI. This button no "
+                    "longer sends stopscan, to avoid contending with PySHM "
+                    "scan-data fetches. Use Stop Scan or GVP emergency stop in "
+                    "their dedicated tabs when needed."
+                ),
             },
-            pending_next="idle after current safe checkpoint",
+            pending_next="idle",
         )
         report = {
             "status": "stop_requested",
             "reason": "operator requested stop",
-            "stopscan_return": stopscan_result,
+            "loop_active": False,
         }
         return self.jsonable(report), self.tip_planner_activity_html()
 
@@ -324,6 +327,7 @@ class TipPlannerGuiMixin:
                 pending_next="idle",
             )
         self.tip_planner_state["pending_action"] = "idle"
+        self.tip_planner_state["loop_active"] = False
         return True
 
     def blank_tip_planner_figure(self, message):
@@ -442,6 +446,107 @@ class TipPlannerGuiMixin:
             ),
         }
 
+    def fast_tip_planner_analysis(
+        self,
+        image,
+        meta,
+        channel,
+        patch_A=80.0,
+        max_candidates=12,
+        max_blobs=8,
+        output_prefix=None,
+    ):
+        """Analyze planner evidence without running the heavy world-map pass."""
+        image = np.asarray(image, dtype=float)
+        settings = self.scan_settings_from_meta_or_cache(meta, channel)
+        meta = dict(meta or {})
+        meta["settings"] = settings
+        pixel = self.pixel_size_from_settings(settings, image=image)
+        quality_image, quality_stride = self.downsample_for_fast_analysis(
+            image,
+            max_dim=384,
+        )
+        quality = self.runner.assess_tip_quality(
+            quality_image,
+            pixel_size_A=pixel * float(quality_stride),
+            output_prefix=None,
+        )
+        quality["fast_analysis_note"] = (
+            "Computed on stride-{} downsampled planner evidence.".format(
+                quality_stride,
+            )
+        )
+        hazards = self.runner.detect_major_bumps(
+            image,
+            max_bumps=max(12, int(max_blobs) * 2),
+            sigma_threshold=7.0,
+            min_sep_px=max(12, int(round(30.0 / max(pixel, 1e-9)))),
+            pixel_size_A=pixel,
+        )
+        for hazard in hazards:
+            try:
+                hazard.update(
+                    self.nav.pixel_to_world_coordinates(
+                        hazard["px"],
+                        hazard["py"],
+                        settings=settings,
+                        channel=channel,
+                    )
+                )
+            except Exception:
+                hazard.setdefault("world_mapping_error", True)
+        clean_patch = self.runner.find_clean_patch(
+            image,
+            patch_x=max(16, min(64, int(round(float(patch_A) / max(pixel, 1e-9))))),
+            step_px=max(4, int(round(25.0 / max(pixel, 1e-9)))),
+            avoid_bumps=False,
+        )
+        candidates = []
+        if clean_patch:
+            extent = self.scan_extent_A(
+                image,
+                {"settings": settings, **dict(meta or {})},
+                channel,
+            )
+            local_x, local_y = self.pixel_to_local_A(
+                clean_patch["px"],
+                clean_patch["py"],
+                image,
+                extent,
+            )
+            candidate = dict(clean_patch)
+            candidate.update(
+                {
+                    "scan_x_A": float(local_x),
+                    "scan_y_A": float(local_y),
+                    "note": "fast planner flat patch candidate; not world-mapped",
+                }
+            )
+            candidates.append(candidate)
+        analysis = {
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "analysis": "fast_tip_planner_analysis",
+            "settings": settings,
+            "fetch_meta": meta,
+            "pixel_size_A": pixel,
+            "tip_quality": quality,
+            "hazards": hazards,
+            "flat_candidates": candidates[:int(max_candidates)],
+            "best_flat_candidate": candidates[0] if candidates else None,
+            "best_candidate": candidates[0] if candidates else None,
+            "skipped": [
+                "full landscape world-map analysis",
+                "stepped-region segmentation",
+                "abnormal-line classifier",
+                "landscape memory append",
+            ],
+        }
+        if output_prefix:
+            path = self.output_dir / "{}_fast_planner_report.json".format(output_prefix)
+            path.write_text(json.dumps(self.jsonable(analysis), indent=2))
+            analysis["report_path"] = str(path)
+        return analysis
+
     def suggest_escape_direction_from_hazards(self, analysis, fallback_direction="image_left_below"):
         hazards = [
             item for item in (analysis.get("hazards", []) or [])
@@ -548,16 +653,22 @@ class TipPlannerGuiMixin:
         return []
 
     def _world_point_in_scan_frame(self, world_x_A, world_y_A, target):
-        ox = float(target["OffsetX"])
-        oy = float(target["OffsetY"])
-        rx = float(target.get("RangeX", target.get("RangeY", 0.0)))
-        ry = float(target.get("RangeY", target.get("RangeX", 0.0)))
-        theta = np.deg2rad(float(target.get("Rotation", target.get("Rotation_deg", 0.0)) or 0.0))
-        dx = float(world_x_A) - ox
-        dy = float(world_y_A) - oy
-        local_x = dx * np.cos(theta) - dy * np.sin(theta)
-        local_y = dx * np.sin(theta) + dy * np.cos(theta)
-        return abs(local_x) <= 0.5 * rx and abs(local_y) <= 0.5 * ry
+        geometry = ScanGeometry.from_settings(
+            {
+                "OffsetX": target.get("OffsetX"),
+                "OffsetY": target.get("OffsetY"),
+                "RangeX": target.get("RangeX", target.get("RangeY", 0.0)),
+                "RangeY": target.get("RangeY", target.get("RangeX", 0.0)),
+                "PointsX": 2,
+                "PointsY": 2,
+                "Rotation": target.get("Rotation", target.get("Rotation_deg", 0.0)),
+            }
+        )
+        local = geometry.world_to_local(world_x_A, world_y_A)
+        return (
+            abs(local.x_A) <= 0.5 * geometry.range_x_A
+            and abs(local.y_A) <= 0.5 * geometry.range_y_A
+        )
 
     def _memory_hazard_items(self, current_analysis):
         items = []
@@ -695,11 +806,18 @@ class TipPlannerGuiMixin:
             total = sum(item[2] for item in weighted) or 1.0
             hx = sum(wx * w for wx, _wy, w, _hazard in weighted) / total
             hy = sum(wy * w for _wx, wy, w, _hazard in weighted) / total
-            dx = hx - old_offset_x
-            dy = hy - old_offset_y
-            theta = np.deg2rad(rotation_deg)
-            hazard_local_x = dx * np.cos(theta) - dy * np.sin(theta)
-            hazard_local_y = dx * np.sin(theta) + dy * np.cos(theta)
+            geometry = ScanGeometry(
+                range_x_A=old_range_x,
+                range_y_A=old_range_y,
+                points_x=2,
+                points_y=2,
+                offset_x_A=old_offset_x,
+                offset_y_A=old_offset_y,
+                rotation_deg=rotation_deg,
+            )
+            hazard_local = geometry.world_to_local(hx, hy)
+            hazard_local_x = hazard_local.x_A
+            hazard_local_y = hazard_local.y_A
             target_local = 0.5 * new_range + margin
             desired_local_shift_x = 0.0
             desired_local_shift_y = 0.0
@@ -719,8 +837,21 @@ class TipPlannerGuiMixin:
                     step_x,
                     step_y,
                 )
-            world_shift_x = desired_local_shift_x * np.cos(theta) + desired_local_shift_y * np.sin(theta)
-            world_shift_y = -desired_local_shift_x * np.sin(theta) + desired_local_shift_y * np.cos(theta)
+            shift_geometry = ScanGeometry(
+                range_x_A=old_range_x,
+                range_y_A=old_range_y,
+                points_x=2,
+                points_y=2,
+                offset_x_A=0.0,
+                offset_y_A=0.0,
+                rotation_deg=rotation_deg,
+            )
+            world_shift = shift_geometry.local_vector_to_world(
+                desired_local_shift_x,
+                desired_local_shift_y,
+            )
+            world_shift_x = world_shift.x_A
+            world_shift_y = world_shift.y_A
             make_target(
                 old_offset_x + world_shift_x,
                 old_offset_y + world_shift_y,
@@ -986,37 +1117,29 @@ class TipPlannerGuiMixin:
             },
             pending_next="select or move to a flat candidate",
         )
-        operation_blocked = self.acquire_microscope_operation(
-            "tip planner analyze current scan",
-            blocking=False,
-        )
-        if operation_blocked:
-            self.finish_tip_planner_activity(
-                activity,
-                status="blocked",
-                result=operation_blocked,
-                pending_next="wait for current microscope operation to finish",
-            )
-            return (
-                self.blank_tip_planner_figure(operation_blocked["reason"]),
-                self.tip_planner_progress_figure(),
-                self.jsonable(operation_blocked),
-            )
         try:
             prefix = str(self.output_dir / str(output_prefix))
             image, meta = self.runner.fetch_scan_image_to_line(
                 channel=int(channel),
                 chunk_lines=int(lines_to_fetch),
             )
-            analysis = self.nav.analyze_current_scan_landscape_map(
+            analysis = self.fast_tip_planner_analysis(
+                image=image,
+                meta=meta,
                 channel=int(channel),
                 patch_A=float(patch_A),
                 max_candidates=int(max_candidates),
-                max_hazards=max(30, int(max_blobs) * 3),
+                max_blobs=int(max_blobs),
                 output_prefix=prefix,
             )
-            df = self.runner.dFreq()
-            dfreq_report = self.runner.interpret_dFreq(df)
+            dfreq_report = {
+                "available": False,
+                "status": "skipped_fast_planner_analysis",
+                "reason": (
+                    "Planner Analyze avoids extra rtquery samples. Use the "
+                    "Live Microscope Monitor for dFreq."
+                ),
+            }
             analysis["dFrequency"] = dfreq_report
             analysis["satisfaction"] = self.tip_quality_satisfied(
                 analysis.get("tip_quality", {}),
@@ -1040,13 +1163,14 @@ class TipPlannerGuiMixin:
             self.tip_planner_state["last_channel"] = int(channel)
             self.tip_planner_state["last_analysis"] = analysis
             self.tip_planner_state["selected_candidate_index"] = 1
-            try:
-                analysis["current_tip_position"] = self._read_tip_planner_tip_position()
-            except Exception as exc:
-                analysis["current_tip_position"] = {
-                    "available": False,
-                    "error": "{}: {}".format(type(exc).__name__, exc),
-                }
+            analysis["current_tip_position"] = {
+                "available": False,
+                "status": "not_refreshed",
+                "reason": (
+                    "Use Read / Mark Current Tip to refresh position; fast "
+                    "planner analysis avoids extra gxsm.get calls."
+                ),
+            }
             event = self.append_tip_planner_log(
                 {
                     "event": "analysis",
@@ -1082,12 +1206,10 @@ class TipPlannerGuiMixin:
                 },
                 pending_next="select candidate or run planner loop",
             )
-            self.release_microscope_operation()
             return fig, self.tip_planner_progress_figure(), self.jsonable(report)
         except Exception as exc:
             self.fail_tip_planner_activity(activity, exc, pending_next="inspect error and retry analysis")
             report = {"error": str(exc), "traceback": traceback.format_exc()}
-            self.release_microscope_operation()
             return (
                 self.blank_tip_planner_figure(exc),
                 self.tip_planner_progress_figure(),
@@ -1539,6 +1661,7 @@ class TipPlannerGuiMixin:
         max_abs_dfreq_Hz,
         auto_shift_on_blobs,
         shift_direction,
+        evidence_source,
         confirm_text,
         arm,
     ):
@@ -1552,17 +1675,24 @@ class TipPlannerGuiMixin:
             report = {"cancelled": "Type '{}' to run the planner loop.".format(self.TIP_LOOP_CONFIRMATION)}
             return self.blank_tip_planner_figure(report["cancelled"]), self.tip_planner_progress_figure(), report
 
-        operation_blocked = self.acquire_microscope_operation(
-            "tip tune planner loop",
-            blocking=False,
-        )
-        if operation_blocked:
+        if self.tip_planner_state.get("loop_active"):
+            operation_blocked = {
+                "blocked": "tip_planner_loop_active",
+                "reason": (
+                    "A Tip Tune Planner loop is already active. Press Stop and "
+                    "wait for the current checkpoint, or restart Gradio if the "
+                    "previous GXSM process crashed and left this GUI run stale."
+                ),
+                "current_action": self.tip_planner_state.get("current_action"),
+                "pending_action": self.tip_planner_state.get("pending_action"),
+            }
             return (
                 self.blank_tip_planner_figure(operation_blocked["reason"]),
                 self.tip_planner_progress_figure(),
                 operation_blocked,
             )
         self.tip_planner_state["stop_requested"] = False
+        self.tip_planner_state["loop_active"] = True
         started = time.time()
         loop_activity = self.start_tip_planner_activity(
             "run tip tune planner loop",
@@ -1572,6 +1702,7 @@ class TipPlannerGuiMixin:
                 "min_lines": int(min_lines),
                 "range_A": float(range_A),
                 "points": int(points),
+                "first_cycle_evidence_source": str(evidence_source),
             },
             pending_next="cycle 1: setup scan and collect evidence",
         )
@@ -1588,6 +1719,7 @@ class TipPlannerGuiMixin:
                 "max_abs_dfreq_Hz": float(max_abs_dfreq_Hz),
                 "auto_shift_on_blobs": bool(auto_shift_on_blobs),
                 "shift_direction": str(shift_direction),
+                "first_cycle_evidence_source": str(evidence_source),
             },
             "cycles": [],
         }
@@ -1597,47 +1729,137 @@ class TipPlannerGuiMixin:
                 if self.check_tip_planner_stop_requested(loop_activity, loop_report, cycle=cycle):
                     break
                 prefix = "tip_planner_cycle_{:02d}".format(cycle)
+                source = str(evidence_source or "start_new_scan").strip().lower()
+                if cycle > 1:
+                    source = "start_new_scan"
                 step = self.start_tip_planner_activity(
-                    "cycle {} setup scan and watch".format(cycle),
-                    details={"cycle": cycle, "range_A": float(range_A), "points": int(points)},
+                    "cycle {} collect evidence".format(cycle),
+                    details={
+                        "cycle": cycle,
+                        "range_A": float(range_A),
+                        "points": int(points),
+                        "evidence_source": source,
+                    },
                     pending_next="cycle {}: analyze landscape and tip".format(cycle),
                 )
-                self.runner.setup_scan_geometry(range_A=float(range_A), points=int(points))
-                assessment = self.runner.scan_watch_assess_tip(
-                    channel=int(channel),
-                    min_lines=int(min_lines),
-                    start_scan=True,
-                    setup_scan=False,
-                    range_A=float(range_A),
-                    points=int(points),
-                    initial_delay_s=4.0,
-                    poll_s=4.0,
-                    timeout_s=max(90.0, float(min_lines) * 2.0),
-                    output_prefix=str(self.output_dir / prefix),
-                )
+                existing_image = None
+                existing_meta = None
+                existing_analysis = None
+                if source in ("existing_image", "existing scan image", "use_existing_image"):
+                    existing_image = self.tip_planner_state.get("last_image")
+                    existing_meta = self.tip_planner_state.get("last_meta") or {}
+                    existing_analysis = self.tip_planner_state.get("last_analysis") or {}
+                    existing_channel = self.tip_planner_state.get("last_channel")
+                    if existing_image is None or not existing_analysis:
+                        missing = {
+                            "status": "no_existing_scan_image",
+                            "reason": (
+                                "No stored planner scan image/analysis is available. "
+                                "Use 'Analyze Current Scan' once, or choose 'take over "
+                                "running scan' / 'start new scan'."
+                            ),
+                            "required_action": "run Analyze Current Scan first or change evidence source",
+                        }
+                        self.finish_tip_planner_activity(
+                            step,
+                            status="blocked",
+                            result=missing,
+                            pending_next=missing["required_action"],
+                        )
+                        loop_report["status"] = "blocked_no_existing_scan_image"
+                        self.finish_tip_planner_activity(
+                            loop_activity,
+                            status="blocked",
+                            result=missing,
+                            pending_next=missing["required_action"],
+                        )
+                        break
+                    if existing_channel is not None and int(existing_channel) != int(channel):
+                        channel = int(existing_channel)
+                    assessment = {
+                        "name": "use_existing_planner_scan_image",
+                        "kind": "tip_workflow",
+                        "status": "ok",
+                        "details": {
+                            "channel": int(channel),
+                            "source": source,
+                            "note": "Used planner_state last_image/last_analysis without fetching a new scan image.",
+                        },
+                        "result_summary": {
+                            "fetch_meta": existing_meta,
+                            "quality": existing_analysis.get("tip_quality", {}),
+                        },
+                    }
+                    workflow = {
+                        "quality": existing_analysis.get("tip_quality", {}),
+                        "fetch_meta": existing_meta,
+                    }
+                else:
+                    start_scan = source not in (
+                        "running_scan",
+                        "take_over_running_scan",
+                        "takeover_running_scan",
+                        "take over running scan",
+                    )
+                    if start_scan:
+                        self.runner.setup_scan_geometry(range_A=float(range_A), points=int(points))
+                    assessment = self.runner.scan_watch_assess_tip(
+                        channel=int(channel),
+                        min_lines=int(min_lines),
+                        start_scan=start_scan,
+                        setup_scan=False,
+                        range_A=float(range_A),
+                        points=int(points),
+                        initial_delay_s=4.0 if start_scan else 0.5,
+                        poll_s=4.0,
+                        timeout_s=max(90.0, float(min_lines) * 2.0),
+                        output_prefix=str(self.output_dir / prefix),
+                    )
+                    workflow = self.runner.data.get("last_tip_workflow", {})
                 self.finish_tip_planner_activity(
                     step,
                     status="completed",
-                    result={"assessment_status": assessment.status},
+                    result={
+                        "assessment_status": (
+                            assessment.get("status") if isinstance(assessment, dict)
+                            else assessment.status
+                        ),
+                        "evidence_source": source,
+                    },
                     pending_next="cycle {}: analyze landscape and tip".format(cycle),
                 )
                 if self.check_tip_planner_stop_requested(loop_activity, loop_report, cycle=cycle):
                     break
-                workflow = self.runner.data.get("last_tip_workflow", {})
                 image_path = self.output_dir / "{}_scan_image.npy".format(prefix)
-                image = np.load(image_path) if image_path.exists() else None
+                image = existing_image if existing_image is not None else (
+                    np.load(image_path) if image_path.exists() else None
+                )
                 step = self.start_tip_planner_activity(
                     "cycle {} analyze landscape and tip".format(cycle),
                     details={"cycle": cycle, "image_available": bool(image is not None)},
                     pending_next="cycle {}: decide next action".format(cycle),
                 )
-                landscape = self.nav.analyze_current_scan_landscape_map(
-                    channel=int(channel),
-                    patch_A=80.0,
-                    max_candidates=12,
-                    max_hazards=max(30, int(max_blobs) * 3),
-                    output_prefix=str(self.output_dir / "{}_landscape".format(prefix)),
-                )
+                if existing_analysis is not None:
+                    landscape = dict(existing_analysis)
+                    landscape.setdefault("fetch_meta", existing_meta)
+                    landscape["evidence_source"] = source
+                else:
+                    fetch_meta = workflow.get("fetch_meta", {})
+                    if image is None:
+                        image, fetch_meta = self.runner.fetch_scan_image_to_line(
+                            channel=int(channel),
+                            chunk_lines=int(min_lines),
+                        )
+                    landscape = self.fast_tip_planner_analysis(
+                        image=image,
+                        meta=fetch_meta,
+                        channel=int(channel),
+                        patch_A=80.0,
+                        max_candidates=12,
+                        max_blobs=int(max_blobs),
+                        output_prefix="{}_landscape".format(prefix),
+                    )
+                    landscape["evidence_source"] = source
                 df = self.runner.dFreq()
                 dfreq_report = self.runner.interpret_dFreq(df)
                 quality = workflow.get("quality") or landscape.get("tip_quality", {})
@@ -1667,7 +1889,11 @@ class TipPlannerGuiMixin:
                     break
                 cycle_report = {
                     "cycle": cycle,
-                    "assessment_record": assessment.__dict__,
+                    "evidence_source": source,
+                    "assessment_record": (
+                        assessment if isinstance(assessment, dict)
+                        else assessment.__dict__
+                    ),
                     "quality": quality,
                     "dFrequency": dfreq_report,
                     "satisfaction": satisfaction,
@@ -1904,7 +2130,8 @@ class TipPlannerGuiMixin:
                     result={"status": loop_report.get("status")},
                     pending_next="idle",
                 )
-            self.release_microscope_operation()
+            self.tip_planner_state["loop_active"] = False
+            self.persist_tip_planner_activity_state()
             return last_fig, self.tip_planner_progress_figure(), self.jsonable(loop_report)
         except Exception as exc:
             loop_report["status"] = "error"
@@ -1923,7 +2150,8 @@ class TipPlannerGuiMixin:
                 )
             if loop_activity.get("status") == "in_progress":
                 self.fail_tip_planner_activity(loop_activity, exc, pending_next="inspect planner error")
-            self.release_microscope_operation()
+            self.tip_planner_state["loop_active"] = False
+            self.persist_tip_planner_activity_state()
             return (
                 last_fig,
                 self.tip_planner_progress_figure(),

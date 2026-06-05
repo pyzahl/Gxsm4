@@ -19,6 +19,7 @@ import traceback
 import numpy as np
 
 import gxsm4process as gxsm4
+from microscope_coordinates import ScanGeometry
 
 
 @dataclass
@@ -544,7 +545,7 @@ class MicroscopeActionRunner:
         self,
         message="ready_check",
         busy_mask=None,
-        delay_s=0.5,
+        delay_s=1.0,
         timeout_s=60.0,
         allow_abort=True,
     ):
@@ -646,7 +647,7 @@ class MicroscopeActionRunner:
     def ready_check_scan_gvp(
         self,
         message="scan_gvp_ready_check",
-        delay_s=0.5,
+        delay_s=1.0,
         timeout_s=60.0,
         allow_abort=True,
     ):
@@ -714,6 +715,49 @@ class MicroscopeActionRunner:
                 )
 
             time.sleep(delay_s)
+
+    def settle_before_pyshm_image_fetch(
+        self,
+        reason="settle before PySHM get_slice",
+        wait_s=1.0,
+    ):
+        """
+        Give GXSM/PySHM ample settling time before reading image data through
+        `gxsm.get_slice`.
+
+        The GXSM C++ pyremote `remote_getslice()` path reads scan `mem2d`
+        directly in the PySHM server thread and constructs a NumPy array there,
+        so planner workflows should not hammer repeated PySHM actions
+        back-to-back while scanning.
+        """
+        started = time.time()
+        if self.dry_run:
+            return self._record(
+                "settle_before_pyshm_image_fetch",
+                "gxsm",
+                "dry-run",
+                started,
+                command="sleep",
+                details={"reason": reason},
+                result={"wait_s": float(wait_s)},
+            )
+
+        time.sleep(float(wait_s))
+        result = {
+            "reason": reason,
+            "wait_s": float(wait_s),
+            "note": "No scan stop was issued; this only spaces PySHM/get_slice activity.",
+        }
+        self.data["last_settle_before_pyshm_image_fetch"] = result
+        return self._record(
+            "settle_before_pyshm_image_fetch",
+            "gxsm",
+            "ok",
+            started,
+            command="sleep",
+            details={"reason": reason},
+            result=result,
+        )
 
     def fetch_probe_event(self, channel=None, nth=-1, collect_as=None):
         started = time.time()
@@ -915,7 +959,7 @@ class MicroscopeActionRunner:
         initial_delay_s=5.0,
         poll_s=10.0,
         timeout_s=900.0,
-        chunk_lines=60,
+        chunk_lines=120,
         move_if_poor=False,
         stop_before_move=True,
         output_prefix="tip_assessment",
@@ -977,11 +1021,16 @@ class MicroscopeActionRunner:
             timeout_s=timeout_s,
         )
         y_current = progress[-1]["y_current"] if progress else int(gxsm.y_current())
+        settle_before_fetch = self.settle_before_pyshm_image_fetch(
+            reason="tip workflow reached enough lines; settle before get_slice",
+            wait_s=1.0,
+        )
 
         image, fetch_meta = self.fetch_scan_image_to_line(
             channel=channel,
             y_current=y_current,
             chunk_lines=chunk_lines,
+            chunk_delay_s=0.5,
         )
         auxiliary_channels = self.fetch_scan_auxiliary_channels_to_line(
             y_current=y_current,
@@ -1027,6 +1076,7 @@ class MicroscopeActionRunner:
             "settings_before": settings_before,
             "startscan_return": start_ret,
             "progress": progress,
+            "settle_before_fetch": settle_before_fetch.__dict__,
             "fetch_meta": fetch_meta,
             "auxiliary_channels": auxiliary_channels,
             "quality": quality,
@@ -1293,9 +1343,8 @@ class MicroscopeActionRunner:
         if settings is None and not self.dry_run:
             settings = self._scan_settings(channel)
         settings = settings or {}
-        range_x = float(settings.get("RangeX", nx))
-        range_y = float(settings.get("RangeY", ny))
-        rotation_deg = float(settings.get("Rotation", 0.0))
+        geometry = ScanGeometry.from_settings(settings, image_shape=arr.shape)
+        rotation_deg = geometry.rotation_deg
         y_grid, x_grid = np.mgrid[:ny, :nx]
         valid = np.isfinite(arr)
         if valid.sum() < 3:
@@ -1308,23 +1357,15 @@ class MicroscopeActionRunner:
             ]
         )
         coeffs, *_ = np.linalg.lstsq(design, arr[valid].ravel(), rcond=None)
-        dz_dlocal_x = float(coeffs[0] / (range_x / max(nx, 1)))
-        dz_dlocal_y = float(coeffs[1] / (range_y / max(ny, 1)))
-        theta = np.deg2rad(rotation_deg)
-        world_x_slope = (
-            dz_dlocal_x * np.cos(theta)
-            - dz_dlocal_y * np.sin(theta)
-        )
-        world_y_slope = (
-            dz_dlocal_x * np.sin(theta)
-            + dz_dlocal_y * np.cos(theta)
-        )
+        dz_dlocal_x = float(coeffs[0] / max(geometry.step_x_A, 1e-12))
+        dz_dlocal_y = float(coeffs[1] / max(geometry.step_y_A, 1e-12))
+        world_slope = geometry.local_gradient_to_world(dz_dlocal_x, dz_dlocal_y)
         return {
             "rotation_deg": rotation_deg,
             "local_slope_x_dz_per_A": dz_dlocal_x,
             "local_slope_y_dz_per_A": dz_dlocal_y,
-            "world_slope_x_dz_per_A": float(world_x_slope),
-            "world_slope_y_dz_per_A": float(world_y_slope),
+            "world_slope_x_dz_per_A": float(world_slope.x_A),
+            "world_slope_y_dz_per_A": float(world_slope.y_A),
             "apply_note": (
                 "Use this as a suggestion. Apply X leveling from Rotation=0 "
                 "and Y leveling from Rotation=90; typical abs values < 0.1."
@@ -1356,8 +1397,9 @@ class MicroscopeActionRunner:
         yn = max(1, min(int(line_count), y_current - y0 + 1))
         strip = self.get_slice_array(gxsm, channel, 0, 0, y0, yn)
         settings = self._scan_settings(channel)
-        pixel_size_x_A = float(settings["RangeX"]) / max(float(settings["PointsX"]) - 1.0, 1.0)
-        x_A = np.arange(strip.shape[1]) * pixel_size_x_A - float(settings["RangeX"]) / 2.0
+        geometry = ScanGeometry.from_settings(settings)
+        pixel_size_x_A = geometry.step_x_A
+        x_A = np.arange(strip.shape[1]) * pixel_size_x_A - geometry.range_x_A / 2.0
         profile = np.nanmean(strip, axis=0)
         ok = np.isfinite(profile)
         if ok.sum() < 3:
@@ -1562,8 +1604,10 @@ class MicroscopeActionRunner:
         self,
         channel=0,
         y_current=None,
-        chunk_lines=60,
+        chunk_lines=120,
         store_last=True,
+        pre_fetch_settle_s=0.0,
+        chunk_delay_s=0.0,
     ):
         """Fetch scan channel data from line 0 through y_current in chunks."""
         if self.dry_run:
@@ -1575,6 +1619,9 @@ class MicroscopeActionRunner:
         if y_current is None:
             y_current = int(float(gxsm.y_current()))
         y_count = ny if y_current >= ny - 1 else max(1, min(ny, int(y_current) + 1))
+
+        if pre_fetch_settle_s and float(pre_fetch_settle_s) > 0:
+            time.sleep(float(pre_fetch_settle_s))
 
         chunks = []
         for yi in range(0, y_count, chunk_lines):
@@ -1588,6 +1635,8 @@ class MicroscopeActionRunner:
                     )
                 )
             chunks.append(block)
+            if chunk_delay_s and float(chunk_delay_s) > 0 and yi + yn < y_count:
+                time.sleep(float(chunk_delay_s))
 
         image = np.vstack(chunks)
         meta = {
@@ -1605,7 +1654,7 @@ class MicroscopeActionRunner:
 
     def fetch_scan_auxiliary_channels_to_line(
         self,
-        channels=(1, 2, 4, 5, 6, 7),
+        channels=(1, 2),
         y_current=None,
         chunk_lines=60,
         store_arrays=False,
@@ -1653,7 +1702,7 @@ class MicroscopeActionRunner:
         self.data["last_scan_auxiliary_channels"] = summaries
         return summaries
 
-    def sample_dfrequency_values(self, count=12, delay_s=0.05):
+    def sample_dfrequency_values(self, count=8, delay_s=0.25):
         """Read several live dFreq snapshots and return robust summary stats."""
         values = []
         for _ in range(int(count)):
@@ -2247,29 +2296,10 @@ class MicroscopeActionRunner:
         """
         if self.dry_run:
             return {"ScanX_A": None, "ScanY_A": None, "dry_run": True}
-        range_x = float(self.connect().get("RangeX"))
-        range_y = float(self.connect().get("RangeY"))
-        points_x = float(self.connect().get("PointsX"))
-        points_y = float(self.connect().get("PointsY"))
-        step_x = range_x / max(points_x - 1.0, 1.0)
-        step_y = range_y / max(points_y - 1.0, 1.0)
-        local_x_A = float(px * step_x - range_x / 2.0)
-        local_y_A = float(range_y / 2.0 - py * step_y)
-        return {
-            "ScanX_A": local_x_A,
-            "ScanY_A": local_y_A,
-            "local_scan_x_A": local_x_A,
-            "local_scan_y_A": local_y_A,
-            "row_down_y_A": -local_y_A,
-            "pixel_origin": "top-left",
-            "scan_origin": "scan center, right handed X-right/Y-up",
-            "scan_y_note": (
-                "Line numbers count downward from top=0, while physical "
-                "local ScanY is positive upward."
-            ),
-            "pixel_size_x_A": float(step_x),
-            "pixel_size_y_A": float(step_y),
-        }
+        geometry = ScanGeometry.from_settings(self._scan_settings(channel))
+        rec = geometry.pixel_record(px, py)
+        rec["row_down_y_A"] = -rec["local_scan_y_A"]
+        return rec
 
     def move_to_scan_xy_fields(self, scan_x_A, scan_y_A, wait_after_s=2.0):
         """Move the tip by writing ScanX and ScanY GUI fields."""
@@ -2422,14 +2452,14 @@ class MicroscopeActionRunner:
         ]
         settings = {key: gxsm.get(key) for key in keys}
         settings["dimensions"] = list(gxsm.get_dimensions(channel))
+        self.data["last_scan_settings"] = dict(settings)
         return settings
 
     def _pixel_size_A(self, channel=0):
         if self.dry_run:
             return 1.0
-        range_x = float(self.connect().get("RangeX"))
-        points_x = float(self.connect().get("PointsX"))
-        return range_x / points_x
+        geometry = ScanGeometry.from_settings(self._scan_settings(channel))
+        return geometry.step_x_A
 
     def _autocorr_peaks(self, acn, max_peaks=10):
         ny, nx = acn.shape
@@ -4044,10 +4074,15 @@ class TipImprovementActivityController:
             time.sleep(5.0)
 
         y_current = int(float(gxsm.y_current()))
+        settle_before_fetch = self.runner.settle_before_pyshm_image_fetch(
+            reason="activity fresh-lines comparison reached enough lines; settle before get_slice",
+            wait_s=1.0,
+        )
         image, meta = self.runner.fetch_scan_image_to_line(
             channel=channel,
             y_current=y_current,
             chunk_lines=chunk_lines,
+            chunk_delay_s=0.5,
         )
         pixel_size_A = self.runner._pixel_size_A(channel)
         quality = self.runner.assess_tip_quality(
@@ -4064,6 +4099,7 @@ class TipImprovementActivityController:
         result.update(
             {
                 "progress": progress,
+                "settle_before_fetch": settle_before_fetch.__dict__,
                 "fetch_meta": meta,
                 "pixel_size_A": pixel_size_A,
                 "tip_quality": quality,
@@ -4396,6 +4432,9 @@ class LandscapeNavigationController:
         self,
         channel=0,
         y_current=None,
+        image=None,
+        meta=None,
+        settings=None,
         patch_A=80.0,
         step_A=20.0,
         max_candidates=12,
@@ -4423,14 +4462,27 @@ class LandscapeNavigationController:
         move ScanX/ScanY or OffsetX/OffsetY.
         """
         started = time.time()
-        settings = self.runner._scan_settings(channel)
+        if settings is None:
+            settings = self.runner._scan_settings(channel)
         self.runner.remember_scan_site(settings)
-        image, meta = self.runner.fetch_scan_image_to_line(
-            channel=channel,
-            y_current=y_current,
-            chunk_lines=80,
-        )
-        pixel_size_A = self.runner._pixel_size_A(channel)
+        if image is None:
+            image, meta = self.runner.fetch_scan_image_to_line(
+                channel=channel,
+                y_current=y_current,
+                chunk_lines=80,
+            )
+        else:
+            image = np.asarray(image, dtype=float)
+            meta = dict(meta or {})
+            meta.setdefault("provided_image", True)
+            meta.setdefault("shape", list(image.shape))
+        try:
+            pixel_size_A = float(settings.get("RangeX")) / max(
+                float(settings.get("PointsX")) - 1.0,
+                1.0,
+            )
+        except Exception:
+            pixel_size_A = self.runner._pixel_size_A(channel)
         footprint = self.scan_frame_world_footprint(settings=settings)
 
         hazards = self.runner.detect_major_bumps(
@@ -4560,72 +4612,24 @@ class LandscapeNavigationController:
         """
         if settings is None:
             settings = self.runner._scan_settings(channel)
-        range_x = float(settings.get("RangeX"))
-        range_y = float(settings.get("RangeY"))
-        points_x = float(settings.get("PointsX"))
-        points_y = float(settings.get("PointsY"))
-        offset_x = float(settings.get("OffsetX", 0.0))
-        offset_y = float(settings.get("OffsetY", 0.0))
-        rotation_deg = float(settings.get("Rotation", 0.0))
-        step_x = range_x / max(points_x - 1.0, 1.0)
-        step_y = range_y / max(points_y - 1.0, 1.0)
-        local_x = float(px) * step_x - range_x / 2.0
-        local_y = range_y / 2.0 - float(py) * step_y
-        theta = np.deg2rad(rotation_deg)
-        world_dx = local_x * np.cos(theta) + local_y * np.sin(theta)
-        world_dy = -local_x * np.sin(theta) + local_y * np.cos(theta)
-        return {
-            "world_x_A": float(offset_x + world_dx),
-            "world_y_A": float(offset_y + world_dy),
-            "local_scan_x_A": float(local_x),
-            "local_scan_y_A": float(local_y),
-            "OffsetX_A": offset_x,
-            "OffsetY_A": offset_y,
-            "Rotation_deg": rotation_deg,
-            "coordinate_note": (
-                "OffsetX/Y are non-rotated world coordinates; local scan "
-                "coordinates are rotated around the scan center by Rotation. "
-                "Line 0/top is ScanY=+RangeY/2; line numbers increase "
-                "downward while physical local Y is positive upward."
-            ),
-        }
+        rec = ScanGeometry.from_settings(settings).pixel_record(px, py)
+        rec["coordinate_note"] = (
+            "OffsetX/Y are non-rotated world coordinates; local scan "
+            "coordinates are rotated around the scan center by Rotation. "
+            "Line 0/top is ScanY=+RangeY/2; line numbers increase "
+            "downward while physical local Y is positive upward."
+        )
+        return rec
 
     def scan_frame_world_footprint(self, settings=None, channel=0):
         """Return scan-frame geometry and its world-coordinate corners."""
         if settings is None:
             settings = self.runner._scan_settings(channel)
-        points_x = int(float(settings.get("PointsX")))
-        points_y = int(float(settings.get("PointsY")))
-        corners_px = {
-            "top_left": (0, 0),
-            "top_right": (points_x - 1, 0),
-            "bottom_right": (points_x - 1, points_y - 1),
-            "bottom_left": (0, points_y - 1),
-        }
-        corners_world = {}
-        for name, (px, py) in corners_px.items():
-            world = self.pixel_to_world_coordinates(
-                px,
-                py,
-                settings=settings,
-                channel=channel,
-            )
-            corners_world[name] = {
-                "world_x_A": world["world_x_A"],
-                "world_y_A": world["world_y_A"],
-                "px": int(px),
-                "py": int(py),
-            }
+        footprint = ScanGeometry.from_settings(settings).footprint()
         return {
-            "OffsetX_A": float(settings.get("OffsetX", 0.0)),
-            "OffsetY_A": float(settings.get("OffsetY", 0.0)),
-            "RangeX_A": float(settings.get("RangeX")),
-            "RangeY_A": float(settings.get("RangeY")),
-            "PointsX": points_x,
-            "PointsY": points_y,
-            "Rotation_deg": float(settings.get("Rotation", 0.0)),
+            **footprint,
             "pixel_origin": "top-left, line 0 at image top",
-            "world_corners": corners_world,
+            "world_corners": footprint.get("corners", {}),
         }
 
     def detect_major_stepped_regions(
@@ -5133,9 +5137,18 @@ class LandscapeNavigationController:
             shift_x,
             shift_y,
         )
-        theta = np.deg2rad(rotation_deg)
-        world_dx = local_dx * np.cos(theta) + local_dy * np.sin(theta)
-        world_dy = -local_dx * np.sin(theta) + local_dy * np.cos(theta)
+        shift_geometry = ScanGeometry(
+            range_x_A=old_range_x,
+            range_y_A=old_range_y,
+            points_x=2,
+            points_y=2,
+            offset_x_A=0.0,
+            offset_y_A=0.0,
+            rotation_deg=rotation_deg,
+        )
+        world_shift = shift_geometry.local_vector_to_world(local_dx, local_dy)
+        world_dx = world_shift.x_A
+        world_dy = world_shift.y_A
         target = {
             "OffsetX": float(old_offset_x + world_dx),
             "OffsetY": float(old_offset_y + world_dy),
@@ -5270,6 +5283,10 @@ class LandscapeNavigationController:
         """
         Monitor an active scan and stop immediately if a major bump/pit appears.
 
+        Note: image-based hazard checking uses `gxsm.get_slice`. Keep these
+        reads sparse and settled; GXSM can scan while image data is fetched, but
+        PySHM requests should not be fired back-to-back.
+
         Returns after full scan completion, abort request, or hazard stop.
         """
         if self.runner.dry_run:
@@ -5294,10 +5311,15 @@ class LandscapeNavigationController:
                 }
             )
             if y_current + 1 >= min_lines_before_check and y_current != last_checked:
+                settle_before_fetch = self.runner.settle_before_pyshm_image_fetch(
+                    reason="exploration hazard monitor reached enough lines; settle before get_slice",
+                    wait_s=1.0,
+                )
                 image, meta = self.runner.fetch_scan_image_to_line(
                     channel=channel,
                     y_current=y_current,
                     chunk_lines=chunk_lines,
+                    chunk_delay_s=0.5,
                 )
                 bumps = self.runner.detect_major_bumps(
                     image,
@@ -5326,6 +5348,7 @@ class LandscapeNavigationController:
                         "elapsed_s": time.time() - started,
                         "y_current": y_current,
                         "fetch_meta": meta,
+                        "settle_before_fetch": settle_before_fetch.__dict__,
                         "hazards": bumps,
                         "reason": (
                             "major bump/pit detected during exploration scan "
@@ -5514,13 +5537,20 @@ class LandscapeNavigationController:
         oy = float(offset_y_A)
         rx = float(range_x_A)
         ry = float(range_y_A if range_y_A is not None else range_x_A)
-        theta = np.deg2rad(float(rotation_deg or 0.0))
         corners = []
+        geometry = ScanGeometry(
+            range_x_A=rx,
+            range_y_A=ry,
+            points_x=2,
+            points_y=2,
+            offset_x_A=ox,
+            offset_y_A=oy,
+            rotation_deg=float(rotation_deg or 0.0),
+        )
         for local_x in (-0.5 * rx, 0.5 * rx):
             for local_y in (-0.5 * ry, 0.5 * ry):
-                world_x = ox + local_x * np.cos(theta) + local_y * np.sin(theta)
-                world_y = oy - local_x * np.sin(theta) + local_y * np.cos(theta)
-                corners.append({"world_x_A": float(world_x), "world_y_A": float(world_y)})
+                world = geometry.local_to_world(local_x, local_y)
+                corners.append({"world_x_A": float(world.x_A), "world_y_A": float(world.y_A)})
         x_values = [corner["world_x_A"] for corner in corners]
         y_values = [corner["world_y_A"] for corner in corners]
         max_abs_x = max(abs(value) for value in x_values)

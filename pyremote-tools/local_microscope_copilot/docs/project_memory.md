@@ -116,6 +116,13 @@ Fast monitor/readout methods:
 
 ## Coordinate Conventions
 
+The authoritative code layer for coordinate transforms is
+`microscope_coordinates.py`; see `docs/coordinate_system_reference.md`.
+Do not duplicate pixel/local/world/controller Volt formulas in GUI, planner, or
+action code.  Build `ScanGeometry` from instrument-returned GXSM scan settings
+and `InstrumentGains` from `gxsm.get_instrument_gains()`/parsed gain data, then
+use those methods for transforms.
+
 Offset coordinates:
 
 - `OffsetX/Y` are non-rotated world coordinates.
@@ -267,6 +274,11 @@ The LLM must not claim an action happened unless it passed through the explicit
 controller gate. This avoids the generic model producing plausible but useless
 SPM advice.
 
+See `docs/llm_intent_and_action_gateway.md` for the full LLM/Intent Mode
+contract, including deterministic parser precedence, strict JSON intent mode,
+unit validation, action-level gates, and a proposed future online/larger-LLM
+planner architecture.
+
 ## Main Files
 
 - `microscope_gradio_gui.py`: Gradio app and chat/intent/action gateway.
@@ -296,7 +308,13 @@ Relevant GXSM C++ counterpart: `plug-ins/common/pyremote.cpp` implements
 `get_slice`/`get_slice_v`, and `PySHMServer_Run`. It uses one shared method
 name/argument/return pickle block, so every PySHM request must complete its full
 handshake before another one starts. The Python wrapper copies returned pickle
-bytes out of SHM before unpickling.
+bytes out of SHM before unpickling. See `docs/pyremote_cpp_reference.md` for
+the maintained C++ bridge reference. `remote_getslice()` also reads scan
+`mem2d` directly from the PySHM server thread; GXSM allows live scan fetches,
+but planner image fetches should be sparse, chunked, and separated by deliberate
+settle time rather than tightly chained. Current wrapper default:
+`GXSM_PYSHM_MIN_INTERVAL_S=0.50`; scan-line planner polling is seconds-scale,
+not sub-second.
 
 ## Current Handoff Snapshot, 2026-06-05
 

@@ -70,6 +70,8 @@ class gxsm_process():
                         "/tmp/gxsm4_pyshm_transaction.lock",
                 )
                 self.pyshm_file_lock_fd = None
+                self.pyshm_min_interval_s = float(os.environ.get("GXSM_PYSHM_MIN_INTERVAL_S", "0.50"))
+                self._last_pyshm_completion_s = 0.0
                 #self.Masyncio = use_asyncio
                 
                 print ('Gxsm4 Process Class Init. PySHM + RPSPMC Monitors. V {}'.format(self.version()))
@@ -129,6 +131,32 @@ class gxsm_process():
                         yield
                 finally:
                         fcntl.flock(self.pyshm_file_lock_fd.fileno(), fcntl.LOCK_UN)
+
+        def wait_for_pyshm_cadence_locked(self):
+                if self.pyshm_min_interval_s <= 0:
+                        return
+                last_completion = self._last_pyshm_completion_s
+                try:
+                        self.pyshm_file_lock_fd.seek(0)
+                        text = self.pyshm_file_lock_fd.read().strip()
+                        if text:
+                                last_completion = max(last_completion, float(text))
+                except Exception:
+                        pass
+                remaining = self.pyshm_min_interval_s - (time.monotonic() - last_completion)
+                if remaining > 0:
+                        time.sleep(remaining)
+
+        def mark_pyshm_completion_locked(self):
+                now = time.monotonic()
+                self._last_pyshm_completion_s = now
+                try:
+                        self.pyshm_file_lock_fd.seek(0)
+                        self.pyshm_file_lock_fd.truncate(0)
+                        self.pyshm_file_lock_fd.write("{:.9f}\n".format(now))
+                        self.pyshm_file_lock_fd.flush()
+                except Exception:
+                        pass
         
         # find and set gxsm4 process id (PID) used for signaling or if given use specific PID
         # all PySHM requires one gxsm4 process -- warning: currently undefined behavior in case of multiple gxsm4 instances!
@@ -192,6 +220,7 @@ class gxsm_process():
                 self.debug_print (1, 'exec_pyshm_method: {} ({}) '.format(method, args))
                 #async with self.mutex:
                 with self.mutex, self.pyshm_transaction_lock():
+                        self.wait_for_pyshm_cadence_locked()
                         if not hasattr(self, "gxsm_pyshm"):
                                 raise RuntimeError("GXSM4 PySHM is not available; cannot call gxsm.{}.".format(method))
                         pyshm_status = np.frombuffer(self.gxsm_pyshm.buf, dtype=np.int64, count=1, offset=100)
@@ -275,6 +304,7 @@ class gxsm_process():
                                 )
                         ret_payload = bytes(self.gxsm_pyshm.buf[128+8 : 128+8+pyshm_pickles_bytes_len])
                         ret = pickle.loads(ret_payload)
+                        self.mark_pyshm_completion_locked()
                 return ret
 
         ### PySHM wrapper functions for full PyRemote Gxsm4 level embedded python compatibility

@@ -1,11 +1,14 @@
 """Scan plotting, refresh, and analysis mixin for the GXSM4 Gradio GUI."""
 
+import html
 import json
 import time
 import traceback
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+from microscope_coordinates import ScanGeometry
 
 
 class ScanGuiMixin:
@@ -15,21 +18,87 @@ class ScanGuiMixin:
         """Return imshow extent in local scan Angstroms, preserving aspect."""
         ny, nx = image.shape
         try:
-            settings = self.runner._scan_settings(int(channel))
-            range_x = float(settings.get("RangeX"))
-            range_y = float(settings.get("RangeY"))
-            points_y = float(settings.get("PointsY") or meta.get("dimensions", [nx, ny])[1])
+            settings = (
+                (meta or {}).get("settings")
+                or getattr(self.runner, "data", {}).get("last_scan_settings")
+                or self.runner._scan_settings(int(channel))
+            )
+            geometry = ScanGeometry.from_settings(settings, image_shape=image.shape)
         except Exception:
             dims = meta.get("dimensions", [nx, ny])
-            range_x = float(dims[0] or nx)
-            range_y = float(dims[1] or ny)
-            points_y = float(dims[1] or ny)
+            geometry = ScanGeometry.from_settings(
+                {
+                    "RangeX": float(dims[0] or nx),
+                    "RangeY": float(dims[1] or ny),
+                    "PointsX": int(dims[0] or nx),
+                    "PointsY": int(dims[1] or ny),
+                },
+                image_shape=image.shape,
+            )
         fetched_y = float(meta.get("fetched_y_count", ny) or ny)
-        x_left = -0.5 * range_x
-        x_right = 0.5 * range_x
-        y_top = 0.5 * range_y
-        y_bottom = y_top - range_y * fetched_y / max(points_y, 1.0)
-        return (x_left, x_right, y_bottom, y_top)
+        return geometry.scan_extent_for_fetched_lines(fetched_y)
+
+    def scan_settings_from_meta_or_cache(self, meta, channel):
+        """Return scan geometry, preferring current instrument readback."""
+        meta = dict(meta or {})
+        settings = meta.get("settings")
+        source = "fetch_meta"
+        if not settings:
+            try:
+                settings = self.runner._scan_settings(int(channel))
+                source = "gxsm_current_scan_settings"
+            except Exception:
+                settings = None
+        if not settings:
+            settings = getattr(self.runner, "data", {}).get("last_scan_settings")
+            source = "cached_last_scan_settings"
+        if not settings:
+            dims = meta.get("dimensions") or meta.get("shape") or [1, 1]
+            nx = int(dims[0]) if len(dims) > 0 else 1
+            ny = int(dims[1]) if len(dims) > 1 else nx
+            settings = {
+                "RangeX": float(nx),
+                "RangeY": float(ny),
+                "PointsX": float(nx),
+                "PointsY": float(ny),
+                "Rotation": 0.0,
+                "ScanX": 0.0,
+                "ScanY": 0.0,
+                "OffsetX": 0.0,
+                "OffsetY": 0.0,
+                "dimensions": [nx, ny],
+                "settings_source": "fallback_from_dimensions",
+                "settings_note": (
+                    "Analyze Scan used dimension-derived local geometry because "
+                    "current GXSM scan settings were not available."
+                ),
+            }
+            source = "fallback_from_dimensions"
+        settings = dict(settings)
+        settings.setdefault("dimensions", list(meta.get("dimensions", [1, 1])))
+        settings.setdefault("settings_source", source)
+        return settings
+
+    def pixel_size_from_settings(self, settings, image=None):
+        points_x = None
+        if settings:
+            points_x = settings.get("PointsX")
+        if points_x is None and image is not None:
+            points_x = image.shape[1]
+        geometry = ScanGeometry.from_settings(
+            dict(settings or {"PointsX": points_x, "RangeX": points_x}),
+            image_shape=image.shape if image is not None else None,
+        )
+        return geometry.step_x_A
+
+    def downsample_for_fast_analysis(self, image, max_dim=384):
+        """Return a strided image small enough for prompt GUI analysis."""
+        arr = np.asarray(image, dtype=float)
+        if arr.ndim != 2:
+            return arr, 1
+        largest = max(arr.shape)
+        stride = max(1, int(np.ceil(float(largest) / float(max_dim))))
+        return arr[::stride, ::stride], stride
 
     def pixel_to_local_A(self, px, py, image, extent):
         ny, nx = image.shape
@@ -322,48 +391,38 @@ class ScanGuiMixin:
         )
         return fig, report
 
-    def fetch_scan_plot_with_profile(self, channel, chunk_lines):
-        operation_blocked = self.acquire_microscope_operation(
-            "fetch scan image",
-            blocking=False,
+    def _fetch_scan_plot_with_profile_locked(self, channel, chunk_lines):
+        image, meta = self.runner.fetch_scan_image_to_line(
+            channel=int(channel),
+            chunk_lines=int(chunk_lines),
         )
-        if operation_blocked:
-            fig, ax = plt.subplots(figsize=(6, 4), constrained_layout=True)
-            ax.text(0.5, 0.5, operation_blocked["reason"], ha="center", va="center", wrap=True)
-            ax.set_axis_off()
-            profile_fig, profile_ax = plt.subplots(figsize=(6, 2.5), constrained_layout=True)
-            profile_ax.text(0.5, 0.5, operation_blocked["reason"], ha="center", va="center", wrap=True)
-            profile_ax.set_axis_off()
-            return fig, profile_fig, self.jsonable(operation_blocked)
+        fig, extent = self.plot_scan_image_A(
+            image,
+            meta,
+            channel,
+            "Channel {} scan data, line 0 at top".format(channel),
+            "signal",
+        )
+        report = {
+            "meta": self.jsonable(meta),
+            "extent_A": list(extent),
+            "shape": list(image.shape),
+            "min": float(image.min()),
+            "max": float(image.max()),
+            "mean": float(image.mean()),
+            "std": float(image.std()),
+        }
+        profile_fig = self.plot_last_scan_line_profile(image, meta, extent)
+        self.scan_view_state[int(channel)] = {
+            "y_current": int(meta.get("y_current", -1)),
+            "fetched_y_count": int(meta.get("fetched_y_count", image.shape[0])),
+            "timestamp": time.time(),
+        }
+        return fig, profile_fig, report
+
+    def fetch_scan_plot_with_profile(self, channel, chunk_lines):
         try:
-            image, meta = self.runner.fetch_scan_image_to_line(
-                channel=int(channel),
-                chunk_lines=int(chunk_lines),
-            )
-            fig, extent = self.plot_scan_image_A(
-                image,
-                meta,
-                channel,
-                "Channel {} scan data, line 0 at top".format(channel),
-                "signal",
-            )
-            report = {
-                "meta": self.jsonable(meta),
-                "extent_A": list(extent),
-                "shape": list(image.shape),
-                "min": float(image.min()),
-                "max": float(image.max()),
-                "mean": float(image.mean()),
-                "std": float(image.std()),
-            }
-            profile_fig = self.plot_last_scan_line_profile(image, meta, extent)
-            self.scan_view_state[int(channel)] = {
-                "y_current": int(meta.get("y_current", -1)),
-                "fetched_y_count": int(meta.get("fetched_y_count", image.shape[0])),
-                "timestamp": time.time(),
-            }
-            self.release_microscope_operation()
-            return fig, profile_fig, report
+            return self._fetch_scan_plot_with_profile_locked(channel, chunk_lines)
         except Exception as exc:
             fig, ax = plt.subplots(figsize=(6, 4), constrained_layout=True)
             ax.text(0.5, 0.5, str(exc), ha="center", va="center", wrap=True)
@@ -371,7 +430,6 @@ class ScanGuiMixin:
             profile_fig, profile_ax = plt.subplots(figsize=(6, 2.5), constrained_layout=True)
             profile_ax.text(0.5, 0.5, str(exc), ha="center", va="center", wrap=True)
             profile_ax.set_axis_off()
-            self.release_microscope_operation()
             return fig, profile_fig, {"error": str(exc), "traceback": traceback.format_exc()}
 
     def plot_last_scan_line_profile(self, image, meta, extent):
@@ -410,38 +468,60 @@ class ScanGuiMixin:
         except Exception:
             gr = None
         update = gr.update() if gr else None
+        status_idle = self.scan_auto_refresh_status_html("idle", "Auto refresh is off.")
         if not enabled:
-            return update, update, update
-        operation_blocked = self.acquire_microscope_operation(
-            "auto refresh scan image",
-            blocking=False,
-        )
-        if operation_blocked:
-            report = dict(operation_blocked)
-            report["status"] = "skipped_busy"
-            report["note"] = (
-                "Auto scan refresh skipped because another PySHM operation, "
-                "such as the Tip Tune Planner, owns the microscope lane."
+            return update, update, update, status_idle
+        if getattr(self, "tip_planner_state", {}).get("loop_active"):
+            status = self.scan_auto_refresh_status_html(
+                "busy",
+                "Planner active; keeping current scan image.",
             )
-            return update, update, self.jsonable(report)
+            return update, update, update, status
         try:
             channel = int(channel)
             y_current = self.current_scan_line_index(channel)
             previous = self.scan_view_state.get(channel, {}).get("y_current")
             if previous is not None and int(previous) == int(y_current):
-                self.release_microscope_operation()
-                return update, update, update
-            self.release_microscope_operation()
-            return self.fetch_scan_plot_with_profile(channel, chunk_lines)
+                status = self.scan_auto_refresh_status_html(
+                    "ok",
+                    "No new scan line yet; image retained.",
+                )
+                return update, update, update, status
         except Exception as exc:
-            self.release_microscope_operation()
-            fig, ax = plt.subplots(figsize=(6, 4), constrained_layout=True)
-            ax.text(0.5, 0.5, str(exc), ha="center", va="center", wrap=True)
-            ax.set_axis_off()
-            profile_fig, profile_ax = plt.subplots(figsize=(6, 2.5), constrained_layout=True)
-            profile_ax.text(0.5, 0.5, str(exc), ha="center", va="center", wrap=True)
-            profile_ax.set_axis_off()
-            return fig, profile_fig, {"error": str(exc), "traceback": traceback.format_exc()}
+            status = self.scan_auto_refresh_status_html(
+                "busy",
+                "Line check skipped: {}.".format(exc),
+            )
+            return update, update, update, status
+        try:
+            fig, profile_fig, report = self._fetch_scan_plot_with_profile_locked(channel, chunk_lines)
+            status = self.scan_auto_refresh_status_html(
+                "ok",
+                "Updated through line {}.".format(report.get("meta", {}).get("y_current", "n/a")),
+            )
+            return fig, profile_fig, report, status
+        except Exception as exc:
+            status = self.scan_auto_refresh_status_html(
+                "busy",
+                "Image update skipped: {}.".format(exc),
+            )
+            return update, update, update, status
+
+    def scan_auto_refresh_status_html(self, state, text):
+        colors = {
+            "ok": ("#1b7f3a", "#e9f6ee"),
+            "busy": ("#c62828", "#fff0f0"),
+            "idle": ("#777", "#f5f5f5"),
+        }
+        color, bg = colors.get(state, colors["idle"])
+        return (
+            "<div style='display:inline-flex;align-items:center;gap:7px;"
+            "padding:5px 8px;border:1px solid #ddd;border-radius:5px;"
+            "background:{bg};font-size:12px;color:#333'>"
+            "<span style='display:inline-block;width:10px;height:10px;"
+            "border-radius:50%;background:{color}'></span>"
+            "<span>{text}</span></div>"
+        ).format(bg=bg, color=color, text=html.escape(str(text)))
 
     def analyze_current_scan(self, channel, chunk_lines, output_prefix):
         try:
@@ -449,54 +529,114 @@ class ScanGuiMixin:
                 channel=int(channel),
                 chunk_lines=int(chunk_lines),
             )
+            settings = self.scan_settings_from_meta_or_cache(meta, channel)
+            meta = dict(meta or {})
+            meta["settings"] = settings
             dfreq_image = None
-            dfreq_meta = None
-            try:
-                dfreq_image, dfreq_meta = self.runner.fetch_scan_image_to_line(
-                    channel=2,
-                    y_current=int(meta.get("y_current", -1)),
-                    chunk_lines=int(chunk_lines),
-                    store_last=False,
-                )
-            except Exception as exc:
-                dfreq_meta = {
-                    "available": False,
-                    "error": "{}: {}".format(type(exc).__name__, exc),
-                    "channel": 2,
-                }
-            pixel = self.runner._pixel_size_A(int(channel))
-            quality = self.runner.assess_tip_quality(
+            dfreq_meta = {
+                "available": False,
+                "status": "skipped_fast_analysis_path",
+                "channel": 2,
+                "reason": (
+                    "Analyze Scan currently performs one topo get_slice only. "
+                    "Use Scan View or a dedicated dFreq fetch for heavier "
+                    "multi-channel reads."
+                ),
+            }
+            pixel = self.pixel_size_from_settings(settings, image=image)
+            analysis_started = time.time()
+            quality_image, quality_stride = self.downsample_for_fast_analysis(
                 image,
-                pixel_size_A=pixel,
-                output_prefix=str(self.output_dir / output_prefix),
+                max_dim=384,
             )
-            live_dfreq = self.runner.sample_dfrequency_values(count=12, delay_s=0.05)
-            quality["dFrequency"] = live_dfreq.get("interpretation")
+            quality = self.runner.assess_tip_quality(
+                quality_image,
+                pixel_size_A=pixel * float(quality_stride),
+                output_prefix=None,
+            )
+            quality["fast_analysis_note"] = (
+                "Tip quality was computed on a stride-{} downsampled image "
+                "to keep the GUI responsive.".format(quality_stride)
+            )
+            live_dfreq = {
+                "status": "skipped_fast_analysis_path",
+                "reason": (
+                    "Analyze Current Scan avoids extra live rtquery samples. "
+                    "Use the live monitor or Full Refresh for current dFreq."
+                ),
+            }
             scan_dfreq_stats = None
             if dfreq_image is not None:
                 scan_dfreq_stats = self.runner._array_stats(dfreq_image)
-            landscape = self.nav.analyze_current_scan_landscape_map(
-                channel=int(channel),
-                output_prefix=str(self.output_dir / (output_prefix + "_landscape")),
+                live_dfreq["recorded_ch2_stats"] = self.jsonable(scan_dfreq_stats)
+            hazards = self.runner.detect_major_bumps(
+                image,
+                max_bumps=12,
+                sigma_threshold=7.0,
+                min_sep_px=max(12, int(round(30.0 / max(pixel, 1e-9)))),
+                pixel_size_A=pixel,
             )
-            current_tip_position = None
-            try:
-                self.runner.get_live_tip_position_monitor(collect_as="scan_analysis_tip_position")
-                monitor = self.runner.data.get("scan_analysis_tip_position", {})
-                current_tip_position = {
-                    "scan_x_A": float(monitor.get("dsp-GVP-XS-MONITOR")),
-                    "scan_y_A": float(monitor.get("dsp-GVP-YS-MONITOR")),
-                    "z_offset_A": float(monitor.get("dsp-GVP-ZS-MONITOR")),
-                    "gvp_u_V": float(monitor.get("dsp-GVP-U-MONITOR")),
-                    "raw_monitor": monitor,
-                }
-                landscape["current_tip_position"] = current_tip_position
-            except Exception as exc:
-                current_tip_position = {
-                    "available": False,
-                    "error": "{}: {}".format(type(exc).__name__, exc),
-                }
-                landscape["current_tip_position"] = current_tip_position
+            for hazard in hazards:
+                try:
+                    hazard.update(
+                        self.nav.pixel_to_world_coordinates(
+                            hazard["px"],
+                            hazard["py"],
+                            settings=settings,
+                            channel=int(channel),
+                        )
+                    )
+                except Exception:
+                    hazard.setdefault("world_mapping_error", True)
+            clean_patch = self.runner.find_clean_patch(
+                image,
+                patch_x=max(16, min(48, int(round(70.0 / max(pixel, 1e-9))))),
+                step_px=max(4, int(round(25.0 / max(pixel, 1e-9)))),
+                avoid_bumps=False,
+            )
+            candidates = []
+            if clean_patch:
+                local_x, local_y = self.pixel_to_local_A(
+                    clean_patch["px"],
+                    clean_patch["py"],
+                    image,
+                    self.scan_extent_A(image, {"settings": settings, **dict(meta or {})}, channel),
+                )
+                candidate = dict(clean_patch)
+                candidate.update(
+                    {
+                        "scan_x_A": float(local_x),
+                        "scan_y_A": float(local_y),
+                        "note": "fast local flat patch candidate; not world-mapped",
+                    }
+                )
+                candidates.append(candidate)
+            landscape = {
+                "analysis": "fast_scan_analysis",
+                "settings": settings,
+                "fetch_meta": meta,
+                "pixel_size_A": pixel,
+                "hazards": hazards,
+                "flat_candidates": candidates,
+                "candidates": candidates,
+                "best_candidate": candidates[0] if candidates else None,
+                "skipped": [
+                    "full landscape world-map analysis",
+                    "stepped-region segmentation",
+                    "abnormal-line classifier",
+                    "Channel 2 dFreq get_slice",
+                ],
+                "runtime_s_before_plot": time.time() - analysis_started,
+            }
+            current_tip_position = {
+                "available": False,
+                "status": "not_refreshed",
+                "reason": (
+                    "Use Read / Mark Current Tip to refresh GVP monitor position; "
+                    "the analysis button avoids extra gxsm.get calls."
+                ),
+            }
+            landscape["current_tip_position"] = current_tip_position
             if hasattr(self, "tip_planner_state"):
                 self.tip_planner_state["last_analysis"] = landscape
                 self.tip_planner_state["last_image"] = image
@@ -526,6 +666,7 @@ class ScanGuiMixin:
                 "extent_A": list(extent),
                 "pixel_size_A": pixel,
                 "tip_quality": quality,
+                "analysis_runtime_s": time.time() - analysis_started,
                 "metal_tip_note": (
                     "Current topo sharpness criteria are for a metal tip. "
                     "CO/O or other functionalized-tip contrast should use a "
@@ -541,3 +682,9 @@ class ScanGuiMixin:
             ax.text(0.5, 0.5, str(exc), ha="center", va="center", wrap=True)
             ax.set_axis_off()
             return fig, {"error": str(exc), "traceback": traceback.format_exc()}, ""
+
+    def blank_scan_figure(self, message):
+        fig, ax = plt.subplots(figsize=(6, 4), constrained_layout=True)
+        ax.text(0.5, 0.5, str(message), ha="center", va="center", wrap=True)
+        ax.set_axis_off()
+        return fig

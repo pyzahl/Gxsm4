@@ -41,7 +41,7 @@
       "channel": 0,
       "lines": 120,
       "auto_refresh": false,
-      "refresh_interval_s": 1.0
+      "refresh_interval_s": 2.0
     },
     "analysis": {
       "channel": 0,
@@ -72,6 +72,7 @@
       "loop_points": 400,
       "loop_max_large_hazards": 8,
       "loop_max_abs_dfreq_Hz": 4.0,
+      "loop_evidence_source": "start_new_scan",
       "loop_auto_shift_on_blobs": false
     },
     "scan_leveling": {

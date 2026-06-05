@@ -873,8 +873,13 @@ in one place:
   needed, applies `OffsetX/Y`, scan range, points, and optionally starts a new
   scan.
 - `Run Tip Tune Planner Loop`: Level 1, arm-gated, and requires typing
-  `EXECUTE TIP LOOP`. It repeats a bounded cycle:
-  scan/setup, wait until enough lines exist, assess image and dFreq, stop if
+  `EXECUTE TIP LOOP`. The first cycle has an evidence-source selector:
+  `start_new_scan` sets up and starts a diagnostic scan, `take_over_running_scan`
+  waits for enough lines from the scan already in progress, and `existing_image`
+  reuses the stored planner image/analysis from `Analyze Tip And Flat Candidates`
+  without starting or fetching another scan. After a GVP action, later cycles
+  start a fresh diagnostic scan for post-action evidence. The loop repeats a
+  bounded cycle: collect enough evidence, assess image and dFreq, stop if
   satisfactory, stop/search if too many large hazards or if a large avoid-worthy
   feature is too close to the chosen clear area, otherwise stop scanning, move
   to the best clean candidate, execute a gentle planned GVP pulse or Z-dip, and

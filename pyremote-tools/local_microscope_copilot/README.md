@@ -13,6 +13,9 @@ This folder contains:
   readouts, tip/landscape analysis, and armed action buttons.
 - `microscope_actions.py`: high-level scan, navigation, tip analysis, and GVP
   controller code.
+- `microscope_coordinates.py`: authoritative pure conversion layer for scan
+  pixels, local Angstrom coordinates, world Offset coordinates, and fast
+  controller-monitor Volts.
 - `gxsm4process.py`: bundled copy of the GXSM4 pyremote transport used by the
   controller.
 - `local_microscope_copilot_config.json`: model/service configuration.
@@ -25,9 +28,10 @@ This folder contains:
 - `copilot_services.sh`: local start/stop/restart/status helper for Ollama and
   the Gradio GUI.
 - `install_ollama.sh`: downloaded official Ollama Linux installer.
-- `docs/`: microscope controller manual, tip-improvement plan, and codebase
-  overview notes. Start with `docs/project_memory.md` to recover the current
-  design context and operator-taught conventions.
+- `docs/`: microscope controller manual, tip-improvement plan, pyremote C++/Python
+  bridge references, and codebase overview notes. Start with
+  `docs/project_memory.md` to recover the current design context and
+  operator-taught conventions.
 - `gvp_*_program.json` / `gvp_*_recipe.json`: bundled default GVP pulse and
   tip-tune templates used by the controller and GUI load actions.
 
@@ -224,7 +228,10 @@ reasons, and recommended next steps. It writes append-only history to
 for cooperative cancellation, and `Clear Planner / Landscape History` after a
 hyper jump or new-world relocation. Large-hazard stops now include a computed
 hazard-avoiding offset target when possible, checked against the full rotated
-scan footprint rather than only the scan center.
+scan footprint rather than only the scan center. The loop's first cycle can
+start a new diagnostic scan, take over a scan that is already running, or reuse
+the existing planner image/analysis from `Analyze Tip And Flat Candidates`
+without fetching another image.
 
 ### Control Levels
 
@@ -257,5 +264,15 @@ scan footprint rather than only the scan center.
   GVP pulse/dip recipes, and operator-taught safety conventions.
 - `docs/gxsm4process_reference.md`: reference for the bundled pyremote wrapper,
   known `gxsm.get/set/action` IDs, and scan/probe data fetching.
+- `docs/coordinate_system_reference.md`: coordinate and unit conversion
+  conventions for pixel, local scan, world Offset, and fast monitor Volt/A
+  transforms.
+- `docs/llm_intent_and_action_gateway.md`: how deterministic chat parsing,
+  local Ollama Intent Mode, safety gates, and possible future online/larger-LLM
+  planners fit together.
+- `docs/pyremote_cpp_reference.md`: reference for GXSM4
+  `plug-ins/common/pyremote.cpp`, including the PySHM transaction layout,
+  exported method table, `get_slice`, `get_probe_event`, and concurrency/ABI
+  cautions.
 - `docs/codebase-overview.md`: compact overview of the pyremote/GXSM context
   used while developing this controller layer.

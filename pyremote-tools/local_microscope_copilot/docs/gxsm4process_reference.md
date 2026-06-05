@@ -4,6 +4,8 @@ This document summarizes the GXSM4 Python pyremote wrapper bundled in
 `local_microscope_copilot/gxsm4process.py`, plus the GXSM GUI refnames/actions
 and data-fetching conventions used so far by the microscope copilot/controller.
 
+For the GXSM4 C++ plugin counterpart, see `docs/pyremote_cpp_reference.md`.
+
 The live system is an LT-STM/AFM. Treat `gxsm.set(...)`, `gxsm.action(...)`,
 `startscan()`, `stopscan()`, `ScanX/Y`, `OffsetX/Y`, and GVP execution as
 hardware-affecting operations.
@@ -143,7 +145,11 @@ gxsm.get_slice_v(ch, x, t, yi, yn)
 `get_slice` and `get_slice_v` can return large NumPy arrays through the same
 PySHM pickle block. Keep them sequential and chunked; do not call them from
 timer threads or in parallel with `gxsm.get`, `gxsm.set`, `gxsm.action`, GVP
-execution, or other PySHM methods.
+execution, or other PySHM methods. `get_slice` can be used while scanning, but
+planner/analysis workflows should leave deliberate settle time before image
+fetches and short delays between chunks instead of issuing PySHM calls
+back-to-back. The bundled wrapper defaults to at least 0.5 s between PySHM
+transactions via `GXSM_PYSHM_MIN_INTERVAL_S`.
 
 The controller fetches a scan image from the top down in chunks:
 

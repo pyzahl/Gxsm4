@@ -47,6 +47,7 @@ from microscope_actions import (
     MicroscopeActionRunner,
     TipImprovementActivityController,
 )
+from microscope_coordinates import InstrumentGains, ScanGeometry
 from microscope_gradio_auth import (
     DEFAULT_AUTH_PASSWORD_ENV,
     DEFAULT_AUTH_PASSWORD_FILE,
@@ -180,9 +181,12 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             "sample_count": {"x": 0, "y": 0},
         }
         self.live_xy_calibration_samples = {"x": [], "y": []}
-        self.microscope_operation_lock = threading.RLock()
+        self.microscope_operation_lock = threading.Lock()
         self.microscope_operation_owner = None
         self.microscope_operation_depth = 0
+        self.microscope_operation_stale_s = float(
+            self.gui_default("operation_gate.stale_after_s", 180.0)
+        )
         self.instrument_gains_cache = {
             "values": None,
             "updated_at": None,
@@ -240,36 +244,64 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
 
     def acquire_microscope_operation(self, name, blocking=False):
         thread_id = threading.get_ident()
-        acquired = self.microscope_operation_lock.acquire(blocking=bool(blocking))
-        if not acquired:
-            return {
-                "blocked": "microscope_operation_busy",
-                "requested_operation": name,
-                "current_operation": self.microscope_operation_owner,
-                "reason": (
-                    "Another GUI hardware operation is active. Planner and "
-                    "PySHM/get_slice actions are serialized to avoid overlap."
-                ),
-            }
-        if (
-            self.microscope_operation_owner
-            and self.microscope_operation_owner.get("thread_id") == thread_id
-        ):
-            self.microscope_operation_depth += 1
-            return None
-        self.microscope_operation_owner = {
-            "name": str(name),
-            "thread_id": thread_id,
-            "started_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
-        }
-        self.microscope_operation_depth = 1
-        return None
+        while True:
+            with self.microscope_operation_lock:
+                owner = self.microscope_operation_owner
+                if (
+                    owner
+                    and owner.get("thread_id") != thread_id
+                    and owner.get("started_monotonic") is not None
+                    and time.monotonic() - float(owner.get("started_monotonic")) > self.microscope_operation_stale_s
+                ):
+                    self.microscope_operation_owner = None
+                    self.microscope_operation_depth = 0
+                    owner = None
+
+                if owner and owner.get("thread_id") == thread_id:
+                    self.microscope_operation_depth += 1
+                    return None
+
+                if not owner:
+                    self.microscope_operation_owner = {
+                        "name": str(name),
+                        "thread_id": thread_id,
+                        "started_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                        "started_monotonic": time.monotonic(),
+                    }
+                    self.microscope_operation_depth = 1
+                    return None
+
+                if not blocking:
+                    age_s = None
+                    if owner.get("started_monotonic") is not None:
+                        age_s = time.monotonic() - float(owner.get("started_monotonic"))
+                    return {
+                        "blocked": "microscope_operation_busy",
+                        "requested_operation": name,
+                        "current_operation": owner,
+                        "current_operation_age_s": age_s,
+                        "stale_after_s": self.microscope_operation_stale_s,
+                        "reason": (
+                            "Another GUI hardware operation is active. Planner "
+                            "and PySHM/get_slice actions are serialized to avoid "
+                            "overlap. If this owner is stale it will be cleared "
+                            "automatically after the stale timeout."
+                        ),
+                    }
+            time.sleep(0.1)
 
     def release_microscope_operation(self):
-        self.microscope_operation_depth = max(0, int(self.microscope_operation_depth) - 1)
-        if self.microscope_operation_depth == 0:
-            self.microscope_operation_owner = None
-        self.microscope_operation_lock.release()
+        thread_id = threading.get_ident()
+        with self.microscope_operation_lock:
+            owner = self.microscope_operation_owner
+            if not owner:
+                self.microscope_operation_depth = 0
+                return
+            if owner.get("thread_id") != thread_id:
+                return
+            self.microscope_operation_depth = max(0, int(self.microscope_operation_depth) - 1)
+            if self.microscope_operation_depth == 0:
+                self.microscope_operation_owner = None
 
     def run_microscope_operation(self, name, callback, blocking=False):
         operation_blocked = self.acquire_microscope_operation(name, blocking=blocking)
@@ -1643,11 +1675,19 @@ User request: __USER_REQUEST__
         current_x = self.read_float_parameter("OffsetX", fallback=0.0)
         current_y = self.read_float_parameter("OffsetY", fallback=0.0)
         rotation = self.read_float_parameter("Rotation", fallback=0.0)
-        theta = np.deg2rad(rotation)
         local_dx = parsed["local_dx_A"]
         local_dy = parsed["local_dy_A"]
-        world_dx = local_dx * np.cos(theta) + local_dy * np.sin(theta)
-        world_dy = -local_dx * np.sin(theta) + local_dy * np.cos(theta)
+        shift = ScanGeometry(
+            range_x_A=1.0,
+            range_y_A=1.0,
+            points_x=2,
+            points_y=2,
+            offset_x_A=0.0,
+            offset_y_A=0.0,
+            rotation_deg=rotation,
+        ).local_vector_to_world(local_dx, local_dy)
+        world_dx = shift.x_A
+        world_dy = shift.y_A
         target_x = current_x + world_dx
         target_y = current_y + world_dy
         target = {
@@ -2604,6 +2644,46 @@ User request: __USER_REQUEST__
             "help": CONTROL_LEVEL_HELP.strip(),
         }
 
+    def microscope_operation_status(self):
+        with self.microscope_operation_lock:
+            owner = dict(self.microscope_operation_owner or {})
+            depth = int(self.microscope_operation_depth or 0)
+        age_s = None
+        if owner.get("started_monotonic") is not None:
+            try:
+                age_s = time.monotonic() - float(owner.get("started_monotonic"))
+            except Exception:
+                age_s = None
+        return self.jsonable(
+            {
+                "status": "busy" if owner else "idle",
+                "current_operation": owner or None,
+                "depth": depth,
+                "age_s": age_s,
+                "stale_after_s": self.microscope_operation_stale_s,
+                "note": (
+                    "This is GUI-side coordination state only. It does not "
+                    "indicate GXSM scan/GVP status."
+                ),
+            }
+        )
+
+    def clear_microscope_operation_gate(self):
+        before = self.microscope_operation_status()
+        with self.microscope_operation_lock:
+            self.microscope_operation_owner = None
+            self.microscope_operation_depth = 0
+        after = self.microscope_operation_status()
+        return {
+            "cleared": True,
+            "before": before,
+            "after": after,
+            "note": (
+                "Cleared GUI busy flag only. No GXSM command was sent and no "
+                "scan/GVP state was changed."
+            ),
+        }
+
     def require_control_level(self, required, action_name):
         if self.control_level < required:
             return {
@@ -2893,23 +2973,59 @@ User request: __USER_REQUEST__
             }
 
     def read_fast_live_dashboard_fast_shm(self, gain_x_V=12.0, gain_y_V=12.0, gain_z_V=24.0):
-        if self.live and self.runner.gxsm is None:
-            report = {
-                "error": "live_gxsm_connection_unavailable",
-                "reason": (
-                    "Fast SHM timer mode will not create a GXSM connection "
-                    "because gxsm_process initialization uses PySHM setup. "
-                    "Use Full Refresh / Update Gains or restart live mode."
-                ),
-                "startup_connection_error": self.live_connection_error,
-            }
-            return self.live_monitor_html({}, {}), self.jsonable(report)
         return self.read_fast_live_dashboard(
             gain_x_V,
             gain_y_V,
             gain_z_V,
             include_pyshm=False,
         )
+
+    def read_fast_live_dashboard_fast_shm_html(self, gain_x_V=12.0, gain_y_V=12.0, gain_z_V=24.0):
+        return self.read_fast_live_dashboard_ultra_html(
+            gain_x_V,
+            gain_y_V,
+            gain_z_V,
+        )
+
+    def read_fast_live_dashboard_ultra_html(self, gain_x_V=12.0, gain_y_V=12.0, gain_z_V=24.0):
+        """
+        Minimal 5 Hz read-only monitor path.
+
+        This avoids per-tick action history, JSON serialization, instrument-gain
+        refresh, GVP monitor reads, disk-backed hazard overlays, and calibration
+        fitting.  It only reads the fast mapped SHM monitors that are safe to
+        sample frequently.
+        """
+        try:
+            gxsm = self.runner.connect()
+            xyz = gxsm.rt_query_xyz()
+            rpspmc = self.jsonable(gxsm.rt_query_rpspmc())
+            monitor = xyz.get("monitor") or [None, None, None]
+            values = {
+                "x_monitor_V": monitor[0] if len(monitor) > 0 else None,
+                "y_monitor_V": monitor[1] if len(monitor) > 1 else None,
+                "z_monitor_V": monitor[2] if len(monitor) > 2 else None,
+                "bias_V": rpspmc.get("bias"),
+                "current_nA": rpspmc.get("current"),
+                "gvp_u_V": (rpspmc.get("gvp") or {}).get("u"),
+                "pac_ampl_mV": (rpspmc.get("pac") or {}).get("ampl"),
+                "pac_dfreq_Hz": (rpspmc.get("pac") or {}).get("dfreq"),
+            }
+            values["x_monitor_A"] = self.controller_volts_to_angstrom("X", values["x_monitor_V"])
+            values["y_monitor_A"] = self.controller_volts_to_angstrom("Y", values["y_monitor_V"])
+            values["z_monitor_A"] = self.controller_volts_to_angstrom("Z", values["z_monitor_V"])
+            gains = {
+                "x": max(abs(float(gain_x_V)), 1e-9),
+                "y": max(abs(float(gain_y_V)), 1e-9),
+                "z": max(abs(float(gain_z_V)), 1e-9),
+            }
+            return self.live_monitor_fast_html(values, gains)
+        except Exception as exc:
+            return (
+                "<div style='border:1px solid #c62828;border-radius:6px;"
+                "padding:10px;background:#fff0f0;color:#7f0000'>"
+                "<b>Live Microscope Monitor read failed</b><br>{}</div>"
+            ).format(html.escape("{}: {}".format(type(exc).__name__, exc)))
 
     def read_fast_live_dashboard(self, gain_x_V=12.0, gain_y_V=12.0, gain_z_V=24.0, include_pyshm=True):
         operation_locked = False
@@ -3122,27 +3238,8 @@ User request: __USER_REQUEST__
         return parsed
 
     def controller_volts_to_angstrom(self, axis, raw_V):
-        try:
-            if raw_V is None:
-                return None
-            gains = self.instrument_gains_cache.get("values") or {}
-            axis_name = str(axis).upper()
-            a_per_controller_v = gains.get("{}_A_per_controller_V".format(axis_name))
-            if a_per_controller_v is not None:
-                value = float(raw_V) * float(a_per_controller_v)
-                return float(value) if np.isfinite(value) else None
-            gain = gains.get("{}_amplifier_gain".format(axis_name))
-            a_to_v = gains.get("{}_A_to_V".format(axis_name))
-            if gain is None or a_to_v is None:
-                return None
-            gain = float(gain)
-            a_to_v = float(a_to_v)
-            if abs(gain) < 1e-12 or abs(a_to_v) < 1e-12:
-                return None
-            value = float(raw_V) * gain * a_to_v
-            return float(value) if np.isfinite(value) else None
-        except Exception:
-            return None
+        gains = InstrumentGains.from_parsed(self.instrument_gains_cache.get("values") or {})
+        return gains.controller_volts_to_A(axis, raw_V)
 
     def read_dconf_scan_range_cached(self, max_age_s=10.0):
         now = time.time()
@@ -3291,30 +3388,17 @@ User request: __USER_REQUEST__
         return dict(self.dconf_xyz_limit_cache)
 
     def axis_A_per_controller_V(self, axis):
+        gains = InstrumentGains.from_parsed(self.instrument_gains_cache.get("values") or {})
+        scale = gains.axis_scale_A_per_V(axis)
         try:
-            gains = self.instrument_gains_cache.get("values") or {}
-            val = gains.get("{}_A_per_controller_V".format(str(axis).upper()))
-            if val is not None:
-                val = float(val)
-                if np.isfinite(val) and abs(val) > 1e-12:
-                    return abs(val)
+            if scale is not None and np.isfinite(float(scale)) and abs(float(scale)) > 1e-12:
+                return abs(float(scale))
         except Exception:
             pass
         return None
 
     def axis_A_per_configured_controller_V(self, axis):
-        try:
-            gains = self.instrument_gains_cache.get("values") or {}
-            axis_name = str(axis).upper()
-            av = gains.get("{}_A_to_V".format(axis_name))
-            if av is None:
-                return self.axis_A_per_controller_V(axis_name)
-            av = float(av)
-            if not np.isfinite(av) or abs(av) < 1e-12:
-                return None
-            return abs(av)
-        except Exception:
-            return None
+        return self.axis_A_per_controller_V(axis)
 
     def z_local_gauge_limit_A(self, values, gauge_limits):
         return self.live_monitor_axis_limit_A(values, "z", gauge_limits.get("z_monitor_A", 1000.0))
@@ -3480,7 +3564,7 @@ User request: __USER_REQUEST__
             note=note,
         )
 
-    def known_large_hazards_for_live_xy(self, max_items=80):
+    def known_large_hazards_for_live_xy(self, max_items=80, include_memory_file=True):
         entries = []
         latest = self.tip_planner_state.get("last_analysis") if hasattr(self, "tip_planner_state") else None
         if isinstance(latest, dict) and latest.get("hazards") is not None:
@@ -3488,11 +3572,12 @@ User request: __USER_REQUEST__
                 {
                     "timestamp": latest.get("timestamp") or "latest_planner_analysis",
                     "source": "latest_planner_analysis",
+                    "settings": latest.get("settings") or {},
                     "hazards": latest.get("hazards", []),
                 }
             )
         path = self.output_dir / "landscape_memory.json"
-        if path.exists():
+        if include_memory_file and path.exists():
             try:
                 data = json.loads(path.read_text())
             except Exception:
@@ -3509,11 +3594,27 @@ User request: __USER_REQUEST__
         hazards = []
         seen = set()
         for entry in entries:
+            entry_settings = entry.get("settings") or {}
+            if not entry_settings and isinstance(latest, dict):
+                entry_settings = latest.get("settings") or {}
             for hazard in entry.get("hazards", []) or []:
                 if not (hazard.get("count_for_offset_stop") or hazard.get("avoid_for_clean_area")):
                     continue
                 wx = hazard.get("world_x_A")
                 wy = hazard.get("world_y_A")
+                if (wx is None or wy is None) and hazard.get("px") is not None and hazard.get("py") is not None:
+                    try:
+                        world = self.nav.pixel_to_world_coordinates(
+                            hazard.get("px"),
+                            hazard.get("py"),
+                            settings=entry_settings,
+                            channel=0,
+                        )
+                        wx = world.get("world_x_A")
+                        wy = world.get("world_y_A")
+                    except Exception:
+                        wx = None
+                        wy = None
                 if wx is None or wy is None:
                     continue
                 try:
@@ -3529,6 +3630,7 @@ User request: __USER_REQUEST__
                 item["world_x_A"] = wx
                 item["world_y_A"] = wy
                 item["memory_timestamp"] = entry.get("timestamp")
+                item["scan_settings"] = dict(entry_settings or {})
                 item["source"] = entry.get("source") or (
                     "latest_planner_analysis"
                     if entry.get("timestamp") == "latest_planner_analysis"
@@ -3568,15 +3670,8 @@ User request: __USER_REQUEST__
         return settings
 
     def world_to_current_local_scan_A(self, world_x_A, world_y_A, settings):
-        offset_x = float(settings.get("OffsetX", 0.0))
-        offset_y = float(settings.get("OffsetY", 0.0))
-        rotation_deg = float(settings.get("Rotation", 0.0))
-        dx = float(world_x_A) - offset_x
-        dy = float(world_y_A) - offset_y
-        theta = np.deg2rad(rotation_deg)
-        local_x = dx * np.cos(theta) - dy * np.sin(theta)
-        local_y = dx * np.sin(theta) + dy * np.cos(theta)
-        return float(local_x), float(local_y)
+        local = ScanGeometry.from_settings(settings).world_to_local(world_x_A, world_y_A)
+        return float(local.x_A), float(local.y_A)
 
     def cluster_live_xy_hazard_points(self, points, panel_px=180.0, threshold_px=18.0):
         clusters = []
@@ -3638,12 +3733,15 @@ User request: __USER_REQUEST__
             float(local_y) / (0.5 * range_y) * float(limit),
         )
 
-    def live_xy_hazard_overlay(self, values, half_range_A):
+    def live_xy_hazard_overlay(self, values, half_range_A, include_memory_file=True):
         try:
             half_range_A = max(abs(float(half_range_A)), 1e-9)
-            hazards = self.known_large_hazards_for_live_xy()
+            hazards = self.known_large_hazards_for_live_xy(
+                include_memory_file=include_memory_file,
+            )
             markers = []
             marker_points = []
+            plotted_samples = []
             visible = 0
             projected = 0
             for idx, hazard in enumerate(hazards, start=1):
@@ -3651,16 +3749,36 @@ User request: __USER_REQUEST__
                 world_y = float(hazard["world_y_A"])
                 if not (np.isfinite(world_x) and np.isfinite(world_y)):
                     continue
+                local_x = hazard.get("local_scan_x_A")
+                local_y = hazard.get("local_scan_y_A")
+                if local_x is None:
+                    local_x = hazard.get("ScanX_A")
+                if local_y is None:
+                    local_y = hazard.get("ScanY_A")
+                try:
+                    plot_x = float(world_x)
+                    plot_y = float(world_y)
+                except Exception:
+                    continue
+                if not (np.isfinite(plot_x) and np.isfinite(plot_y)):
+                    continue
                 projected += 1
-                if abs(world_x) > half_range_A or abs(world_y) > half_range_A:
+                if abs(plot_x) > half_range_A or abs(plot_y) > half_range_A:
                     continue
                 visible += 1
-                left = 50.0 + 50.0 * max(-1.0, min(1.0, world_x / half_range_A))
-                top = 50.0 - 50.0 * max(-1.0, min(1.0, world_y / half_range_A))
+                if len(plotted_samples) < 3:
+                    plotted_samples.append(
+                        "({:.4g},{:.4g})".format(plot_x, plot_y)
+                    )
+                left = 50.0 + 50.0 * max(-1.0, min(1.0, plot_x / half_range_A))
+                top = 50.0 - 50.0 * max(-1.0, min(1.0, plot_y / half_range_A))
                 title = (
-                    "known large hazard #{idx}: world/controller=({wx:.4g}, {wy:.4g}) A"
+                    "known large hazard #{idx}: world/controller=({wx:.4g}, {wy:.4g}) A; "
+                    "scan-local=({lx}, {ly}) A"
                 ).format(
                     idx=idx,
+                    lx="{:.4g}".format(float(local_x)) if local_x is not None else "n/a",
+                    ly="{:.4g}".format(float(local_y)) if local_y is not None else "n/a",
                     wx=world_x,
                     wy=world_y,
                 )
@@ -3687,9 +3805,15 @@ User request: __USER_REQUEST__
                 )
             outlines, outline_count = self.cluster_live_xy_hazard_points(marker_points)
             note = (
-                "Known large hazards visible: {} / {}; projected in controller/world coordinates: {}; "
-                "outlined regions: {}; plotted directly in the same Angstrom coordinates as fast SHM X/Y."
-            ).format(visible, len(hazards), projected, outline_count)
+                "Known large hazards visible: {} / {}; projected in world/controller Angstrom coordinates: {}; "
+                "outlined regions: {}; sample plotted world A: {}; scan-local X/Y remains available in tooltips and scan-image overlays."
+            ).format(
+                visible,
+                len(hazards),
+                projected,
+                outline_count,
+                ", ".join(plotted_samples) if plotted_samples else "none",
+            )
             return "\n".join([outlines] + markers), note
         except Exception as exc:
             return "", "Hazard overlay unavailable: {}: {}".format(type(exc).__name__, exc)
@@ -3727,8 +3851,8 @@ User request: __USER_REQUEST__
   </div>
   <div style="display:grid;grid-template-columns:190px 1fr;gap:12px;align-items:center">
     <div style="font-variant-numeric:tabular-nums;font-size:13px">
-      X local: {x_A_text} A<br>
-      Y local: {y_A_text} A<br>
+      X controller/world: {x_A_text} A<br>
+      Y controller/world: {y_A_text} A<br>
       X raw: {x_V_text} V<br>
       Y raw: {y_V_text} V<br>
       XY source: {xy_source}<br>
@@ -3813,6 +3937,92 @@ User request: __USER_REQUEST__
   {xy_panel}
 </div>
 """.format(rows="\n".join(rows), xy_panel=xy_panel)
+
+    def live_monitor_fast_html(self, values, gains):
+        gauge_limits = self.gui_default("live_readouts.gauge_limits", {})
+        controller_limit_V = abs(float(self.gui_default("live_readouts.max_controller_voltage_V", 5.0)))
+        x_limit_A = max(
+            abs(float(self.axis_A_per_controller_V("X") or 0.0)) * controller_limit_V,
+            abs(float(gauge_limits.get("x_monitor_A", 1000.0) or 1000.0)),
+            1e-9,
+        )
+        y_limit_A = max(
+            abs(float(self.axis_A_per_controller_V("Y") or 0.0)) * controller_limit_V,
+            abs(float(gauge_limits.get("y_monitor_A", 1000.0) or 1000.0)),
+            1e-9,
+        )
+        z_limit_A = max(
+            abs(float(self.axis_A_per_controller_V("Z") or 0.0)) * controller_limit_V,
+            abs(float(gauge_limits.get("z_monitor_A", 1000.0) or 1000.0)),
+            1e-9,
+        )
+        rows = [
+            self.gauge_row("X local", values.get("x_monitor_A"), "A", x_limit_A, bipolar=True),
+            self.gauge_row("Y local", values.get("y_monitor_A"), "A", y_limit_A, bipolar=True),
+            self.gauge_row("Z local", values.get("z_monitor_A"), "A", z_limit_A, bipolar=True),
+            self.gauge_row("Bias", values.get("bias_V"), "V", gauge_limits.get("bias_V", 5.0), bipolar=True),
+            self.gauge_row("Current", values.get("current_nA"), "nA", gauge_limits.get("current_nA", 0.1), bipolar=True),
+            self.gauge_row("GVP U", values.get("gvp_u_V"), "V", gauge_limits.get("gvp_u_V", 5.0), bipolar=True),
+            self.gauge_row("PAC ampl", values.get("pac_ampl_mV"), "mV", gauge_limits.get("pac_ampl_mV", 10.0), bipolar=True),
+            self.gauge_row("PAC dFreq", values.get("pac_dfreq_Hz"), "Hz", gauge_limits.get("pac_dfreq_Hz", 20.0), bipolar=True),
+        ]
+        try:
+            x = float(values.get("x_monitor_A"))
+            y = float(values.get("y_monitor_A"))
+            finite_xy = np.isfinite(x) and np.isfinite(y)
+        except Exception:
+            x = 0.0
+            y = 0.0
+            finite_xy = False
+        half_range_A = max(float(x_limit_A), float(y_limit_A), 1e-9)
+        xpct = 50.0 + 50.0 * max(-1.0, min(1.0, x / half_range_A))
+        ypct = 50.0 - 50.0 * max(-1.0, min(1.0, y / half_range_A))
+        dot_color = "#1b7f3a" if finite_xy else "#777"
+        hazard_overlay, hazard_note = self.live_xy_hazard_overlay(
+            values,
+            half_range_A,
+            include_memory_file=False,
+        )
+        xy_panel = """
+<div style="position:relative;width:240px;height:240px;background:#f7f7f7;border:1px solid #aaa;margin-top:6px">
+  <div style="position:absolute;left:50%;top:0;width:1px;height:100%;background:#bbb"></div>
+  <div style="position:absolute;left:0;top:50%;width:100%;height:1px;background:#bbb"></div>
+  {hazard_overlay}
+  <div style="position:absolute;left:{xpct:.3f}%;top:{ypct:.3f}%;width:14px;height:14px;margin-left:-7px;margin-top:-7px;border-radius:50%;background:{dot_color};box-shadow:0 0 0 2px white,0 0 0 3px #444"></div>
+  <div style="position:absolute;left:6px;top:4px;font-size:11px;color:#555">+Y</div>
+  <div style="position:absolute;right:6px;top:116px;font-size:11px;color:#555">+X</div>
+</div>
+""".format(
+            hazard_overlay=hazard_overlay,
+            xpct=xpct,
+            ypct=ypct,
+            dot_color=dot_color,
+        )
+        return """
+<div style="border:1px solid #d0d0d0;border-radius:6px;padding:10px;background:#fafafa">
+  <div style="font-weight:700;margin-bottom:6px">Live Microscope Monitor</div>
+  <div style="font-size:12px;color:#555;margin-bottom:8px">
+    Fast read-only SHM monitor: <code>rt_query_xyz()</code> and
+    <code>rt_query_rpspmc()</code>. The 5 Hz timer intentionally skips JSON,
+    dconf reads, GVP monitor reads, calibration fitting, and disk-backed
+    hazard history. Red marks use only the latest in-memory planner analysis.
+  </div>
+  <div style="display:grid;grid-template-columns:minmax(420px,1fr) 270px;gap:14px;align-items:start">
+    <div>{rows}</div>
+    <div style="align-self:start">
+      <div style="font-size:12px;font-weight:600">XY controller/world</div>
+      {xy_panel}
+      <div style="font-size:11px;color:#666;margin-top:5px">scale +/-{half_range} A</div>
+      <div style="font-size:10px;color:#666;margin-top:4px">{hazard_note}</div>
+    </div>
+  </div>
+</div>
+""".format(
+            rows="\n".join(rows),
+            xy_panel=xy_panel,
+            half_range=self.fmt6(half_range_A),
+            hazard_note=html.escape(hazard_note),
+        )
 
     def xyz_monitor_position_context(self, monitor):
         context = {
@@ -4317,6 +4527,12 @@ User request: __USER_REQUEST__
             return {"error": str(exc), "traceback": traceback.format_exc()}
 
     def measure_scan_leveling(self, channel, line_count, output_prefix):
+        operation_blocked = self.acquire_microscope_operation(
+            "measure scan leveling",
+            blocking=False,
+        )
+        if operation_blocked:
+            return self.slope_report_figure(operation_blocked), self.jsonable(operation_blocked)
         try:
             report = self.runner.measure_recent_fast_axis_slope(
                 channel=int(channel),
@@ -4331,6 +4547,8 @@ User request: __USER_REQUEST__
             ax.text(0.5, 0.5, str(exc), ha="center", va="center", wrap=True)
             ax.set_axis_off()
             return fig, {"error": str(exc), "traceback": traceback.format_exc()}
+        finally:
+            self.release_microscope_operation()
 
     def slope_report_figure(self, report, profile_path=None):
         fig, ax = plt.subplots(figsize=(7, 4), constrained_layout=True)
@@ -4385,6 +4603,12 @@ User request: __USER_REQUEST__
         cancelled = self.require_arm(arm, "apply scan slope correction")
         if cancelled:
             return self.slope_report_figure(cancelled), cancelled
+        operation_blocked = self.acquire_microscope_operation(
+            "apply scan slope correction",
+            blocking=False,
+        )
+        if operation_blocked:
+            return self.slope_report_figure(operation_blocked), self.jsonable(operation_blocked)
         try:
             result = self.runner.auto_correct_scan_slope_from_recent_lines(
                 channel=int(channel),
@@ -4402,6 +4626,8 @@ User request: __USER_REQUEST__
         except Exception as exc:
             report = {"error": str(exc), "traceback": traceback.format_exc()}
             return self.slope_report_figure(report), report
+        finally:
+            self.release_microscope_operation()
 
 
 def build_ui(backend):
@@ -4431,6 +4657,9 @@ def build_ui(backend):
                 label="Control Level",
             )
             dconf_btn = gr.Button("Read GXSM dconf Settings / Limits")
+            with gr.Row():
+                op_status_btn = gr.Button("Show GUI Busy Flag")
+                op_clear_btn = gr.Button("Clear GUI Busy Flag")
             level_report = gr.JSON(
                 value={
                     "control_level": 0,
@@ -4440,8 +4669,11 @@ def build_ui(backend):
                 },
                 label="Control-level policy",
             )
+            operation_report = gr.JSON(label="GUI busy-flag status")
             dconf_report = gr.JSON(label="Read-only GXSM dconf report")
         control_level.change(backend.set_control_level, control_level, [status, level_report])
+        op_status_btn.click(backend.microscope_operation_status, outputs=operation_report)
+        op_clear_btn.click(backend.clear_microscope_operation_gate, outputs=operation_report)
         dconf_btn.click(backend.read_gxsm_dconf_settings, outputs=dconf_report)
 
         with gr.Tab("Chat"):
@@ -4503,9 +4735,12 @@ def build_ui(backend):
             xyz_report = gr.JSON(label="Fast XYZ monitor report")
             xyz_timer = gr.Timer(value=gd("live_readouts.fast_shm_timer_s", 0.2), active=True)
             xyz_timer.tick(
-                backend.read_fast_live_dashboard_fast_shm,
+                backend.read_fast_live_dashboard_fast_shm_html,
                 inputs=[xyz_gain_x, xyz_gain_y, xyz_gain_z],
-                outputs=[live_gauges, xyz_report],
+                outputs=live_gauges,
+                queue=False,
+                show_progress="hidden",
+                trigger_mode="always_last",
             )
             live_refresh_btn.click(
                 backend.read_fast_live_dashboard,
@@ -4527,9 +4762,15 @@ def build_ui(backend):
                 )
                 fetch_btn = gr.Button("Fetch And Plot")
             gr.Markdown(
-                "Auto refresh uses the same PySHM operation gate as manual "
-                "fetch. If the Tip Tune Planner or another PySHM action is "
-                "running, auto refresh skips that cycle instead of overlapping."
+                "Auto refresh keeps the last image visible. If another image "
+                "or planner data fetch is active, only the status indicator "
+                "changes and the current plot is retained."
+            )
+            scan_auto_status = gr.HTML(
+                value=backend.scan_auto_refresh_status_html(
+                    "idle",
+                    "Auto refresh is off.",
+                )
             )
             scan_plot = gr.Plot(label="Scan image")
             scan_profile = gr.Plot(label="Last scan-line profile")
@@ -4543,7 +4784,7 @@ def build_ui(backend):
             scan_refresh_timer.tick(
                 backend.auto_refresh_scan_plot,
                 [scan_auto, scan_channel, scan_lines],
-                [scan_plot, scan_profile, scan_meta],
+                [scan_plot, scan_profile, scan_meta, scan_auto_status],
             )
 
         with gr.Tab("Tip / Landscape Analysis"):
@@ -4658,11 +4899,12 @@ def build_ui(backend):
 
             with gr.Accordion("Automated Tip-Improvement Loop", open=False):
                 gr.Markdown(
-                    "Runs scan, waits for enough lines, assesses tip and dFreq, "
+                    "Runs or joins a scan, waits for enough lines, assesses tip and dFreq, "
                     "moves to a clean candidate after stopping the scan, executes "
                     "a gentle pulse/tune action, and repeats. Stops when quality "
                     "and dFreq are satisfactory, when blob count is too high, or "
-                    "when max cycles is reached. Requires exact confirmation."
+                    "when max cycles is reached. The first cycle can also use the "
+                    "already analyzed planner image. Requires exact confirmation."
                 )
                 with gr.Row():
                     loop_cycles = gr.Number(value=gd("tip_planner.loop_max_cycles", 2), label="Max cycles", precision=0)
@@ -4670,6 +4912,15 @@ def build_ui(backend):
                     loop_range = gr.Number(value=gd("tip_planner.loop_range_A", 700.0), label="Diagnostic range (A)")
                     loop_points = gr.Number(value=gd("tip_planner.loop_points", 400), label="Points", precision=0)
                 with gr.Row():
+                    loop_evidence_source = gr.Dropdown(
+                        choices=[
+                            "start_new_scan",
+                            "take_over_running_scan",
+                            "existing_image",
+                        ],
+                        value=gd("tip_planner.loop_evidence_source", "start_new_scan"),
+                        label="First-cycle evidence source",
+                    )
                     loop_max_blobs = gr.Number(value=gd("tip_planner.loop_max_large_hazards", 8), label="Stop/search if large hazards >=", precision=0)
                     loop_df_ok = gr.Number(value=gd("tip_planner.loop_max_abs_dfreq_Hz", 4.0), label="Max |dFreq| OK (Hz)")
                     loop_auto_shift = gr.Checkbox(value=gd("tip_planner.loop_auto_shift_on_blobs", False), label="Auto shift on too many blobs")
@@ -4776,6 +5027,7 @@ def build_ui(backend):
                     loop_df_ok,
                     loop_auto_shift,
                     shift_direction,
+                    loop_evidence_source,
                     loop_confirm,
                     planner_arm,
                 ],
