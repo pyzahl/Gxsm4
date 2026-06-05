@@ -1,0 +1,117 @@
+{
+  "gui": {
+    "server": {
+      "host": "127.0.0.1",
+      "port": 7860,
+      "ssl_certfile": "/etc/grafana/ltncafm_cfn_bnl_gov.pem",
+      "ssl_keyfile": "/etc/grafana/ltncafm_cfn_bnl_gov_privkey.key"
+    },
+    "chat": {
+      "arm_level1_actions": false,
+      "llm_intent_mode": true
+    },
+    "live_readouts": {
+      "dfreq_samples": 20,
+      "dfreq_delay_s": 0.15,
+      "xyz_gain_choices": ["1", "3", "6", "12", "24"],
+      "xyz_gain_x": "12",
+      "xyz_gain_y": "12",
+      "xyz_gain_z": "24",
+      "xyz_timer_s": 0.2,
+      "line_count_range": [8, 2048],
+      "gauge_limits": {
+        "piezo_V": 100.0,
+        "bias_V": 5.0,
+        "current_nA": 0.1,
+        "gvp_u_V": 5.0,
+        "pac_ampl_mV": 10.0,
+        "pac_dfreq_Hz": 20.0,
+        "xy_raw_V": 10.0
+      }
+    },
+    "scan_image": {
+      "channel": 0,
+      "lines": 120,
+      "auto_refresh": false,
+      "refresh_interval_s": 1.0
+    },
+    "analysis": {
+      "channel": 0,
+      "lines": 160,
+      "output_prefix": "gui_scan_analysis"
+    },
+    "tip_planner": {
+      "arm_action": false,
+      "channel": 0,
+      "lines": 180,
+      "patch_A": 80.0,
+      "max_candidates": 12,
+      "max_large_hazards": 8,
+      "output_prefix": "gui_tip_planner",
+      "candidate_index": 1,
+      "shift_direction": "image_left_below",
+      "shift_range_A": 800.0,
+      "shift_overlap_A": 250.0,
+      "shift_points": 400,
+      "start_after_shift": true,
+      "loop_max_cycles": 2,
+      "loop_min_lines": 140,
+      "loop_range_A": 700.0,
+      "loop_points": 400,
+      "loop_max_large_hazards": 8,
+      "loop_max_abs_dfreq_Hz": 4.0,
+      "loop_auto_shift_on_blobs": false
+    },
+    "scan_leveling": {
+      "channel": 0,
+      "recent_line_count": 64,
+      "output_prefix": "gui_scan_leveling",
+      "arm_correction": false,
+      "correction_sign": -1.0,
+      "correction_gain": 1.0,
+      "max_abs_delta": 0.005,
+      "verify_delay_s": 20.0,
+      "verify_line_count": 16
+    },
+    "gvp": {
+      "arm_action": false,
+      "bias_pulse_du_V": 2.0,
+      "tip_contact_bias_V": 0.0,
+      "tip_dip_depth_A": 5.0,
+      "tip_ramp_time_s": 30.0,
+      "execute_wait_s": 300.0
+    },
+    "level3": {
+      "arm_action": false,
+      "script_control_enabled": true,
+      "z_down_burstcount": 1,
+      "coarse_channel": "Z",
+      "coarse_direction": "-1",
+      "coarse_burstcount": 1,
+      "coarse_period_s": 0.5,
+      "coarse_voltage_HV_V": 30.0,
+      "large_channel": "X",
+      "large_direction": "+1",
+      "large_burstcount": 100,
+      "large_voltage_HV_V": 30.0,
+      "approach_current_nA": 0.013,
+      "approach_steps_per_cycle": 1,
+      "approach_max_total_steps": 3,
+      "approach_max_abs_dfreq_Hz": 5.0,
+      "approach_check_timeout_s": 30.0
+    },
+    "armed_actions": {
+      "arm_action": false,
+      "bias_V": 0.1,
+      "current_value": 10.0,
+      "current_unit": "pA",
+      "scan_speed_A_s": 700.0,
+      "scan_range_A": 700.0,
+      "geometry_range_A": 700.0,
+      "geometry_points": 400,
+      "geometry_rotation_deg": 90.0,
+      "feedback_cp_dB": -90.0,
+      "feedback_ci_dB": -90.0
+    }
+  }
+}

@@ -8,10 +8,13 @@ the button controls when the operator arms chat actions.
 """
 
 import argparse
+import ast
 import json
 import os
 from pathlib import Path
 import re
+import shutil
+import subprocess
 import sys
 import time
 import traceback
@@ -29,6 +32,8 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 DEFAULT_SSL_CERTFILE = "/etc/grafana/ltncafm_cfn_bnl_gov.pem"
 DEFAULT_SSL_KEYFILE = "/etc/grafana/ltncafm_cfn_bnl_gov_privkey.key"
+DEFAULT_CONTROLLER_CONFIG = SCRIPT_DIR / "microscope_controller_config.json"
+DEFAULT_GUI_CONFIG = SCRIPT_DIR / "microscope_gui_config.json"
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 if str(PROJECT_ROOT) not in sys.path:
@@ -91,14 +96,47 @@ EMERGENCY_STOP_CSS = """
 """
 
 
-def load_config(path):
+def deep_merge_dict(base, override):
+    result = dict(base or {})
+    for key, value in dict(override or {}).items():
+        if (
+            isinstance(value, dict)
+            and isinstance(result.get(key), dict)
+        ):
+            result[key] = deep_merge_dict(result[key], value)
+        else:
+            result[key] = value
+    return result
+
+
+def load_json_file(path):
     with open(path, "r") as file:
         return json.load(file)
 
 
+def load_optional_json_file(path):
+    path = Path(path)
+    if not path.exists():
+        return {}
+    return load_json_file(path)
+
+
+def load_config(path, controller_config_path=None, gui_config_path=None):
+    controller_config_path = Path(controller_config_path or DEFAULT_CONTROLLER_CONFIG)
+    gui_config_path = Path(gui_config_path or DEFAULT_GUI_CONFIG)
+    config = {}
+    config = deep_merge_dict(config, load_optional_json_file(controller_config_path))
+    config = deep_merge_dict(config, load_optional_json_file(gui_config_path))
+    config = deep_merge_dict(config, load_json_file(path))
+    return config
+
+
 class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
     def __init__(self, config, live=False, output_dir=None):
-        self.config = dict(config)
+        defaults = {}
+        defaults = deep_merge_dict(defaults, load_optional_json_file(DEFAULT_CONTROLLER_CONFIG))
+        defaults = deep_merge_dict(defaults, load_optional_json_file(DEFAULT_GUI_CONFIG))
+        self.config = deep_merge_dict(defaults, dict(config))
         self.live = bool(live)
         self.output_dir = Path(output_dir or SCRIPT_DIR / "gui_outputs")
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -116,7 +154,10 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         )
         self.level3 = Level3ProtectedController(
             self.runner,
-            thv_base_url=self.config.get("thv_base_url", "http://192.168.40.10/"),
+            thv_base_url=self.controller_default(
+                "level3_thv_base_url",
+                self.config.get("thv_base_url", "http://192.168.40.10/"),
+            ),
             output_dir=str(self.output_dir),
         )
         self.control_level = 0
@@ -129,6 +170,27 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         self.scan_view_state = {}
         self.init_tip_planner_state()
         self.chat_messages = [{"role": "system", "content": DEFAULT_SYSTEM_PROMPT}]
+
+    def nested_config(self, section, key, default=None):
+        value = self.config.get(section, {})
+        for part in str(key).split("."):
+            if not isinstance(value, dict) or part not in value:
+                return default
+            value = value[part]
+        return value
+
+    def gui_default(self, key, default=None):
+        return self.nested_config("gui", key, default)
+
+    def controller_default(self, key, default=None):
+        return self.nested_config("controller", key, default)
+
+    def controller_limits(self):
+        return dict(self.controller_default("safety_limits", {}))
+
+    def clamp_config_value(self, value, config_key, default_range):
+        limits = self.controller_default(config_key, default_range)
+        return max(float(limits[0]), min(float(limits[1]), value))
 
     def status_text(self):
         mode = "LIVE GXSM4" if self.live else "DRY RUN"
@@ -670,36 +732,58 @@ User request: __USER_REQUEST__
 
     def parse_tip_pulse_chat_parameters(self, text):
         text_l = text.lower()
-        pulse = 2.0
+        pulse = float(self.controller_default("gvp_defaults.bias_pulse_du_V", 2.0))
         match = re.search(r"([-+]?\d+(?:\.\d+)?)\s*v", text_l)
         if match:
             pulse = float(match.group(1))
-        pulse = max(-4.0, min(4.0, pulse))
+        max_pulse = float(self.safety_limits()["level1_max_abs_gvp_bias_pulse_du_V"])
+        pulse = max(-max_pulse, min(max_pulse, pulse))
         return {
             "kind": "bias_pulse",
             "pulse_du_V": pulse,
-            "max_abs_pulse_du_V": 4.0,
-            "note": "Default tip pulse is +2 V; Level 1 caps pulse du at +/-4 V.",
+            "max_abs_pulse_du_V": max_pulse,
+            "note": (
+                "Default tip pulse is {} V; Level 1 caps pulse du at +/-{} V."
+            ).format(self.controller_default("gvp_defaults.bias_pulse_du_V", 2.0), max_pulse),
         }
 
     def parse_tip_dip_chat_parameters(self, text):
         text_l = text.lower()
         fine_tune = "fine tune" in text_l or "finetune" in text_l
-        dip_depth = 4.0 if fine_tune else 5.0
-        contact_bias = 0.0
+        dip_depth = float(
+            self.controller_default(
+                "gvp_defaults.tip_fine_tune_dip_depth_A"
+                if fine_tune
+                else "gvp_defaults.tip_dip_depth_A",
+                4.0 if fine_tune else 5.0,
+            )
+        )
+        contact_bias = float(self.controller_default("gvp_defaults.tip_contact_bias_V", 0.0))
         match = re.search(r"([-+]?\d+(?:\.\d+)?)\s*a\b", text_l)
         if match:
             dip_depth = abs(float(match.group(1)))
         match = re.search(r"(?:contact bias|contact voltage|at contact)\D*([-+]?\d+(?:\.\d+)?)\s*v", text_l)
         if match:
             contact_bias = float(match.group(1))
-        ramp_time = 30.0
+        ramp_time = float(self.controller_default("gvp_defaults.tip_ramp_time_s", 30.0))
         match = re.search(r"(?:ramp(?: time)?|vec\s*[24]\s*time)\D*([-+]?\d+(?:\.\d+)?)\s*s", text_l)
         if match:
             ramp_time = float(match.group(1))
-        dip_depth = max(0.0, min(25.0, dip_depth))
-        contact_bias = max(-1.0, min(1.0, contact_bias))
-        ramp_time = max(1.0, min(60.0, ramp_time))
+        dip_depth = self.clamp_config_value(
+            dip_depth,
+            "gvp_defaults.tip_dip_depth_range_A",
+            [0.0, 25.0],
+        )
+        contact_bias = self.clamp_config_value(
+            contact_bias,
+            "gvp_defaults.tip_contact_bias_range_V",
+            [-1.0, 1.0],
+        )
+        ramp_time = self.clamp_config_value(
+            ramp_time,
+            "gvp_defaults.tip_ramp_time_range_s",
+            [1.0, 60.0],
+        )
         return {
             "kind": "tip_z_dip",
             "fine_tune": fine_tune,
@@ -737,7 +821,14 @@ User request: __USER_REQUEST__
             ).format(action_label, json.dumps(self.jsonable({"parameters": params, "load": load_result}), indent=2))
         fig, execute_report = self.execute_loaded_gvp_with_plot(
             self.safety_limits()["gvp_execute_extra_confirmation"],
-            min(300.0, max(180.0, 2.0 * float(params.get("ramp_time_s", 30.0)) + 60.0)),
+            min(
+                float(self.controller_default("gvp_defaults.execute_wait_max_s", 300.0)),
+                max(
+                    float(self.controller_default("gvp_defaults.execute_wait_min_s", 180.0)),
+                    2.0 * float(params.get("ramp_time_s", 30.0))
+                    + float(self.controller_default("gvp_defaults.execute_wait_extra_s", 60.0)),
+                ),
+            ),
             arm=True,
         )
         if isinstance(execute_report, dict) and (
@@ -864,38 +955,47 @@ User request: __USER_REQUEST__
 
     def parse_tip_loop_chat_parameters(self, text):
         text_l = text.lower()
-        params = {
-            "max_cycles": 2,
-            "channel": 0,
-            "min_lines": 140,
-            "range_A": 700.0,
-            "points": 400,
-            "max_large_hazards": 8,
-            "max_abs_dfreq_Hz": 4.0,
-            "auto_shift_on_blobs": bool(re.search(r"\b(auto ?shift|shift offset|search offset)\b", text_l)),
-            "shift_direction": "image_left_below",
-        }
+        params = dict(self.controller_default("tip_loop_defaults", {}))
+        params.setdefault("max_cycles", 2)
+        params.setdefault("channel", 0)
+        params.setdefault("min_lines", 140)
+        params.setdefault("range_A", 700.0)
+        params.setdefault("points", 400)
+        params.setdefault("max_large_hazards", 8)
+        params.setdefault("max_abs_dfreq_Hz", 4.0)
+        params["auto_shift_on_blobs"] = bool(
+            params.get("auto_shift_on_blobs", False)
+            or re.search(r"\b(auto ?shift|shift offset|search offset)\b", text_l)
+        )
+        params.setdefault("shift_direction", "image_left_below")
         match = re.search(r"\b(?:max cycles|cycles?)\D+(\d+)", text_l)
         if match:
-            params["max_cycles"] = max(1, min(6, int(match.group(1))))
+            lo, hi = self.controller_default("tip_loop_ranges.max_cycles", [1, 6])
+            params["max_cycles"] = max(int(lo), min(int(hi), int(match.group(1))))
         match = re.search(r"\b(?:channel|ch)\D+(\d+)", text_l)
         if match:
-            params["channel"] = max(0, min(8, int(match.group(1))))
+            lo, hi = self.controller_default("tip_loop_ranges.channel", [0, 8])
+            params["channel"] = max(int(lo), min(int(hi), int(match.group(1))))
         match = re.search(r"\b(?:lines?|minimum lines|min lines)\D+(\d+)", text_l)
         if match:
-            params["min_lines"] = max(20, min(400, int(match.group(1))))
+            lo, hi = self.controller_default("tip_loop_ranges.min_lines", [20, 400])
+            params["min_lines"] = max(int(lo), min(int(hi), int(match.group(1))))
         match = re.search(r"(\d+(?:\.\d+)?)\s*(?:a|ang|angstrom|angstroms)\b", text_l)
         if match:
-            params["range_A"] = max(100.0, min(1200.0, float(match.group(1))))
+            lo, hi = self.controller_default("tip_loop_ranges.range_A", [100.0, 1200.0])
+            params["range_A"] = max(float(lo), min(float(hi), float(match.group(1))))
         match = re.search(r"\b(?:points?|px)\D+(\d+)", text_l)
         if match:
-            params["points"] = max(64, min(800, int(match.group(1))))
+            lo, hi = self.controller_default("tip_loop_ranges.points", [64, 5000])
+            params["points"] = max(int(lo), min(int(hi), int(match.group(1))))
         match = re.search(r"\b(?:large hazards?|hazards?|large blobs?)\D+(\d+)", text_l)
         if match:
-            params["max_large_hazards"] = max(1, min(30, int(match.group(1))))
+            lo, hi = self.controller_default("tip_loop_ranges.max_large_hazards", [1, 30])
+            params["max_large_hazards"] = max(int(lo), min(int(hi), int(match.group(1))))
         match = re.search(r"\b(?:dfreq|dfr|frequency)\D+(\d+(?:\.\d+)?)", text_l)
         if match:
-            params["max_abs_dfreq_Hz"] = max(0.5, min(20.0, float(match.group(1))))
+            lo, hi = self.controller_default("tip_loop_ranges.max_abs_dfreq_Hz", [0.5, 20.0])
+            params["max_abs_dfreq_Hz"] = max(float(lo), min(float(hi), float(match.group(1))))
         for direction in (
             "image_left_below",
             "image_right_below",
@@ -1040,8 +1140,9 @@ User request: __USER_REQUEST__
             target = self.resolve_rotation_target_deg(text)
             if target is None:
                 return "I did not change scan rotation. Use an absolute angle, for example `45 deg` or `90`."
-            if not (-360.0 <= target <= 360.0):
-                return "I did not change scan rotation. Level 1 allows -360..360 deg."
+            lo, hi = self.safety_limits()["level1_rotation_deg"]
+            if not (float(lo) <= target <= float(hi)):
+                return "I did not change scan rotation. Level 1 allows {}..{} deg.".format(lo, hi)
             return {
                 "action_name": "scan rotation",
                 "target": "{} deg".format(self.fmt6(target)),
@@ -1073,8 +1174,9 @@ User request: __USER_REQUEST__
                     )
                 return self.missing_unit_message(spec["label"], "`0.01 A/A`")
             if abs(target) > self.safety_limits()["level1_max_abs_scan_slope"]:
-                return "I did not change {}. Level 1 allows abs(slope) <= 0.1.".format(
-                    spec["label"]
+                return "I did not change {}. Level 1 allows abs(slope) <= {}.".format(
+                    spec["label"],
+                    self.safety_limits()["level1_max_abs_scan_slope"],
                 )
             return {
                 "action_name": spec["label"],
@@ -1318,8 +1420,9 @@ User request: __USER_REQUEST__
             target = self.resolve_rotation_target_deg(text)
             if target is None:
                 return "I did not change scan rotation. Use an absolute angle, for example `45 deg` or `90`."
-            if not (-360.0 <= target <= 360.0):
-                return "I did not change scan rotation. Level 1 allows -360..360 deg."
+            lo, hi = self.safety_limits()["level1_rotation_deg"]
+            if not (float(lo) <= target <= float(hi)):
+                return "I did not change scan rotation. Level 1 allows {}..{} deg.".format(lo, hi)
             return self.execute_chat_level1_action(
                 "scan rotation",
                 "{} deg".format(self.fmt6(target)),
@@ -1349,8 +1452,9 @@ User request: __USER_REQUEST__
                     )
                 return self.missing_unit_message(spec["label"], "`0.01 A/A`")
             if abs(target) > self.safety_limits()["level1_max_abs_scan_slope"]:
-                return "I did not change {}. Level 1 allows abs(slope) <= 0.1.".format(
-                    spec["label"]
+                return "I did not change {}. Level 1 allows abs(slope) <= {}.".format(
+                    spec["label"],
+                    self.safety_limits()["level1_max_abs_scan_slope"],
                 )
             return self.execute_chat_level1_action(
                 spec["label"],
@@ -2042,7 +2146,8 @@ User request: __USER_REQUEST__
         match = re.search(r"(\d+)\s*(?:lines?|scan lines?)\b", text, re.IGNORECASE)
         if not match:
             return int(default)
-        return max(8, min(2048, int(match.group(1))))
+        lo, hi = self.gui_default("live_readouts.line_count_range", [8, 2048])
+        return max(int(lo), min(int(hi), int(match.group(1))))
 
     def try_chat_parameter_read(self, text):
         if not re.search(
@@ -2226,7 +2331,9 @@ User request: __USER_REQUEST__
             if target is None:
                 return self.missing_unit_message("scan slope x", "`0.01 A/A`")
             if abs(target) > self.safety_limits()["level1_max_abs_scan_slope"]:
-                return "I did not change scan slope x. Level 1 allows abs(slope) <= 0.1."
+                return "I did not change scan slope x. Level 1 allows abs(slope) <= {}.".format(
+                    self.safety_limits()["level1_max_abs_scan_slope"]
+                )
             return self.execute_chat_level1_action(
                 "scan slope x",
                 target,
@@ -2238,7 +2345,9 @@ User request: __USER_REQUEST__
             if target is None:
                 return self.missing_unit_message("scan slope y", "`0.01 A/A`")
             if abs(target) > self.safety_limits()["level1_max_abs_scan_slope"]:
-                return "I did not change scan slope y. Level 1 allows abs(slope) <= 0.1."
+                return "I did not change scan slope y. Level 1 allows abs(slope) <= {}.".format(
+                    self.safety_limits()["level1_max_abs_scan_slope"]
+                )
             return self.execute_chat_level1_action(
                 "scan slope y",
                 target,
@@ -2419,26 +2528,220 @@ User request: __USER_REQUEST__
         return None
 
     def safety_limits(self):
-        return {
-            "level1_max_abs_bias_V": 1.0,
-            "level1_max_current_nA": 0.05,
-            "level1_scan_speed_multiplier_range": [0.5, 1.5],
-            "level1_feedback_cp_ci_range_dB": [-120.0, -30.0],
-            "level1_max_abs_gvp_bias_pulse_du_V": 4.0,
-            "level1_scan_range_A": [10.0, 2000.0],
-            "level1_scan_points": [16, 5000],
-            "level1_max_abs_scan_slope": 0.1,
-            "gvp_execute_extra_confirmation": "EXECUTE GVP",
-            "level3_extra_confirmation": "EXECUTE LEVEL 3",
-            "level3_large_motion_confirmation": "EXECUTE LEVEL 3 LARGE MOTION",
-            "level3_thv_base_url": self.config.get("thv_base_url", "http://192.168.40.10/"),
-            "level3_max_auto_approach_steps": 10,
-            "level3_max_abs_dFreq_Hz": 5.0,
-            "level3_max_coarse_burstcount": 5,
-            "level3_max_coarse_voltage_V": 100.0,
-            "level3_max_large_coarse_burstcount": 5000,
-            "level3_coarse_period_s_range": [0.05, 2.0],
+        limits = self.controller_limits()
+        legacy_map = {
+            "max_bias_auto_V": "level1_max_abs_bias_V",
+            "max_current_auto_nA": "level1_max_current_nA",
+            "max_scan_slope_abs": "level1_max_abs_scan_slope",
         }
+        for legacy_key, limit_key in legacy_map.items():
+            if legacy_key in self.config and limit_key not in limits:
+                limits[limit_key] = self.config[legacy_key]
+        return limits
+
+    def read_gxsm_dconf_settings(self):
+        cfg = self.controller_default("gxsm_dconf", {})
+        if not cfg.get("enabled", True):
+            return {"enabled": False, "note": "GXSM dconf readback disabled in controller config."}
+        if shutil.which("dconf") is None:
+            return {"enabled": True, "error": "`dconf` executable not found."}
+        main_window_path = str(cfg.get("main_window_path", cfg.get("current_path", "")))
+        controller_path = str(cfg.get("controller_path", ""))
+        adjustment_path = str(cfg.get("adjustment_path", ""))
+        main_window = {}
+        controller_current = {}
+        adjustments = {}
+        errors = []
+        main_window_keys = dict(cfg.get("main_window_keys", cfg.get("current_keys", {})))
+        for name, key in main_window_keys.items():
+            rec = self.dconf_read_value(main_window_path, key)
+            main_window[name] = rec
+            if rec.get("error"):
+                errors.append(rec)
+        for name, key in dict(cfg.get("controller_keys", {})).items():
+            rec = self.dconf_read_value(controller_path, key)
+            controller_current[name] = rec
+            if rec.get("error"):
+                errors.append(rec)
+        for name, key in dict(cfg.get("adjustment_keys", {})).items():
+            rec = self.dconf_read_value(adjustment_path, key)
+            if isinstance(rec.get("value"), list) and len(rec["value"]) >= 2:
+                upper = rec["value"][0]
+                lower = rec["value"][1]
+                rec["upper"] = upper
+                rec["lower"] = lower
+                rec["range"] = [min(lower, upper), max(lower, upper)]
+                rec["note"] = "GXSM adjustment array: first value is upper, second is lower."
+            adjustments[name] = rec
+            if rec.get("error"):
+                errors.append(rec)
+        report = {
+            "enabled": True,
+            "read_only": True,
+            "main_window_path": main_window_path,
+            "controller_path": controller_path,
+            "adjustment_path": adjustment_path,
+            "main_window_current": main_window,
+            "controller_current": controller_current,
+            "adjustments": adjustments,
+            "comparison": self.compare_config_to_dconf_adjustments(adjustments),
+        }
+        if errors:
+            report["errors"] = errors
+        return self.jsonable(report)
+
+    def dconf_read_value(self, base_path, key):
+        path = "{}{}".format(str(base_path).rstrip("/") + "/", key)
+        try:
+            proc = subprocess.run(
+                ["dconf", "read", path],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+            )
+        except Exception as exc:
+            return {"path": path, "error": str(exc)}
+        raw = (proc.stdout or "").strip()
+        rec = {
+            "path": path,
+            "raw": raw,
+            "returncode": proc.returncode,
+        }
+        if proc.stderr:
+            rec["stderr_note"] = self.clean_dconf_stderr(proc.stderr)
+        if proc.returncode != 0:
+            rec["error"] = "dconf read returned {}".format(proc.returncode)
+            return rec
+        if raw == "":
+            rec["value"] = None
+        else:
+            rec["value"] = self.parse_dconf_literal(raw)
+        return rec
+
+    def parse_dconf_literal(self, raw):
+        text = str(raw).strip()
+        try:
+            return ast.literal_eval(text)
+        except Exception:
+            pass
+        try:
+            return float(text)
+        except Exception:
+            return text
+
+    def clean_dconf_stderr(self, stderr):
+        lines = [
+            line.strip()
+            for line in str(stderr).splitlines()
+            if line.strip()
+        ]
+        return " ".join(lines)
+
+    def compare_config_to_dconf_adjustments(self, adjustments):
+        limits = self.safety_limits()
+        checks = []
+        self.add_abs_limit_dconf_check(
+            checks,
+            "level1_max_abs_bias_V",
+            limits.get("level1_max_abs_bias_V"),
+            adjustments.get("dsp-fbs-bias"),
+        )
+        self.add_upper_limit_dconf_check(
+            checks,
+            "level1_max_current_nA",
+            limits.get("level1_max_current_nA"),
+            adjustments.get("dsp-fbs-mx0-current-set"),
+        )
+        self.add_range_dconf_check(
+            checks,
+            "level1_feedback_cp_ci_range_dB",
+            limits.get("level1_feedback_cp_ci_range_dB"),
+            adjustments.get("dsp-fbs-cp"),
+            "dsp-fbs-cp",
+        )
+        self.add_range_dconf_check(
+            checks,
+            "level1_feedback_cp_ci_range_dB",
+            limits.get("level1_feedback_cp_ci_range_dB"),
+            adjustments.get("dsp-fbs-ci"),
+            "dsp-fbs-ci",
+        )
+        self.add_abs_limit_dconf_check(
+            checks,
+            "level1_max_abs_scan_slope",
+            limits.get("level1_max_abs_scan_slope"),
+            adjustments.get("dsp-adv-scan-slope-x"),
+            "dsp-adv-scan-slope-x",
+        )
+        self.add_abs_limit_dconf_check(
+            checks,
+            "level1_max_abs_scan_slope",
+            limits.get("level1_max_abs_scan_slope"),
+            adjustments.get("dsp-adv-scan-slope-y"),
+            "dsp-adv-scan-slope-y",
+        )
+        warnings = [check for check in checks if check.get("status") == "outside_gxsm_limit"]
+        return {
+            "checks": checks,
+            "warnings": warnings,
+            "note": (
+                "These checks compare this copilot's configured automatic limits "
+                "against GXSM dconf adjustment limits. Values outside GXSM's "
+                "limits may trigger a blocking GXSM warning/rejection dialog."
+            ),
+        }
+
+    def add_abs_limit_dconf_check(self, checks, config_key, config_value, adjustment, refname=None):
+        if config_value is None or not adjustment or adjustment.get("range") is None:
+            return
+        gxsm_min, gxsm_max = adjustment["range"]
+        allowed = min(abs(float(gxsm_min)), abs(float(gxsm_max)))
+        status = "ok" if abs(float(config_value)) <= allowed else "outside_gxsm_limit"
+        checks.append(
+            {
+                "config_key": config_key,
+                "refname": refname or adjustment.get("path", "").rsplit("/", 1)[-1],
+                "config_value": config_value,
+                "gxsm_adjustment_range": adjustment["range"],
+                "status": status,
+            }
+        )
+
+    def add_upper_limit_dconf_check(self, checks, config_key, config_value, adjustment):
+        if config_value is None or not adjustment or adjustment.get("range") is None:
+            return
+        gxsm_min, gxsm_max = adjustment["range"]
+        status = "ok" if float(config_value) <= float(gxsm_max) else "outside_gxsm_limit"
+        checks.append(
+            {
+                "config_key": config_key,
+                "refname": adjustment.get("path", "").rsplit("/", 1)[-1],
+                "config_value": config_value,
+                "gxsm_adjustment_range": adjustment["range"],
+                "status": status,
+            }
+        )
+
+    def add_range_dconf_check(self, checks, config_key, config_range, adjustment, refname):
+        if config_range is None or not adjustment or adjustment.get("range") is None:
+            return
+        gxsm_min, gxsm_max = adjustment["range"]
+        cfg_min, cfg_max = config_range
+        status = (
+            "ok"
+            if float(gxsm_min) <= float(cfg_min) <= float(cfg_max) <= float(gxsm_max)
+            else "outside_gxsm_limit"
+        )
+        checks.append(
+            {
+                "config_key": config_key,
+                "refname": refname,
+                "config_value": config_range,
+                "gxsm_adjustment_range": adjustment["range"],
+                "status": status,
+            }
+        )
 
     def read_monitors(self):
         try:
@@ -2591,7 +2894,11 @@ User request: __USER_REQUEST__
         )
 
     def xy_position_html(self, values, raw_limit_V=10.0):
-        limit = max(abs(float(raw_limit_V)), 1e-9)
+        configured_limit = self.gui_default(
+            "live_readouts.gauge_limits.xy_raw_V",
+            raw_limit_V,
+        )
+        limit = max(abs(float(configured_limit)), 1e-9)
         try:
             x = float(values.get("x_monitor_V"))
             y = float(values.get("y_monitor_V"))
@@ -2647,15 +2954,16 @@ User request: __USER_REQUEST__
             y_label += " (raw {} V)".format(self.fmt6(values.get("y_monitor_V")))
         if values.get("z_monitor_V") is not None:
             z_label += " (raw {} V)".format(self.fmt6(values.get("z_monitor_V")))
+        gauge_limits = self.gui_default("live_readouts.gauge_limits", {})
         rows = [
-            self.gauge_row(x_label, values.get("x_effective_piezo_V"), "V", 100.0, bipolar=True),
-            self.gauge_row(y_label, values.get("y_effective_piezo_V"), "V", 100.0, bipolar=True),
-            self.gauge_row(z_label, values.get("z_effective_piezo_V"), "V", 100.0, bipolar=True),
-            self.gauge_row("Bias", values.get("bias_V"), "V", 5.0, bipolar=True),
-            self.gauge_row("Current", values.get("current_nA"), "nA", 0.1, bipolar=True),
-            self.gauge_row("GVP U", values.get("gvp_u_V"), "V", 5.0, bipolar=True),
-            self.gauge_row("PAC ampl", values.get("pac_ampl_mV"), "mV", 10.0, bipolar=True),
-            self.gauge_row("PAC dFreq", values.get("pac_dfreq_Hz"), "Hz", 20.0, bipolar=True),
+            self.gauge_row(x_label, values.get("x_effective_piezo_V"), "V", gauge_limits.get("piezo_V", 100.0), bipolar=True),
+            self.gauge_row(y_label, values.get("y_effective_piezo_V"), "V", gauge_limits.get("piezo_V", 100.0), bipolar=True),
+            self.gauge_row(z_label, values.get("z_effective_piezo_V"), "V", gauge_limits.get("piezo_V", 100.0), bipolar=True),
+            self.gauge_row("Bias", values.get("bias_V"), "V", gauge_limits.get("bias_V", 5.0), bipolar=True),
+            self.gauge_row("Current", values.get("current_nA"), "nA", gauge_limits.get("current_nA", 0.1), bipolar=True),
+            self.gauge_row("GVP U", values.get("gvp_u_V"), "V", gauge_limits.get("gvp_u_V", 5.0), bipolar=True),
+            self.gauge_row("PAC ampl", values.get("pac_ampl_mV"), "mV", gauge_limits.get("pac_ampl_mV", 10.0), bipolar=True),
+            self.gauge_row("PAC dFreq", values.get("pac_dfreq_Hz"), "Hz", gauge_limits.get("pac_dfreq_Hz", 20.0), bipolar=True),
         ]
         xy_panel = self.xy_position_html(values)
         return """
@@ -2787,10 +3095,10 @@ User request: __USER_REQUEST__
                 "Z",
                 -1,
                 int(burstcount),
-                period_s=0.5,
-                voltage_V=30.0,
-                max_burstcount=5,
-                max_voltage_V=60.0,
+                period_s=float(self.safety_limits()["level3_z_down_period_s"]),
+                voltage_V=float(self.safety_limits()["level3_z_down_voltage_V"]),
+                max_burstcount=int(self.safety_limits()["level3_z_down_max_burstcount"]),
+                max_voltage_V=float(self.safety_limits()["level3_z_down_max_voltage_V"]),
             )
             return self.jsonable(rec.__dict__)
         except Exception as exc:
@@ -3071,8 +3379,9 @@ User request: __USER_REQUEST__
             return cancelled
         try:
             rotation = float(rotation_deg)
-            if not (-360.0 <= rotation <= 360.0):
-                raise ValueError("Rotation must be within -360..360 degrees for Level 1.")
+            lo, hi = self.safety_limits()["level1_rotation_deg"]
+            if not (float(lo) <= rotation <= float(hi)):
+                raise ValueError("Rotation must be within {}..{} degrees for Level 1.".format(lo, hi))
             rec = self.runner.set_parameter("Rotation", rotation)
             return self.jsonable(rec.__dict__)
         except Exception as exc:
@@ -3242,6 +3551,8 @@ def build_ui(backend):
             "  ./microscope_gradio_gui.py --host 127.0.0.1 --port 7860\n"
         ) from exc
 
+    gd = backend.gui_default
+
     with gr.Blocks(title="GXSM4 Local Microscope Copilot") as demo:
         gr.Markdown("# GXSM4 Local Microscope Copilot")
         status = gr.Textbox(value=backend.status_text(), label="Status", interactive=False)
@@ -3264,7 +3575,10 @@ def build_ui(backend):
                 },
                 label="Control-level policy",
             )
+            dconf_btn = gr.Button("Read GXSM dconf Settings / Limits")
+            dconf_report = gr.JSON(label="Read-only GXSM dconf report")
         control_level.change(backend.set_control_level, control_level, [status, level_report])
+        dconf_btn.click(backend.read_gxsm_dconf_settings, outputs=dconf_report)
 
         with gr.Tab("Chat"):
             gr.Markdown(
@@ -3276,8 +3590,14 @@ def build_ui(backend):
             )
             chat = gr.Chatbot(label="Ollama chat", height=420)
             with gr.Row():
-                chat_arm = gr.Checkbox(value=False, label="Arm Level 1 chat actions")
-                llm_intent_mode = gr.Checkbox(value=True, label="LLM Intent Mode")
+                chat_arm = gr.Checkbox(
+                    value=gd("chat.arm_level1_actions", False),
+                    label="Arm Level 1 chat actions",
+                )
+                llm_intent_mode = gr.Checkbox(
+                    value=gd("chat.llm_intent_mode", True),
+                    label="LLM Intent Mode",
+                )
             prompt = gr.Textbox(label="Prompt", placeholder="Ask for interpretation or a proposed next step")
             prompt.submit(
                 backend.chat,
@@ -3291,8 +3611,15 @@ def build_ui(backend):
                 df_btn = gr.Button("Sample dFreq")
                 rpspmc_btn = gr.Button("Read RPSPMC Monitor")
             with gr.Row():
-                df_count = gr.Number(value=20, label="dFreq samples", precision=0)
-                df_delay = gr.Number(value=0.15, label="Delay per sample (s)")
+                df_count = gr.Number(
+                    value=gd("live_readouts.dfreq_samples", 20),
+                    label="dFreq samples",
+                    precision=0,
+                )
+                df_delay = gr.Number(
+                    value=gd("live_readouts.dfreq_delay_s", 0.15),
+                    label="Delay per sample (s)",
+                )
             gr.Markdown(
                 "Fast XYZ monitor updates at 5 Hz from "
                 "`gxsm4process.rt_query_xyz()` and displays "
@@ -3301,20 +3628,20 @@ def build_ui(backend):
                 "compute effective piezo voltage from controller output voltage."
             )
             with gr.Row():
-                gain_choices = ["1", "3", "6", "12", "24"]
+                gain_choices = gd("live_readouts.xyz_gain_choices", ["1", "3", "6", "12", "24"])
                 xyz_gain_x = gr.Dropdown(
                     choices=gain_choices,
-                    value="12",
+                    value=gd("live_readouts.xyz_gain_x", "12"),
                     label="X external amplifier gain",
                 )
                 xyz_gain_y = gr.Dropdown(
                     choices=gain_choices,
-                    value="12",
+                    value=gd("live_readouts.xyz_gain_y", "12"),
                     label="Y external amplifier gain",
                 )
                 xyz_gain_z = gr.Dropdown(
                     choices=gain_choices,
-                    value="24",
+                    value=gd("live_readouts.xyz_gain_z", "24"),
                     label="Z external amplifier gain",
                 )
             with gr.Row():
@@ -3326,7 +3653,7 @@ def build_ui(backend):
             dfreq = gr.JSON(label="dFrequency report")
             xyz_report = gr.JSON(label="Fast XYZ monitor report")
             rpspmc_report = gr.JSON(label="RPSPMC monitor snapshot")
-            xyz_timer = gr.Timer(value=0.2, active=True)
+            xyz_timer = gr.Timer(value=gd("live_readouts.xyz_timer_s", 0.2), active=True)
             xyz_timer.tick(
                 backend.read_fast_live_dashboard,
                 inputs=[xyz_gain_x, xyz_gain_y, xyz_gain_z],
@@ -3338,14 +3665,18 @@ def build_ui(backend):
 
         with gr.Tab("Scan Image"):
             with gr.Row():
-                scan_channel = gr.Number(value=0, label="Channel", precision=0)
-                scan_lines = gr.Number(value=120, label="Recent/full lines to fetch", precision=0)
-                scan_auto = gr.Checkbox(value=False, label="Auto refresh")
+                scan_channel = gr.Number(value=gd("scan_image.channel", 0), label="Channel", precision=0)
+                scan_lines = gr.Number(
+                    value=gd("scan_image.lines", 120),
+                    label="Recent/full lines to fetch",
+                    precision=0,
+                )
+                scan_auto = gr.Checkbox(value=gd("scan_image.auto_refresh", False), label="Auto refresh")
                 fetch_btn = gr.Button("Fetch And Plot")
             scan_plot = gr.Plot(label="Scan image")
             scan_profile = gr.Plot(label="Last scan-line profile")
             scan_meta = gr.JSON(label="Scan metadata")
-            scan_refresh_timer = gr.Timer(value=1.0, active=True)
+            scan_refresh_timer = gr.Timer(value=gd("scan_image.refresh_interval_s", 1.0), active=True)
             fetch_btn.click(
                 backend.fetch_scan_plot_with_profile,
                 [scan_channel, scan_lines],
@@ -3359,9 +3690,9 @@ def build_ui(backend):
 
         with gr.Tab("Tip / Landscape Analysis"):
             with gr.Row():
-                ana_channel = gr.Number(value=0, label="Channel", precision=0)
-                ana_lines = gr.Number(value=160, label="Lines to fetch", precision=0)
-                ana_prefix = gr.Textbox(value="gui_scan_analysis", label="Output prefix")
+                ana_channel = gr.Number(value=gd("analysis.channel", 0), label="Channel", precision=0)
+                ana_lines = gr.Number(value=gd("analysis.lines", 160), label="Lines to fetch", precision=0)
+                ana_prefix = gr.Textbox(value=gd("analysis.output_prefix", "gui_scan_analysis"), label="Output prefix")
                 ana_btn = gr.Button("Analyze Current Scan")
             ana_plot = gr.Plot(label="Analyzed image")
             ana_report = gr.JSON(label="Analysis report")
@@ -3379,19 +3710,19 @@ def build_ui(backend):
                 "candidate, then run bounded scan/action/reassess cycles. "
                 "ScanX/Y moves are refused while scanning."
             )
-            planner_arm = gr.Checkbox(value=False, label="Arm one planner live action")
+            planner_arm = gr.Checkbox(value=gd("tip_planner.arm_action", False), label="Arm one planner live action")
             planner_report = gr.JSON(label="Planner report")
             planner_plot = gr.Plot(label="Planner annotated image")
             planner_progress = gr.Plot(label="Planner progress")
             with gr.Accordion("Analyze And Select Work Site", open=True):
                 with gr.Row():
-                    planner_channel = gr.Number(value=0, label="Channel", precision=0)
-                    planner_lines = gr.Number(value=180, label="Lines to fetch", precision=0)
-                    planner_patch = gr.Number(value=80.0, label="Flat patch size (A)")
-                    planner_candidates = gr.Number(value=12, label="Max candidates", precision=0)
+                    planner_channel = gr.Number(value=gd("tip_planner.channel", 0), label="Channel", precision=0)
+                    planner_lines = gr.Number(value=gd("tip_planner.lines", 180), label="Lines to fetch", precision=0)
+                    planner_patch = gr.Number(value=gd("tip_planner.patch_A", 80.0), label="Flat patch size (A)")
+                    planner_candidates = gr.Number(value=gd("tip_planner.max_candidates", 12), label="Max candidates", precision=0)
                 with gr.Row():
-                    planner_max_blobs = gr.Number(value=8, label="Stop/search if large hazards >=", precision=0)
-                    planner_prefix = gr.Textbox(value="gui_tip_planner", label="Output prefix")
+                    planner_max_blobs = gr.Number(value=gd("tip_planner.max_large_hazards", 8), label="Stop/search if large hazards >=", precision=0)
+                    planner_prefix = gr.Textbox(value=gd("tip_planner.output_prefix", "gui_tip_planner"), label="Output prefix")
                     planner_analyze_btn = gr.Button("Analyze Tip And Flat Candidates")
                 planner_analyze_btn.click(
                     backend.tip_planner_analyze_current_scan,
@@ -3406,7 +3737,7 @@ def build_ui(backend):
                     [planner_plot, planner_progress, planner_report],
                 )
                 with gr.Row():
-                    planner_candidate_index = gr.Number(value=1, label="Candidate #", precision=0)
+                    planner_candidate_index = gr.Number(value=gd("tip_planner.candidate_index", 1), label="Candidate #", precision=0)
                     planner_move_btn = gr.Button("Move Tip To Candidate")
                 planner_move_btn.click(
                     backend.tip_planner_move_to_candidate,
@@ -3432,15 +3763,15 @@ def build_ui(backend):
                             "image_left_above",
                             "image_right_above",
                         ],
-                        value="image_left_below",
+                        value=gd("tip_planner.shift_direction", "image_left_below"),
                         label="Search direction",
                     )
-                    shift_range = gr.Number(value=800.0, label="New scan range (A)")
-                    shift_overlap = gr.Number(value=250.0, label="Overlap (A)")
-                    shift_points = gr.Number(value=400, label="Points", precision=0)
+                    shift_range = gr.Number(value=gd("tip_planner.shift_range_A", 800.0), label="New scan range (A)")
+                    shift_overlap = gr.Number(value=gd("tip_planner.shift_overlap_A", 250.0), label="Overlap (A)")
+                    shift_points = gr.Number(value=gd("tip_planner.shift_points", 400), label="Points", precision=0)
                 with gr.Row():
                     plan_shift_btn = gr.Button("Plan Offset Shift")
-                    start_after_shift = gr.Checkbox(value=True, label="Start scan after shift")
+                    start_after_shift = gr.Checkbox(value=gd("tip_planner.start_after_shift", True), label="Start scan after shift")
                     apply_shift_btn = gr.Button("Apply Offset Shift")
                 plan_shift_btn.click(
                     backend.tip_planner_plan_offset_shift,
@@ -3469,14 +3800,14 @@ def build_ui(backend):
                     "when max cycles is reached. Requires exact confirmation."
                 )
                 with gr.Row():
-                    loop_cycles = gr.Number(value=2, label="Max cycles", precision=0)
-                    loop_min_lines = gr.Number(value=140, label="Minimum evidence lines", precision=0)
-                    loop_range = gr.Number(value=700.0, label="Diagnostic range (A)")
-                    loop_points = gr.Number(value=400, label="Points", precision=0)
+                    loop_cycles = gr.Number(value=gd("tip_planner.loop_max_cycles", 2), label="Max cycles", precision=0)
+                    loop_min_lines = gr.Number(value=gd("tip_planner.loop_min_lines", 140), label="Minimum evidence lines", precision=0)
+                    loop_range = gr.Number(value=gd("tip_planner.loop_range_A", 700.0), label="Diagnostic range (A)")
+                    loop_points = gr.Number(value=gd("tip_planner.loop_points", 400), label="Points", precision=0)
                 with gr.Row():
-                    loop_max_blobs = gr.Number(value=8, label="Stop/search if large hazards >=", precision=0)
-                    loop_df_ok = gr.Number(value=4.0, label="Max |dFreq| OK (Hz)")
-                    loop_auto_shift = gr.Checkbox(value=False, label="Auto shift on too many blobs")
+                    loop_max_blobs = gr.Number(value=gd("tip_planner.loop_max_large_hazards", 8), label="Stop/search if large hazards >=", precision=0)
+                    loop_df_ok = gr.Number(value=gd("tip_planner.loop_max_abs_dfreq_Hz", 4.0), label="Max |dFreq| OK (Hz)")
+                    loop_auto_shift = gr.Checkbox(value=gd("tip_planner.loop_auto_shift_on_blobs", False), label="Auto shift on too many blobs")
                 loop_confirm = gr.Textbox(
                     label="Loop confirmation",
                     placeholder="Type EXECUTE TIP LOOP",
@@ -3507,9 +3838,9 @@ def build_ui(backend):
                 "Rotation=0 for world X or Rotation=90 for world Y."
             )
             with gr.Row():
-                level_channel = gr.Number(value=0, label="Channel", precision=0)
-                level_lines = gr.Number(value=64, label="Recent line count", precision=0)
-                level_prefix = gr.Textbox(value="gui_scan_leveling", label="Output prefix")
+                level_channel = gr.Number(value=gd("scan_leveling.channel", 0), label="Channel", precision=0)
+                level_lines = gr.Number(value=gd("scan_leveling.recent_line_count", 64), label="Recent line count", precision=0)
+                level_prefix = gr.Textbox(value=gd("scan_leveling.output_prefix", "gui_scan_leveling"), label="Output prefix")
                 measure_level_btn = gr.Button("Measure Residual Slope")
             level_plot = gr.Plot(label="Recent-line mean profile and fit")
             level_report = gr.JSON(label="Leveling report")
@@ -3523,13 +3854,13 @@ def build_ui(backend):
                 "the residual, use the opposite correction sign."
             )
             with gr.Row():
-                level_arm = gr.Checkbox(value=False, label="Arm leveling correction")
-                correction_sign = gr.Number(value=-1.0, label="Correction sign")
-                correction_gain = gr.Number(value=1.0, label="Gain")
-                max_abs_delta = gr.Number(value=0.005, label="Max abs delta")
+                level_arm = gr.Checkbox(value=gd("scan_leveling.arm_correction", False), label="Arm leveling correction")
+                correction_sign = gr.Number(value=gd("scan_leveling.correction_sign", -1.0), label="Correction sign")
+                correction_gain = gr.Number(value=gd("scan_leveling.correction_gain", 1.0), label="Gain")
+                max_abs_delta = gr.Number(value=gd("scan_leveling.max_abs_delta", 0.005), label="Max abs delta")
             with gr.Row():
-                verify_delay = gr.Number(value=20.0, label="Verify delay (s)")
-                verify_lines = gr.Number(value=16, label="Verify line count", precision=0)
+                verify_delay = gr.Number(value=gd("scan_leveling.verify_delay_s", 20.0), label="Verify delay (s)")
+                verify_lines = gr.Number(value=gd("scan_leveling.verify_line_count", 16), label="Verify line count", precision=0)
                 apply_level_btn = gr.Button("Apply Slope Correction")
             apply_level_btn.click(
                 backend.apply_scan_leveling_correction,
@@ -3554,11 +3885,11 @@ def build_ui(backend):
                 "`gvp_tip_tune_template_current_latest.json` template and rewrites "
                 "all vector values/FB flags before loading."
             )
-            gvp_arm = gr.Checkbox(value=False, label="Arm one GVP action")
+            gvp_arm = gr.Checkbox(value=gd("gvp.arm_action", False), label="Arm one GVP action")
             gvp_report = gr.JSON(label="GVP result")
             with gr.Accordion("Bias Pulse GVP", open=True):
                 with gr.Row():
-                    pulse_du = gr.Number(value=2.0, label="Bias pulse du (V)")
+                    pulse_du = gr.Number(value=gd("gvp.bias_pulse_du_V", 2.0), label="Bias pulse du (V)")
                     load_pulse_btn = gr.Button("Load Bias Pulse GVP Only")
                 load_pulse_btn.click(
                     backend.load_bias_pulse,
@@ -3576,9 +3907,9 @@ def build_ui(backend):
                     "bias, vec 6 removes contact bias, and vec 7 restores scan bias."
                 )
                 with gr.Row():
-                    tip_contact_bias = gr.Number(value=0.0, label="Contact bias (V)")
-                    tip_dip_depth = gr.Number(value=5.0, label="Dip depth magnitude (A)")
-                    tip_ramp_time = gr.Number(value=30.0, label="Vec 2/4 ramp time (s)")
+                    tip_contact_bias = gr.Number(value=gd("gvp.tip_contact_bias_V", 0.0), label="Contact bias (V)")
+                    tip_dip_depth = gr.Number(value=gd("gvp.tip_dip_depth_A", 5.0), label="Dip depth magnitude (A)")
+                    tip_ramp_time = gr.Number(value=gd("gvp.tip_ramp_time_s", 30.0), label="Vec 2/4 ramp time (s)")
                     load_tip_tune_btn = gr.Button("Load Tip Tune Z-Dip GVP")
                 load_tip_tune_btn.click(
                     backend.load_tip_tune_gvp,
@@ -3591,7 +3922,7 @@ def build_ui(backend):
                     placeholder="Type EXECUTE GVP to run loaded GVP",
                 )
                 execute_gvp_btn = gr.Button("Execute Loaded GVP And Plot")
-                gvp_wait_s = gr.Number(value=300.0, label="Max wait for GVP completion (s)")
+                gvp_wait_s = gr.Number(value=gd("gvp.execute_wait_s", 300.0), label="Max wait for GVP completion (s)")
                 gvp_stop_btn = gr.Button(
                     "GVP STOP: NULL VECTORS + EXECUTE",
                     variant="stop",
@@ -3630,7 +3961,7 @@ def build_ui(backend):
                 "immediately. It does not require arming or confirmation.**"
             )
             with gr.Row():
-                level3_arm = gr.Checkbox(value=False, label="Arm Level 3 action")
+                level3_arm = gr.Checkbox(value=gd("level3.arm_action", False), label="Arm Level 3 action")
                 level3_confirm = gr.Textbox(
                     label="Level 3 confirmation",
                     placeholder="Type EXECUTE LEVEL 3",
@@ -3638,7 +3969,7 @@ def build_ui(backend):
                 level3_tel_btn = gr.Button("Read Level 3 Telemetry")
             level3_tel_btn.click(backend.level3_telemetry, outputs=level3_report)
             with gr.Row():
-                script_control = gr.Checkbox(value=True, label="script-control enabled")
+                script_control = gr.Checkbox(value=gd("level3.script_control_enabled", True), label="script-control enabled")
                 script_control_btn = gr.Button("Set script-control")
             script_control_btn.click(
                 backend.level3_set_script_control,
@@ -3651,7 +3982,7 @@ def build_ui(backend):
                 "DANGEROUS: fast tip-down coarse motion."
             )
             with gr.Row():
-                coarse_burstcount = gr.Number(value=1, label="Z-down burstcount", precision=0)
+                coarse_burstcount = gr.Number(value=gd("level3.z_down_burstcount", 1), label="Z-down burstcount", precision=0)
                 coarse_z_btn = gr.Button("Execute Coarse Z Down")
             coarse_z_btn.click(
                 backend.level3_coarse_z_down,
@@ -3664,16 +3995,16 @@ def build_ui(backend):
                 "coarse moves are capped at burstcount 5 and 100 HV V."
             )
             with gr.Row():
-                coarse_channel = gr.Dropdown(choices=["X", "Y", "Z"], value="Z", label="Channel")
+                coarse_channel = gr.Dropdown(choices=["X", "Y", "Z"], value=gd("level3.coarse_channel", "Z"), label="Channel")
                 coarse_direction = gr.Dropdown(
                     choices=["-1", "+1"],
-                    value="-1",
+                    value=gd("level3.coarse_direction", "-1"),
                     label="Direction",
                 )
-                coarse_generic_burst = gr.Number(value=1, label="Burstcount", precision=0)
+                coarse_generic_burst = gr.Number(value=gd("level3.coarse_burstcount", 1), label="Burstcount", precision=0)
             with gr.Row():
-                coarse_period = gr.Number(value=0.5, label="Period (s)")
-                coarse_voltage = gr.Number(value=30.0, label="Voltage (HV V)")
+                coarse_period = gr.Number(value=gd("level3.coarse_period_s", 0.5), label="Period (s)")
+                coarse_voltage = gr.Number(value=gd("level3.coarse_voltage_HV_V", 30.0), label="Voltage (HV V)")
                 coarse_generic_btn = gr.Button("Execute Generic Coarse Move")
             coarse_generic_btn.click(
                 backend.level3_coarse_move,
@@ -3698,17 +4029,17 @@ def build_ui(backend):
                 large_confirm = gr.Textbox(
                     label="Large-motion confirmation",
                     placeholder="Type EXECUTE LEVEL 3 LARGE MOTION",
-                )
+            )
             with gr.Row():
-                large_channel = gr.Dropdown(choices=["X", "Y", "Z"], value="X", label="Channel")
+                large_channel = gr.Dropdown(choices=["X", "Y", "Z"], value=gd("level3.large_channel", "X"), label="Channel")
                 large_direction = gr.Dropdown(
                     choices=["-1", "+1"],
-                    value="+1",
+                    value=gd("level3.large_direction", "+1"),
                     label="Direction",
                 )
-                large_burst = gr.Number(value=100, label="Burstcount", precision=0)
+                large_burst = gr.Number(value=gd("level3.large_burstcount", 100), label="Burstcount", precision=0)
             with gr.Row():
-                large_voltage = gr.Number(value=30.0, label="Voltage (HV V)")
+                large_voltage = gr.Number(value=gd("level3.large_voltage_HV_V", 30.0), label="Voltage (HV V)")
                 large_btn = gr.Button("Execute Large Coarse Move")
             large_btn.click(
                 backend.level3_large_coarse_move,
@@ -3728,12 +4059,12 @@ def build_ui(backend):
                 "abort on script-control=0, dFreq limit, or max steps."
             )
             with gr.Row():
-                approach_current = gr.Number(value=0.013, label="Approach current (nA)")
-                approach_steps = gr.Number(value=1, label="Coarse steps/cycle", precision=0)
-                approach_max_steps = gr.Number(value=3, label="Max total steps", precision=0)
+                approach_current = gr.Number(value=gd("level3.approach_current_nA", 0.013), label="Approach current (nA)")
+                approach_steps = gr.Number(value=gd("level3.approach_steps_per_cycle", 1), label="Coarse steps/cycle", precision=0)
+                approach_max_steps = gr.Number(value=gd("level3.approach_max_total_steps", 3), label="Max total steps", precision=0)
             with gr.Row():
-                approach_df_limit = gr.Number(value=5.0, label="Max abs dFreq (Hz)")
-                approach_timeout = gr.Number(value=30.0, label="Check timeout (s)")
+                approach_df_limit = gr.Number(value=gd("level3.approach_max_abs_dfreq_Hz", 5.0), label="Max abs dFreq (Hz)")
+                approach_timeout = gr.Number(value=gd("level3.approach_check_timeout_s", 30.0), label="Check timeout (s)")
                 approach_btn = gr.Button("Execute Protected Auto Approach")
             approach_btn.click(
                 backend.level3_auto_approach,
@@ -3757,20 +4088,20 @@ def build_ui(backend):
                 "bounded basic operations. Levels 2 and 3 are placeholders for "
                 "future advanced/extreme workflows."
             )
-            arm = gr.Checkbox(value=False, label="Arm one live action")
+            arm = gr.Checkbox(value=gd("armed_actions.arm_action", False), label="Arm one live action")
             with gr.Row():
                 stop_btn = gr.Button("Stop Scan")
                 start_btn = gr.Button("Start Scan")
             with gr.Row():
-                bias_V = gr.Number(value=0.1, label="Bias target (V)")
+                bias_V = gr.Number(value=gd("armed_actions.bias_V", 0.1), label="Bias target (V)")
                 set_bias_btn = gr.Button("Set Bias")
             with gr.Row():
-                current_value = gr.Number(value=10.0, label="Current target")
-                current_unit = gr.Dropdown(choices=["pA", "nA"], value="pA", label="Current unit")
+                current_value = gr.Number(value=gd("armed_actions.current_value", 10.0), label="Current target")
+                current_unit = gr.Dropdown(choices=["pA", "nA"], value=gd("armed_actions.current_unit", "pA"), label="Current unit")
                 set_current_btn = gr.Button("Set Current Setpoint")
             with gr.Row():
-                scan_speed = gr.Number(value=700.0, label="Scan speed (A/s)")
-                scan_range = gr.Number(value=700.0, label="Current scan range (A)")
+                scan_speed = gr.Number(value=gd("armed_actions.scan_speed_A_s", 700.0), label="Scan speed (A/s)")
+                scan_range = gr.Number(value=gd("armed_actions.scan_range_A", 700.0), label="Current scan range (A)")
                 set_speed_btn = gr.Button("Set Scan Speed")
             with gr.Accordion("Scan Geometry", open=True):
                 gr.Markdown(
@@ -3779,16 +4110,16 @@ def build_ui(backend):
                     "Rotation is in degrees and may be changed live with caution."
                 )
                 with gr.Row():
-                    geometry_range = gr.Number(value=700.0, label="Scan range X/Y (A)")
-                    geometry_points = gr.Number(value=400, label="Scan points X/Y", precision=0)
-                    geometry_rotation = gr.Number(value=90.0, label="Rotation (deg)")
+                    geometry_range = gr.Number(value=gd("armed_actions.geometry_range_A", 700.0), label="Scan range X/Y (A)")
+                    geometry_points = gr.Number(value=gd("armed_actions.geometry_points", 400), label="Scan points X/Y", precision=0)
+                    geometry_rotation = gr.Number(value=gd("armed_actions.geometry_rotation_deg", 90.0), label="Rotation (deg)")
                 with gr.Row():
                     set_geometry_btn = gr.Button("Set Range And Points")
                     set_rotation_btn = gr.Button("Set Rotation")
                     set_geometry_rotation_btn = gr.Button("Set Geometry And Rotation")
             with gr.Row():
-                cp_dB = gr.Number(value=-90.0, label="Feedback CP (dB)")
-                ci_dB = gr.Number(value=-90.0, label="Feedback CI (dB)")
+                cp_dB = gr.Number(value=gd("armed_actions.feedback_cp_dB", -90.0), label="Feedback CP (dB)")
+                ci_dB = gr.Number(value=gd("armed_actions.feedback_ci_dB", -90.0), label="Feedback CI (dB)")
                 set_feedback_btn = gr.Button("Set Feedback CP/CI")
             action_report = gr.JSON(label="Action result")
             stop_btn.click(backend.stop_scan, arm, action_report)
@@ -3834,10 +4165,20 @@ def main(argv=None):
         "--config",
         default=str(SCRIPT_DIR / "local_microscope_copilot_config.json"),
     )
+    parser.add_argument(
+        "--controller-config",
+        default=str(DEFAULT_CONTROLLER_CONFIG),
+        help="Controller safety limits, ranges, confirmations, and endpoint settings.",
+    )
+    parser.add_argument(
+        "--gui-config",
+        default=str(DEFAULT_GUI_CONFIG),
+        help="GUI widget defaults and display/refresh settings.",
+    )
     parser.add_argument("--model")
     parser.add_argument("--live", action="store_true")
-    parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=7860)
+    parser.add_argument("--host", default="")
+    parser.add_argument("--port", type=int, default=0)
     parser.add_argument("--share", action="store_true")
     parser.add_argument(
         "--https",
@@ -3869,20 +4210,29 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     os.chdir(SCRIPT_DIR)
-    config = load_config(args.config)
+    config = load_config(
+        args.config,
+        controller_config_path=args.controller_config,
+        gui_config_path=args.gui_config,
+    )
     if args.model:
         config["model"] = args.model
     backend = MicroscopeGradioBackend(config, live=args.live)
     demo = build_ui(backend)
+    server_defaults = config.get("gui", {}).get("server", {})
+    host = args.host or server_defaults.get("host", "127.0.0.1")
+    port = int(args.port or server_defaults.get("port", 7860))
     launch_kwargs = {
-        "server_name": args.host,
-        "server_port": args.port,
+        "server_name": host,
+        "server_port": port,
         "share": args.share,
         "show_error": True,
         "css": EMERGENCY_STOP_CSS,
     }
-    ssl_certfile = args.ssl_certfile or (DEFAULT_SSL_CERTFILE if args.https else "")
-    ssl_keyfile = args.ssl_keyfile or (DEFAULT_SSL_KEYFILE if args.https else "")
+    ssl_cert_default = server_defaults.get("ssl_certfile", DEFAULT_SSL_CERTFILE)
+    ssl_key_default = server_defaults.get("ssl_keyfile", DEFAULT_SSL_KEYFILE)
+    ssl_certfile = args.ssl_certfile or (ssl_cert_default if args.https else "")
+    ssl_keyfile = args.ssl_keyfile or (ssl_key_default if args.https else "")
     if ssl_certfile or ssl_keyfile:
         if not (ssl_certfile and ssl_keyfile):
             raise SystemExit("HTTPS requires both --ssl-certfile and --ssl-keyfile.")
@@ -3907,12 +4257,12 @@ def main(argv=None):
                 auth_report["password_source"],
             )
         )
-    elif args.host not in ("127.0.0.1", "localhost"):
+    elif host not in ("127.0.0.1", "localhost"):
         print(
             "WARNING: Microscope GUI authentication is disabled while binding "
             "to {}. Set {} or create {} and use --require-auth for access "
             "control.".format(
-                args.host,
+                host,
                 args.auth_password_env,
                 args.auth_password_file,
             )

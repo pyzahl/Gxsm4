@@ -19,9 +19,6 @@
   "default_live": true,
   "confirm_hardware_actions": true,
   "confirm_gvp_execute": true,
-  "max_bias_auto_V": 1.0,
-  "max_current_auto_nA": 0.05,
-  "max_scan_slope_abs": 0.1,
   "notes": [
     "Use qwen3:4b as the default CPU-friendly local model.",
     "Use qwen3:8b if local speed is acceptable and better reasoning is needed.",

@@ -15,14 +15,19 @@ This folder contains:
   controller code.
 - `gxsm4process.py`: bundled copy of the GXSM4 pyremote transport used by the
   controller.
-- `local_microscope_copilot_config.json`: model and safety configuration.
+- `local_microscope_copilot_config.json`: model/service configuration.
+- `microscope_controller_config.json`: controller endpoints, safety ranges,
+  confirmations, GVP defaults, and planner limits.
+- `microscope_gui_config.json`: GUI widget defaults, refresh periods, display
+  gauge ranges, and default action-form values.
 - `local_microscope_copilot_setup.md`: install and run instructions.
 - `requirements-gui.txt`: Python packages for the optional Gradio GUI.
 - `copilot_services.sh`: local start/stop/restart/status helper for Ollama and
   the Gradio GUI.
 - `install_ollama.sh`: downloaded official Ollama Linux installer.
 - `docs/`: microscope controller manual, tip-improvement plan, and codebase
-  overview notes.
+  overview notes. Start with `docs/project_memory.md` to recover the current
+  design context and operator-taught conventions.
 - `gvp_*_program.json` / `gvp_*_recipe.json`: bundled default GVP pulse and
   tip-tune templates used by the controller and GUI load actions.
 
@@ -138,6 +143,27 @@ Or use the service helper:
 
 The helper records only processes it starts in `.run/*.pid`; it will not kill an
 external Ollama or web server that was started elsewhere.
+
+## Configuration
+
+The GUI loads three JSON files by default:
+
+- `local_microscope_copilot_config.json`: Ollama host/model choices and service
+  notes.
+- `microscope_controller_config.json`: live-control policy, safety limits,
+  THV endpoint, GVP timing/defaults, tip-loop bounds, and read-only GXSM dconf
+  key mappings for current values/adjustment limits.
+- `microscope_gui_config.json`: front-end defaults such as scan-line fetch
+  counts, refresh timers, gains, form defaults, and visual gauge ranges.
+
+Override paths when needed:
+
+```bash
+.venv/bin/python microscope_gradio_gui.py \
+  --config local_microscope_copilot_config.json \
+  --controller-config microscope_controller_config.json \
+  --gui-config microscope_gui_config.json
+```
 
 The GUI separates Ollama chat from explicit microscope buttons. Live-changing
 buttons require an arm checkbox; loaded-GVP execution additionally requires

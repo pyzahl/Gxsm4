@@ -7,6 +7,8 @@ This repo now includes a local LLM wrapper:
 - `microscope_actions.py`
 - `gxsm4process.py`
 - `local_microscope_copilot_config.json`
+- `microscope_controller_config.json`
+- `microscope_gui_config.json`
 - `requirements-gui.txt`
 - `copilot_services.sh`
 - `install_ollama.sh`
@@ -15,6 +17,21 @@ This repo now includes a local LLM wrapper:
 The wrapper uses a local Ollama chat model and exposes a safety-gated set of
 microscope tools from its local `microscope_actions.py`. That controller imports
 the bundled `gxsm4process.py` transport copy for GXSM pyremote communication.
+
+Start with `docs/project_memory.md` when continuing development from a fresh
+checkout. It summarizes the current controller architecture, safety gates,
+operator-taught microscope conventions, GVP recipes, and LLM routing design.
+
+Configuration is split by responsibility:
+
+- `local_microscope_copilot_config.json`: Ollama/model/service options.
+- `microscope_controller_config.json`: controller URLs, safety limits, GVP
+  defaults, and planner ranges.
+- `microscope_gui_config.json`: GUI form defaults, refresh intervals, gains,
+  and visual gauge ranges.
+
+The Gradio launcher reads all three by default. Use `--controller-config` and
+`--gui-config` to test alternate limits or GUI defaults.
 
 ## Optional Gradio GUI
 
