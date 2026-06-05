@@ -2948,12 +2948,6 @@ User request: __USER_REQUEST__
         x_label = "X piezo"
         y_label = "Y piezo"
         z_label = "Z piezo"
-        if values.get("x_monitor_V") is not None:
-            x_label += " (raw {} V)".format(self.fmt6(values.get("x_monitor_V")))
-        if values.get("y_monitor_V") is not None:
-            y_label += " (raw {} V)".format(self.fmt6(values.get("y_monitor_V")))
-        if values.get("z_monitor_V") is not None:
-            z_label += " (raw {} V)".format(self.fmt6(values.get("z_monitor_V")))
         gauge_limits = self.gui_default("live_readouts.gauge_limits", {})
         rows = [
             self.gauge_row(x_label, values.get("x_effective_piezo_V"), "V", gauge_limits.get("piezo_V", 100.0), bipolar=True),
@@ -2968,7 +2962,7 @@ User request: __USER_REQUEST__
         xy_panel = self.xy_position_html(values)
         return """
 <div style="border:1px solid #d0d0d0;border-radius:6px;padding:10px;background:#fafafa">
-  <div style="font-weight:700;margin-bottom:6px">Fast live monitor</div>
+  <div style="font-weight:700;margin-bottom:6px">Live Microscope Monitor</div>
   <div style="font-size:12px;color:#555;margin-bottom:8px">
     XYZ values are controller Volts from <code>rt_query_xyz()</code>, not Angstroms.
     X/Y/Z gauge values are effective piezo Volts after multiplying by the external amplifier gain.
@@ -3566,6 +3560,7 @@ def build_ui(backend):
                 value=CONTROL_LEVELS[0],
                 label="Control Level",
             )
+            dconf_btn = gr.Button("Read GXSM dconf Settings / Limits")
             level_report = gr.JSON(
                 value={
                     "control_level": 0,
@@ -3575,7 +3570,6 @@ def build_ui(backend):
                 },
                 label="Control-level policy",
             )
-            dconf_btn = gr.Button("Read GXSM dconf Settings / Limits")
             dconf_report = gr.JSON(label="Read-only GXSM dconf report")
         control_level.change(backend.set_control_level, control_level, [status, level_report])
         dconf_btn.click(backend.read_gxsm_dconf_settings, outputs=dconf_report)
@@ -3605,21 +3599,7 @@ def build_ui(backend):
                 [prompt, chat],
             )
 
-        with gr.Tab("Live Readouts"):
-            with gr.Row():
-                read_btn = gr.Button("Read X/Y/Z/U Monitors")
-                df_btn = gr.Button("Sample dFreq")
-                rpspmc_btn = gr.Button("Read RPSPMC Monitor")
-            with gr.Row():
-                df_count = gr.Number(
-                    value=gd("live_readouts.dfreq_samples", 20),
-                    label="dFreq samples",
-                    precision=0,
-                )
-                df_delay = gr.Number(
-                    value=gd("live_readouts.dfreq_delay_s", 0.15),
-                    label="Delay per sample (s)",
-                )
+        with gr.Tab("Live Microscope State Monitor"):
             gr.Markdown(
                 "Fast XYZ monitor updates at 5 Hz from "
                 "`gxsm4process.rt_query_xyz()` and displays "
@@ -3649,19 +3629,13 @@ def build_ui(backend):
                 xyz_y = gr.Number(label="Y monitor (V)", interactive=False)
                 xyz_z = gr.Number(label="Z monitor (V)", interactive=False)
             live_gauges = gr.HTML(label="Fast monitor gauges")
-            monitors = gr.JSON(label="Monitor readback")
-            dfreq = gr.JSON(label="dFrequency report")
             xyz_report = gr.JSON(label="Fast XYZ monitor report")
-            rpspmc_report = gr.JSON(label="RPSPMC monitor snapshot")
             xyz_timer = gr.Timer(value=gd("live_readouts.xyz_timer_s", 0.2), active=True)
             xyz_timer.tick(
                 backend.read_fast_live_dashboard,
                 inputs=[xyz_gain_x, xyz_gain_y, xyz_gain_z],
                 outputs=[xyz_x, xyz_y, xyz_z, live_gauges, xyz_report],
             )
-            read_btn.click(backend.read_monitors, outputs=[monitors, status])
-            df_btn.click(backend.sample_dfrequency, [df_count, df_delay], dfreq)
-            rpspmc_btn.click(backend.read_rpspmc_monitor, outputs=rpspmc_report)
 
         with gr.Tab("Scan Image"):
             with gr.Row():
@@ -3694,14 +3668,55 @@ def build_ui(backend):
                 ana_lines = gr.Number(value=gd("analysis.lines", 160), label="Lines to fetch", precision=0)
                 ana_prefix = gr.Textbox(value=gd("analysis.output_prefix", "gui_scan_analysis"), label="Output prefix")
                 ana_btn = gr.Button("Analyze Current Scan")
+            with gr.Row():
+                ana_candidate_index = gr.Number(
+                    value=gd("analysis.candidate_index", 1),
+                    label="Candidate #",
+                    precision=0,
+                )
+                ana_arm = gr.Checkbox(value=gd("analysis.arm_tip_move", False), label="Arm tip move")
+                ana_read_tip_btn = gr.Button("Read / Mark Current Tip")
+                ana_auto_tip = gr.Checkbox(
+                    value=gd("analysis.auto_tip_position", False),
+                    label="Auto update current tip marker",
+                )
+                ana_move_btn = gr.Button("Move Tip To Selected Candidate")
+            gr.Markdown(
+                "Click the analyzed image to select the nearest flat candidate. "
+                "The move writes local ScanX/ScanY only, and is refused unless "
+                "the scan/GVP state is ready."
+            )
             ana_plot = gr.Plot(label="Analyzed image")
-            ana_report = gr.JSON(label="Analysis report")
             ana_path = gr.Textbox(label="Saved report path", interactive=False)
+            ana_report = gr.JSON(label="Analysis report")
             ana_btn.click(
                 backend.analyze_current_scan,
                 [ana_channel, ana_lines, ana_prefix],
                 [ana_plot, ana_report, ana_path],
             )
+            ana_read_tip_btn.click(
+                backend.tip_planner_read_tip_position,
+                outputs=[ana_plot, ana_report],
+            )
+            ana_move_btn.click(
+                backend.tip_planner_move_to_candidate_update_plot,
+                [ana_candidate_index, ana_arm],
+                [ana_plot, ana_report],
+            )
+            ana_tip_timer = gr.Timer(value=gd("analysis.tip_position_refresh_s", 1.0), active=True)
+            ana_tip_timer.tick(
+                backend.tip_planner_auto_read_tip_position,
+                inputs=ana_auto_tip,
+                outputs=[ana_plot, ana_report],
+            )
+            if hasattr(ana_plot, "select"):
+                def _analysis_plot_select(evt):
+                    return backend.tip_planner_select_candidate_from_plot(evt)
+
+                ana_plot.select(
+                    _analysis_plot_select,
+                    outputs=[ana_candidate_index, ana_plot, ana_report],
+                )
 
         with gr.Tab("Tip Tune Planner"):
             gr.Markdown(
@@ -3711,7 +3726,6 @@ def build_ui(backend):
                 "ScanX/Y moves are refused while scanning."
             )
             planner_arm = gr.Checkbox(value=gd("tip_planner.arm_action", False), label="Arm one planner live action")
-            planner_report = gr.JSON(label="Planner report")
             planner_plot = gr.Plot(label="Planner annotated image")
             planner_progress = gr.Plot(label="Planner progress")
             with gr.Accordion("Analyze And Select Work Site", open=True):
@@ -3724,25 +3738,18 @@ def build_ui(backend):
                     planner_max_blobs = gr.Number(value=gd("tip_planner.max_large_hazards", 8), label="Stop/search if large hazards >=", precision=0)
                     planner_prefix = gr.Textbox(value=gd("tip_planner.output_prefix", "gui_tip_planner"), label="Output prefix")
                     planner_analyze_btn = gr.Button("Analyze Tip And Flat Candidates")
-                planner_analyze_btn.click(
-                    backend.tip_planner_analyze_current_scan,
-                    [
-                        planner_channel,
-                        planner_lines,
-                        planner_patch,
-                        planner_candidates,
-                        planner_max_blobs,
-                        planner_prefix,
-                    ],
-                    [planner_plot, planner_progress, planner_report],
-                )
                 with gr.Row():
                     planner_candidate_index = gr.Number(value=gd("tip_planner.candidate_index", 1), label="Candidate #", precision=0)
-                    planner_move_btn = gr.Button("Move Tip To Candidate")
-                planner_move_btn.click(
-                    backend.tip_planner_move_to_candidate,
-                    [planner_candidate_index, planner_arm],
-                    planner_report,
+                    planner_read_tip_btn = gr.Button("Read / Mark Current Tip")
+                    planner_auto_tip = gr.Checkbox(
+                        value=gd("tip_planner.auto_tip_position", False),
+                        label="Auto update current tip marker",
+                    )
+                    planner_move_btn = gr.Button("Move Tip To Selected Candidate")
+                gr.Markdown(
+                    "Click the annotated image to select the nearest numbered "
+                    "flat candidate. Movement still requires Control Level 1, "
+                    "the planner arm checkbox, and a stopped scan/GVP state."
                 )
 
             with gr.Accordion("Offset Search For Cleaner Area", open=False):
@@ -3773,23 +3780,6 @@ def build_ui(backend):
                     plan_shift_btn = gr.Button("Plan Offset Shift")
                     start_after_shift = gr.Checkbox(value=gd("tip_planner.start_after_shift", True), label="Start scan after shift")
                     apply_shift_btn = gr.Button("Apply Offset Shift")
-                plan_shift_btn.click(
-                    backend.tip_planner_plan_offset_shift,
-                    [shift_direction, shift_range, shift_overlap],
-                    planner_report,
-                )
-                apply_shift_btn.click(
-                    backend.tip_planner_apply_offset_shift,
-                    [
-                        shift_direction,
-                        shift_range,
-                        shift_overlap,
-                        shift_points,
-                        start_after_shift,
-                        planner_arm,
-                    ],
-                    planner_report,
-                )
 
             with gr.Accordion("Automated Tip-Improvement Loop", open=False):
                 gr.Markdown(
@@ -3813,23 +3803,76 @@ def build_ui(backend):
                     placeholder="Type EXECUTE TIP LOOP",
                 )
                 loop_btn = gr.Button("Run Tip Tune Planner Loop")
-                loop_btn.click(
-                    backend.run_tip_planner_loop,
-                    [
-                        loop_cycles,
-                        planner_channel,
-                        loop_min_lines,
-                        loop_range,
-                        loop_points,
-                        loop_max_blobs,
-                        loop_df_ok,
-                        loop_auto_shift,
-                        shift_direction,
-                        loop_confirm,
-                        planner_arm,
-                    ],
-                    [planner_plot, planner_progress, planner_report],
+            planner_report = gr.JSON(label="Planner report")
+            planner_analyze_btn.click(
+                backend.tip_planner_analyze_current_scan,
+                [
+                    planner_channel,
+                    planner_lines,
+                    planner_patch,
+                    planner_candidates,
+                    planner_max_blobs,
+                    planner_prefix,
+                ],
+                [planner_plot, planner_progress, planner_report],
+            )
+            planner_move_btn.click(
+                backend.tip_planner_move_to_candidate_update_plot,
+                [planner_candidate_index, planner_arm],
+                [planner_plot, planner_report],
+            )
+            planner_read_tip_btn.click(
+                backend.tip_planner_read_tip_position,
+                outputs=[planner_plot, planner_report],
+            )
+            planner_tip_timer = gr.Timer(value=gd("tip_planner.tip_position_refresh_s", 1.0), active=True)
+            planner_tip_timer.tick(
+                backend.tip_planner_auto_read_tip_position,
+                inputs=planner_auto_tip,
+                outputs=[planner_plot, planner_report],
+            )
+            if hasattr(planner_plot, "select"):
+                def _planner_plot_select(evt):
+                    return backend.tip_planner_select_candidate_from_plot(evt)
+
+                planner_plot.select(
+                    _planner_plot_select,
+                    outputs=[planner_candidate_index, planner_plot, planner_report],
                 )
+            plan_shift_btn.click(
+                backend.tip_planner_plan_offset_shift,
+                [shift_direction, shift_range, shift_overlap],
+                planner_report,
+            )
+            apply_shift_btn.click(
+                backend.tip_planner_apply_offset_shift,
+                [
+                    shift_direction,
+                    shift_range,
+                    shift_overlap,
+                    shift_points,
+                    start_after_shift,
+                    planner_arm,
+                ],
+                planner_report,
+            )
+            loop_btn.click(
+                backend.run_tip_planner_loop,
+                [
+                    loop_cycles,
+                    planner_channel,
+                    loop_min_lines,
+                    loop_range,
+                    loop_points,
+                    loop_max_blobs,
+                    loop_df_ok,
+                    loop_auto_shift,
+                    shift_direction,
+                    loop_confirm,
+                    planner_arm,
+                ],
+                [planner_plot, planner_progress, planner_report],
+            )
 
         with gr.Tab("Scan Leveling"):
             gr.Markdown(
@@ -3843,12 +3886,6 @@ def build_ui(backend):
                 level_prefix = gr.Textbox(value=gd("scan_leveling.output_prefix", "gui_scan_leveling"), label="Output prefix")
                 measure_level_btn = gr.Button("Measure Residual Slope")
             level_plot = gr.Plot(label="Recent-line mean profile and fit")
-            level_report = gr.JSON(label="Leveling report")
-            measure_level_btn.click(
-                backend.measure_scan_leveling,
-                [level_channel, level_lines, level_prefix],
-                [level_plot, level_report],
-            )
             gr.Markdown(
                 "Correction is Level 1 and arm-gated. If the correction worsens "
                 "the residual, use the opposite correction sign."
@@ -3862,6 +3899,12 @@ def build_ui(backend):
                 verify_delay = gr.Number(value=gd("scan_leveling.verify_delay_s", 20.0), label="Verify delay (s)")
                 verify_lines = gr.Number(value=gd("scan_leveling.verify_line_count", 16), label="Verify line count", precision=0)
                 apply_level_btn = gr.Button("Apply Slope Correction")
+            level_report = gr.JSON(label="Leveling report")
+            measure_level_btn.click(
+                backend.measure_scan_leveling,
+                [level_channel, level_lines, level_prefix],
+                [level_plot, level_report],
+            )
             apply_level_btn.click(
                 backend.apply_scan_leveling_correction,
                 [
@@ -3886,16 +3929,10 @@ def build_ui(backend):
                 "all vector values/FB flags before loading."
             )
             gvp_arm = gr.Checkbox(value=gd("gvp.arm_action", False), label="Arm one GVP action")
-            gvp_report = gr.JSON(label="GVP result")
             with gr.Accordion("Bias Pulse GVP", open=True):
                 with gr.Row():
                     pulse_du = gr.Number(value=gd("gvp.bias_pulse_du_V", 2.0), label="Bias pulse du (V)")
                     load_pulse_btn = gr.Button("Load Bias Pulse GVP Only")
-                load_pulse_btn.click(
-                    backend.load_bias_pulse,
-                    [pulse_du, gvp_arm],
-                    gvp_report,
-                )
             with gr.Accordion("Tip Tune GVP: Z Dip", open=True):
                 gr.Markdown(
                     "Gentle starting point: contact bias 0 V, dip depth 5 A. "
@@ -3911,11 +3948,6 @@ def build_ui(backend):
                     tip_dip_depth = gr.Number(value=gd("gvp.tip_dip_depth_A", 5.0), label="Dip depth magnitude (A)")
                     tip_ramp_time = gr.Number(value=gd("gvp.tip_ramp_time_s", 30.0), label="Vec 2/4 ramp time (s)")
                     load_tip_tune_btn = gr.Button("Load Tip Tune Z-Dip GVP")
-                load_tip_tune_btn.click(
-                    backend.load_tip_tune_gvp,
-                    [tip_contact_bias, tip_dip_depth, tip_ramp_time, gvp_arm],
-                    gvp_report,
-                )
             with gr.Accordion("Execute Loaded GVP", open=True):
                 gvp_confirm = gr.Textbox(
                     label="GVP execute confirmation",
@@ -3929,15 +3961,26 @@ def build_ui(backend):
                     elem_id="gvp_emergency_stop",
                 )
                 gvp_plot = gr.Plot(label="GVP VP data: ZS, current, dFreq")
-                execute_gvp_btn.click(
-                    backend.execute_loaded_gvp_with_plot,
-                    [gvp_confirm, gvp_wait_s, gvp_arm],
-                    [gvp_plot, gvp_report],
-                )
-                gvp_stop_btn.click(
-                    backend.emergency_stop_gvp,
-                    outputs=gvp_report,
-                )
+            gvp_report = gr.JSON(label="GVP result")
+            load_pulse_btn.click(
+                backend.load_bias_pulse,
+                [pulse_du, gvp_arm],
+                gvp_report,
+            )
+            load_tip_tune_btn.click(
+                backend.load_tip_tune_gvp,
+                [tip_contact_bias, tip_dip_depth, tip_ramp_time, gvp_arm],
+                gvp_report,
+            )
+            execute_gvp_btn.click(
+                backend.execute_loaded_gvp_with_plot,
+                [gvp_confirm, gvp_wait_s, gvp_arm],
+                [gvp_plot, gvp_report],
+            )
+            gvp_stop_btn.click(
+                backend.emergency_stop_gvp,
+                outputs=gvp_report,
+            )
 
         with gr.Tab("Level 3 Protected"):
             gr.Markdown(
@@ -3946,15 +3989,10 @@ def build_ui(backend):
                 "confirmation. Keep `script-control` enabled only while actively "
                 "supervising; set it to 0 to abort watchdog-style loops."
             )
-            level3_report = gr.JSON(label="Level 3 result")
             emergency_stop_btn = gr.Button(
                 "EMERGENCY STOP COARSE MOTION",
                 variant="stop",
                 elem_id="level3_emergency_stop",
-            )
-            emergency_stop_btn.click(
-                backend.level3_emergency_stop_coarse_motion,
-                outputs=level3_report,
             )
             gr.Markdown(
                 "**Emergency stop sends zero-step, zero-volt THV5 stop commands "
@@ -3967,15 +4005,9 @@ def build_ui(backend):
                     placeholder="Type EXECUTE LEVEL 3",
                 )
                 level3_tel_btn = gr.Button("Read Level 3 Telemetry")
-            level3_tel_btn.click(backend.level3_telemetry, outputs=level3_report)
             with gr.Row():
                 script_control = gr.Checkbox(value=gd("level3.script_control_enabled", True), label="script-control enabled")
                 script_control_btn = gr.Button("Set script-control")
-            script_control_btn.click(
-                backend.level3_set_script_control,
-                [script_control, level3_confirm, level3_arm],
-                level3_report,
-            )
             gr.Markdown(
                 "Coarse Z-down uses THV5 Z, direction -1, period 0.5 s, 30 V. "
                 "Burstcount is capped at 5 in this GUI. Z direction -1 is "
@@ -3984,11 +4016,6 @@ def build_ui(backend):
             with gr.Row():
                 coarse_burstcount = gr.Number(value=gd("level3.z_down_burstcount", 1), label="Z-down burstcount", precision=0)
                 coarse_z_btn = gr.Button("Execute Coarse Z Down")
-            coarse_z_btn.click(
-                backend.level3_coarse_z_down,
-                [coarse_burstcount, level3_confirm, level3_arm],
-                level3_report,
-            )
             gr.Markdown(
                 "Generic THV coarse move. Direction signs are controller signs; "
                 "use only with an explicit operator coordinate plan. Normal "
@@ -4006,19 +4033,6 @@ def build_ui(backend):
                 coarse_period = gr.Number(value=gd("level3.coarse_period_s", 0.5), label="Period (s)")
                 coarse_voltage = gr.Number(value=gd("level3.coarse_voltage_HV_V", 30.0), label="Voltage (HV V)")
                 coarse_generic_btn = gr.Button("Execute Generic Coarse Move")
-            coarse_generic_btn.click(
-                backend.level3_coarse_move,
-                [
-                    coarse_channel,
-                    coarse_direction,
-                    coarse_generic_burst,
-                    coarse_period,
-                    coarse_voltage,
-                    level3_confirm,
-                    level3_arm,
-                ],
-                level3_report,
-            )
             gr.Markdown(
                 "Extra-protected large/fast coarse motion. Period is fixed at "
                 "0.5 s. Burstcount can be up to 5000 and voltage up to 100 HV V. "
@@ -4041,18 +4055,6 @@ def build_ui(backend):
             with gr.Row():
                 large_voltage = gr.Number(value=gd("level3.large_voltage_HV_V", 30.0), label="Voltage (HV V)")
                 large_btn = gr.Button("Execute Large Coarse Move")
-            large_btn.click(
-                backend.level3_large_coarse_move,
-                [
-                    large_channel,
-                    large_direction,
-                    large_burst,
-                    large_voltage,
-                    large_confirm,
-                    level3_arm,
-                ],
-                level3_report,
-            )
             gr.Markdown(
                 "Protected auto approach follows the watchdog pattern: set current, "
                 "check Z range, retract, apply one or more coarse Z-down bursts, "
@@ -4066,6 +4068,47 @@ def build_ui(backend):
                 approach_df_limit = gr.Number(value=gd("level3.approach_max_abs_dfreq_Hz", 5.0), label="Max abs dFreq (Hz)")
                 approach_timeout = gr.Number(value=gd("level3.approach_check_timeout_s", 30.0), label="Check timeout (s)")
                 approach_btn = gr.Button("Execute Protected Auto Approach")
+            level3_report = gr.JSON(label="Level 3 result")
+            emergency_stop_btn.click(
+                backend.level3_emergency_stop_coarse_motion,
+                outputs=level3_report,
+            )
+            level3_tel_btn.click(backend.level3_telemetry, outputs=level3_report)
+            script_control_btn.click(
+                backend.level3_set_script_control,
+                [script_control, level3_confirm, level3_arm],
+                level3_report,
+            )
+            coarse_z_btn.click(
+                backend.level3_coarse_z_down,
+                [coarse_burstcount, level3_confirm, level3_arm],
+                level3_report,
+            )
+            coarse_generic_btn.click(
+                backend.level3_coarse_move,
+                [
+                    coarse_channel,
+                    coarse_direction,
+                    coarse_generic_burst,
+                    coarse_period,
+                    coarse_voltage,
+                    level3_confirm,
+                    level3_arm,
+                ],
+                level3_report,
+            )
+            large_btn.click(
+                backend.level3_large_coarse_move,
+                [
+                    large_channel,
+                    large_direction,
+                    large_burst,
+                    large_voltage,
+                    large_confirm,
+                    level3_arm,
+                ],
+                level3_report,
+            )
             approach_btn.click(
                 backend.level3_auto_approach,
                 [

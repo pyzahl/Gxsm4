@@ -16,8 +16,13 @@ class TipPlannerGuiMixin:
     def init_tip_planner_state(self):
         self.tip_planner_state = {
             "last_analysis": None,
+            "last_image": None,
+            "last_meta": None,
+            "last_channel": 0,
             "history": [],
             "last_move": None,
+            "current_tip_position": None,
+            "selected_candidate_index": 1,
         }
 
     def tip_planner_log_path(self):
@@ -149,6 +154,8 @@ class TipPlannerGuiMixin:
 
     def plot_tip_planner_analysis(self, image, meta, channel, analysis, title=None):
         landscape = self.normalize_planner_landscape(analysis)
+        landscape["current_tip_position"] = self.tip_planner_state.get("current_tip_position")
+        landscape["selected_candidate_index"] = self.tip_planner_state.get("selected_candidate_index")
         quality = dict(analysis.get("tip_quality") or {})
         fig, _extent = self.plot_scan_image_A(
             image,
@@ -160,6 +167,158 @@ class TipPlannerGuiMixin:
             landscape=landscape,
         )
         return fig
+
+    def _tip_planner_last_plot(self, title="Tip planner analysis, line 0 at top"):
+        image = self.tip_planner_state.get("last_image")
+        meta = self.tip_planner_state.get("last_meta") or {}
+        analysis = self.tip_planner_state.get("last_analysis") or {}
+        channel = self.tip_planner_state.get("last_channel", 0)
+        if image is None or not analysis:
+            return self.blank_tip_planner_figure("Run a planner analysis first.")
+        return self.plot_tip_planner_analysis(image, meta, channel, analysis, title=title)
+
+    def _read_tip_planner_tip_position(self):
+        record = self.runner.get_live_tip_position_monitor()
+        monitor = (record.result_summary or {}).get("monitor") or self.runner.data.get("live_tip_position", {})
+        if not monitor and isinstance(record.result_summary, dict):
+            monitor = record.result_summary.get("result") or {}
+        try:
+            scan_x = float(monitor.get("dsp-GVP-XS-MONITOR"))
+        except Exception:
+            scan_x = None
+        try:
+            scan_y = float(monitor.get("dsp-GVP-YS-MONITOR"))
+        except Exception:
+            scan_y = None
+        try:
+            z_offset = float(monitor.get("dsp-GVP-ZS-MONITOR"))
+        except Exception:
+            z_offset = None
+        try:
+            bias = float(monitor.get("dsp-GVP-U-MONITOR"))
+        except Exception:
+            bias = None
+        tip = {
+            "scan_x_A": scan_x,
+            "scan_y_A": scan_y,
+            "z_offset_A": z_offset,
+            "gvp_u_V": bias,
+            "raw_monitor": monitor,
+            "record": record.__dict__,
+            "note": (
+                "X/Y are live local ScanX/ScanY tip coordinates in Angstrom. "
+                "They can change during raster scanning."
+            ),
+        }
+        self.tip_planner_state["current_tip_position"] = tip
+        return tip
+
+    def tip_planner_read_tip_position(self):
+        try:
+            tip = self._read_tip_planner_tip_position()
+            report = {
+                "event": "read_current_tip_position",
+                "current_tip_position": tip,
+                "selected_candidate_index": self.tip_planner_state.get("selected_candidate_index"),
+            }
+            return self._tip_planner_last_plot(), self.jsonable(report)
+        except Exception as exc:
+            return (
+                self.blank_tip_planner_figure(exc),
+                {"error": str(exc), "traceback": traceback.format_exc()},
+            )
+
+    def tip_planner_auto_read_tip_position(self, enabled):
+        try:
+            import gradio as gr
+        except Exception:
+            gr = None
+        if not enabled:
+            update = gr.update() if gr else None
+            return update, update
+        return self.tip_planner_read_tip_position()
+
+    def _candidate_local_xy(self, candidate):
+        scan_x = candidate.get("scan_x_A")
+        scan_y = candidate.get("scan_y_A")
+        if scan_x is None:
+            scan_x = candidate.get("local_scan_x_A")
+        if scan_y is None:
+            scan_y = candidate.get("local_scan_y_A")
+        return float(scan_x), float(scan_y)
+
+    def _extract_plot_click_xy_A(self, evt):
+        values = []
+        for name in ("index", "value", "selected"):
+            if hasattr(evt, name):
+                values.append(getattr(evt, name))
+        if isinstance(evt, dict):
+            values.extend([evt.get("index"), evt.get("value"), evt.get("selected")])
+        for value in values:
+            if value is None:
+                continue
+            if isinstance(value, dict):
+                for x_key, y_key in (("x", "y"), ("xdata", "ydata")):
+                    if x_key in value and y_key in value:
+                        x_val = value[x_key]
+                        y_val = value[y_key]
+                        if isinstance(x_val, (list, tuple, np.ndarray)):
+                            x_val = x_val[0]
+                        if isinstance(y_val, (list, tuple, np.ndarray)):
+                            y_val = y_val[0]
+                        return float(x_val), float(y_val)
+                points = value.get("points")
+                if points:
+                    point = points[0]
+                    if isinstance(point, dict) and "x" in point and "y" in point:
+                        return float(point["x"]), float(point["y"])
+            if isinstance(value, (list, tuple, np.ndarray)) and len(value) >= 2:
+                return float(value[0]), float(value[1])
+        return None, None
+
+    def tip_planner_select_candidate_from_plot(self, evt):
+        try:
+            analysis = self.tip_planner_state.get("last_analysis")
+            if not analysis:
+                raise ValueError("Run a planner analysis first.")
+            candidates = analysis.get("flat_candidates", [])
+            if not candidates:
+                raise ValueError("No flat candidates are available in the last analysis.")
+            click_x, click_y = self._extract_plot_click_xy_A(evt)
+            if click_x is None or click_y is None:
+                raise ValueError(
+                    "Could not read plot click coordinates from this Gradio event."
+                )
+            distances = []
+            for idx, candidate in enumerate(candidates, start=1):
+                cand_x, cand_y = self._candidate_local_xy(candidate)
+                distances.append((float(np.hypot(cand_x - click_x, cand_y - click_y)), idx, candidate))
+            distance_A, idx, candidate = min(distances, key=lambda item: item[0])
+            self.tip_planner_state["selected_candidate_index"] = idx
+            report = {
+                "event": "selected_candidate_from_plot_click",
+                "clicked_scan_x_A": click_x,
+                "clicked_scan_y_A": click_y,
+                "selected_candidate_index": idx,
+                "distance_to_click_A": distance_A,
+                "candidate": candidate,
+                "instruction": "Press Move Tip To Selected Candidate to move after arming Level 1.",
+            }
+            return idx, self._tip_planner_last_plot(), self.jsonable(report)
+        except Exception as exc:
+            return (
+                self.tip_planner_state.get("selected_candidate_index", 1),
+                self._tip_planner_last_plot(),
+                {"error": str(exc), "traceback": traceback.format_exc()},
+            )
+
+    def tip_planner_move_to_candidate_update_plot(self, candidate_index, arm):
+        result = self.tip_planner_move_to_candidate(candidate_index, arm)
+        try:
+            self._read_tip_planner_tip_position()
+        except Exception:
+            pass
+        return self._tip_planner_last_plot(), result
 
     def tip_planner_analyze_current_scan(
         self,
@@ -203,7 +362,18 @@ class TipPlannerGuiMixin:
                 "too_close_to_clear_area": blob_summary["too_close_to_clear_area"],
                 "too_many_blobs": blob_summary["large_hazard_count"] >= int(max_blobs),
             }
+            self.tip_planner_state["last_image"] = image
+            self.tip_planner_state["last_meta"] = meta
+            self.tip_planner_state["last_channel"] = int(channel)
             self.tip_planner_state["last_analysis"] = analysis
+            self.tip_planner_state["selected_candidate_index"] = 1
+            try:
+                analysis["current_tip_position"] = self._read_tip_planner_tip_position()
+            except Exception as exc:
+                analysis["current_tip_position"] = {
+                    "available": False,
+                    "error": "{}: {}".format(type(exc).__name__, exc),
+                }
             event = self.append_tip_planner_log(
                 {
                     "event": "analysis",
@@ -268,6 +438,10 @@ class TipPlannerGuiMixin:
                 candidate["scan_x_A"],
                 candidate["scan_y_A"],
             )
+            try:
+                self._read_tip_planner_tip_position()
+            except Exception:
+                pass
             result = {
                 "candidate_index": idx + 1,
                 "candidate": candidate,

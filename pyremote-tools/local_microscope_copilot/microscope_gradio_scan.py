@@ -142,6 +142,75 @@ class ScanGuiMixin:
         if candidates:
             summary_lines.append("flat candidates: {}".format(len(candidates)))
 
+        selected_idx = landscape.get("selected_candidate_index")
+        if selected_idx is not None and candidates:
+            try:
+                selected_zero = int(selected_idx) - 1
+                if 0 <= selected_zero < len(candidates):
+                    selected = candidates[selected_zero]
+                    if selected.get("px") is not None and selected.get("py") is not None:
+                        x_A, y_A = self.pixel_to_local_A(
+                            selected["px"],
+                            selected["py"],
+                            image,
+                            extent,
+                        )
+                        ax.plot(
+                            x_A,
+                            y_A,
+                            marker="o",
+                            ms=14,
+                            mfc="none",
+                            mec="#ffdd00",
+                            mew=2.2,
+                            label="selected flat",
+                        )
+            except Exception:
+                pass
+
+        current_tip = landscape.get("current_tip_position") or {}
+        try:
+            tip_x = current_tip.get("scan_x_A")
+            tip_y = current_tip.get("scan_y_A")
+            if tip_x is None:
+                tip_x = current_tip.get("dsp-GVP-XS-MONITOR")
+            if tip_y is None:
+                tip_y = current_tip.get("dsp-GVP-YS-MONITOR")
+            if tip_x is not None and tip_y is not None:
+                tip_x = float(tip_x)
+                tip_y = float(tip_y)
+                ax.plot(
+                    tip_x,
+                    tip_y,
+                    marker="+",
+                    color="#ff3333",
+                    ms=16,
+                    mew=2.5,
+                    label="current tip",
+                )
+                ax.plot(
+                    tip_x,
+                    tip_y,
+                    marker="o",
+                    mfc="none",
+                    mec="#ff3333",
+                    ms=10,
+                    mew=1.5,
+                )
+                ax.text(
+                    tip_x,
+                    tip_y,
+                    " tip",
+                    color="#ff3333",
+                    fontsize=8,
+                    ha="left",
+                    va="bottom",
+                    bbox={"facecolor": "white", "alpha": 0.65, "pad": 1.5},
+                )
+                summary_lines.append("tip X/Y: {:.4g}, {:.4g} A".format(tip_x, tip_y))
+        except Exception:
+            pass
+
         ax.text(
             0.01,
             0.99,
@@ -382,6 +451,31 @@ class ScanGuiMixin:
                 channel=int(channel),
                 output_prefix=str(self.output_dir / (output_prefix + "_landscape")),
             )
+            current_tip_position = None
+            try:
+                self.runner.get_live_tip_position_monitor(collect_as="scan_analysis_tip_position")
+                monitor = self.runner.data.get("scan_analysis_tip_position", {})
+                current_tip_position = {
+                    "scan_x_A": float(monitor.get("dsp-GVP-XS-MONITOR")),
+                    "scan_y_A": float(monitor.get("dsp-GVP-YS-MONITOR")),
+                    "z_offset_A": float(monitor.get("dsp-GVP-ZS-MONITOR")),
+                    "gvp_u_V": float(monitor.get("dsp-GVP-U-MONITOR")),
+                    "raw_monitor": monitor,
+                }
+                landscape["current_tip_position"] = current_tip_position
+            except Exception as exc:
+                current_tip_position = {
+                    "available": False,
+                    "error": "{}: {}".format(type(exc).__name__, exc),
+                }
+                landscape["current_tip_position"] = current_tip_position
+            if hasattr(self, "tip_planner_state"):
+                self.tip_planner_state["last_analysis"] = landscape
+                self.tip_planner_state["last_image"] = image
+                self.tip_planner_state["last_meta"] = meta
+                self.tip_planner_state["last_channel"] = int(channel)
+                self.tip_planner_state["current_tip_position"] = current_tip_position
+                self.tip_planner_state["selected_candidate_index"] = 1
             fig, extent = self.plot_scan_analysis_with_dfreq(
                 image,
                 meta,
@@ -400,6 +494,7 @@ class ScanGuiMixin:
                     "channel_info": self.runner.scan_channel_info(2),
                 },
                 "live_average_dFrequency": self.jsonable(live_dfreq),
+                "current_tip_position": self.jsonable(current_tip_position),
                 "extent_A": list(extent),
                 "pixel_size_A": pixel,
                 "tip_quality": quality,

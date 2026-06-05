@@ -11,8 +11,6 @@
       "llm_intent_mode": true
     },
     "live_readouts": {
-      "dfreq_samples": 20,
-      "dfreq_delay_s": 0.15,
       "xyz_gain_choices": ["1", "3", "6", "12", "24"],
       "xyz_gain_x": "12",
       "xyz_gain_y": "12",
@@ -38,7 +36,11 @@
     "analysis": {
       "channel": 0,
       "lines": 160,
-      "output_prefix": "gui_scan_analysis"
+      "output_prefix": "gui_scan_analysis",
+      "candidate_index": 1,
+      "arm_tip_move": false,
+      "auto_tip_position": false,
+      "tip_position_refresh_s": 1.0
     },
     "tip_planner": {
       "arm_action": false,
@@ -49,6 +51,8 @@
       "max_large_hazards": 8,
       "output_prefix": "gui_tip_planner",
       "candidate_index": 1,
+      "auto_tip_position": false,
+      "tip_position_refresh_s": 1.0,
       "shift_direction": "image_left_below",
       "shift_range_A": 800.0,
       "shift_overlap_A": 250.0,

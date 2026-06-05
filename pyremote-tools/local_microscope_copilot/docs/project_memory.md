@@ -282,6 +282,242 @@ Limits` button that reads configured main-window keys, PACPLL/controller keys,
 and adjustment-limit keys, then compares known copilot limits against GXSM
 adjustment ranges.
 
+## Current Handoff Snapshot, 2026-06-05
+
+This section is intended for someone continuing after a lost chat. It records
+the current working state of the local copilot as of the latest operator-tested
+session. Always verify `git status` first because this file may lag behind
+uncommitted edits.
+
+Repository location used during development:
+
+- `/home/percy/VS/Gxsm4/pyremote-tools/local_microscope_copilot/`
+
+Known good baseline commit before the most recent GUI additions:
+
+- `76c8baf Externalize copilot configuration`
+
+Important current local edits after that baseline:
+
+- `microscope_gradio_gui.py`
+- `microscope_gradio_scan.py`
+- `microscope_gradio_tip_planner.py`
+- `microscope_gui_config.json`
+- `docs/project_memory.md`
+
+Recent GUI changes that were restarted and operator-tested as OK:
+
+- The old `Live Readouts` page is now `Live Microscope State Monitor`.
+- The live monitor block is named `Live Microscope Monitor`.
+- Obsolete manual read buttons were removed because the fast live monitor
+  supersedes them.
+- JSON result panels were moved toward the bottom of each page.
+- Scan image plots preserve scan aspect ratio and partial scans are not
+  stretched into a square.
+- The Scan Image tab can auto-refresh about once per second and shows a
+  last-line profile.
+- The Tip/Landscape Analysis and Tip Tune Planner paths share flat-candidate
+  state.
+- Candidate plots can show numbered flat locations, selected location, hazards,
+  and current tip position.
+- `Read / Mark Current Tip` reads `dsp-GVP-XS-MONITOR` and
+  `dsp-GVP-YS-MONITOR` and overlays a red current-tip marker.
+- The current-tip marker can auto-refresh when the checkbox is enabled.
+- Clicking the analysis/planner image selects the nearest flat candidate when
+  the installed Gradio event supplies plot click coordinates.
+- `Move Tip To Selected Candidate` writes local `ScanX/ScanY` only after the
+  existing Level-1 arm gate and readiness check pass.
+
+Operator-tested readiness rule for local ScanX/Y moves and GVP execution:
+
+- Use `gxsm.rtquery("s")`.
+- Interpret the third value, `Sgvp`.
+- `Sgvp == 0`: ready, stopped/finished scan.
+- `Sgvp == 5`: ready, completed GVP.
+- `Sgvp == 1`: busy, scan or GVP active.
+- Do not use a stale `waitscan(False)` line number as a hard busy blocker; if a
+  stopped current line is not changing it may simply be the last stopped line.
+
+Current service pattern:
+
+```bash
+cd /home/percy/VS/Gxsm4/pyremote-tools/local_microscope_copilot
+./copilot_services.sh status
+./copilot_services.sh restart gradio --live --https --require-auth --host 0.0.0.0 --port 7870
+```
+
+The password is intentionally not stored in git. Use the local ignored file
+`.microscope_gui_password` or the `MICROSCOPE_COPILOT_PASSWORD` environment
+variable.
+
+Useful smoke checks after edits:
+
+```bash
+cd /home/percy/VS/Gxsm4/pyremote-tools
+python3 -m py_compile \
+  local_microscope_copilot/microscope_gradio_gui.py \
+  local_microscope_copilot/microscope_gradio_scan.py \
+  local_microscope_copilot/microscope_gradio_tip_planner.py
+
+cd local_microscope_copilot
+.venv/bin/python -c "import microscope_gradio_gui as m; b=m.MicroscopeGradioBackend({}, live=False); ui=m.build_ui(b); print(type(ui).__name__)"
+```
+
+The system `python3` may not have Gradio installed; use `.venv/bin/python` for
+GUI build checks.
+
+## Current GUI Map
+
+Top-level tabs and purpose:
+
+- `Control Level`: choose safety level, read dconf settings/limits.
+- `Chat`: deterministic command router and optional LLM Intent Mode. Actions
+  still need the correct level and arm checkbox.
+- `Live Microscope State Monitor`: read-only fast XYZ, RPSPMC, bias, current,
+  GVP U, PAC amplitude, PAC dFreq, and 2D XY visual indication.
+- `Scan Image`: fetch/auto-refresh scan image and last-line profile.
+- `Tip / Landscape Analysis`: analyze current scan, show topo plus dFreq image,
+  rank flat candidates, mark hazards, read/mark current tip, select candidate,
+  and move tip to selected candidate when safe.
+- `Tip Tune Planner`: planner workflow for flat-site selection, offset search,
+  and bounded iterative scan/analyze/move/tune loops.
+- `Scan Leveling`: measure residual fast-axis slope and apply armed correction.
+- `GVP`: load bias-pulse or tip-tune Z-dip templates, execute loaded GVP, plot
+  ZS/current/dFreq over time, emergency GVP STOP.
+- `Level 3 Protected`: THV coarse motion, large motion, watchdog-style auto
+  approach, and immediate coarse-motion emergency stop.
+
+## Current LLM/Intent Status
+
+Do not rely on the generic model for direct microscope understanding. The
+deterministic router is the trusted controller. It parses known operator
+phrases, validates SI units, converts to GXSM base units, checks control level
+and bounds, then calls controller methods. The LLM may help only by producing a
+strict intent that is reparsed through the same deterministic path, or by giving
+advisory text when no action is executed.
+
+Known intent/parser expectations:
+
+- Accept `set`, `apply`, `change`, and similar words for parameters.
+- Bias values require voltage units, except explicit readback requests.
+- Current setpoint values require current units; convert pA to nA for GXSM.
+- Range/offset/length values require length units.
+- Scientific notation such as `1e-6 MV` must parse correctly.
+- Points are counts and may be unitless.
+- Rotation may be unitless and interpreted as degrees; also accept `deg` and
+  `degree`.
+- Reject wrong physical dimensions, for example `1 Ang bias`.
+- Support grouped scan geometry commands for range and points.
+- Support absolute `OffsetX/Y` setting and relative image shifts in local image
+  coordinates rotated into world `OffsetX/Y`.
+
+## Current Tip/Landscape Planner State
+
+The planner distinguishes:
+
+- Small blobs/molecules: typically `abs(dZ) < 3 A`; do not stop the loop by
+  themselves.
+- Large hazards: broad/tall blobs, pits, or bumps; avoid for clean-area
+  selection and stop/shift only if too many or too close to the selected work
+  site.
+- Flat candidates: ranked patches with low roughness/slope/gradient and away
+  from avoid-worthy hazards.
+
+Candidate movement:
+
+- Uses local `ScanX/ScanY`, not `OffsetX/Y`.
+- Requires the scan/GVP to be ready.
+- The instrument prohibits the local tip move while scanning.
+- Verify with `dsp-GVP-XS-MONITOR` and `dsp-GVP-YS-MONITOR`.
+
+Coordinate reminder:
+
+- Image line `0` is the top.
+- Physical local ScanY is positive upward.
+- Top of image is local `ScanY = +RangeY/2`.
+- Bottom is local `ScanY = -RangeY/2`.
+- At `Rotation = 90 deg`, visual up/down shifts map into world X changes; be
+  careful not to apply unrotated intuition to offsets.
+
+## Current GVP Details
+
+Bias pulse:
+
+- Load-only is safe.
+- Execution requires arm and exact `EXECUTE GVP`.
+- Bias pulse parameter is the `du` step in Volts.
+- Very maximum historically allowed by operator for this family is +/-4 V, but
+  use current config limits as the live authority.
+
+Tip-tune Z dip:
+
+- Gentle fine-tune default is around `5 A`.
+- Vec 1 removes the current scan bias using `dU = -actual_bias`.
+- Vec 3 applies the requested contact bias.
+- Vec 6 removes the contact bias.
+- Vec 7 restores the scan bias.
+- Vec 2 and Vec 4 ramp times are parameterized; allowed range is currently
+  `1 s .. 60 s`.
+- All vector components and FB checkboxes must be explicitly written, including
+  zero and false values, until the final terminating vector with `# points = 0`.
+- Vector 4 feedback flag was operator-corrected to false for the Z-dip pattern.
+
+Long GVP:
+
+- Several-minute GVPs are possible.
+- GUI waits up to 5 minutes for execution/plotting by default.
+- Emergency GVP STOP writes all NULL vectors and executes them.
+
+## Level 3 / Coarse Motion Status
+
+Level 3 is intentionally protected and not casually live-tested.
+
+THV coarse controls:
+
+- Channels: `X`, `Y`, `Z`.
+- Directions: `+1` or `-1`.
+- Period default/fixed operationally around `0.5 s`.
+- Normal cap: voltage <= `100 HV V`, burstcount <= `5`.
+- Extra protected large motion: burstcount up to `5000`.
+- Any `Z, -1` motion is dangerous because it moves the tip down.
+- Red EMERGENCY STOP coarse motion is not arm-gated; it sends zero-step,
+  zero-volt commands for the last started axis/direction and then all axes.
+
+Auto approach/watchdog concept:
+
+- Reads `dFreq()` from `gxsm.rtquery("f")`.
+- Reads `VZ_tip()` from `gxsm.rtquery("z")`.
+- Uses `script-control` as a user abort flag.
+- Retract by setting current setpoint to zero and waiting while Z moves up.
+- Check range by setting a small current and waiting for Z/dFreq response.
+- Apply small Z-down coarse bursts only while dFreq and Z safety conditions are
+  acceptable.
+
+## Runtime Artifacts And Git Hygiene
+
+Keep these in git:
+
+- source `.py` files in `local_microscope_copilot/`,
+- config `.json` defaults,
+- GVP template/recipe JSON files needed by the GUI,
+- `docs/*.md`,
+- service/install scripts,
+- README/setup docs.
+
+Do not commit:
+
+- `.microscope_gui_password`,
+- `.venv/`,
+- `.run/`,
+- `logs/`,
+- `__pycache__/`,
+- live scan output images, `.npy`, `.npz`, and generated reports unless a
+  particular file is intentionally promoted to a documented fixture.
+
+The working root outside `local_microscope_copilot/` contains many historical
+experiment artifacts from earlier live sessions. Treat them as local data, not
+project source, unless the operator explicitly asks to preserve one.
+
 ## Maintenance Rules
 
 Update this memory document when:
