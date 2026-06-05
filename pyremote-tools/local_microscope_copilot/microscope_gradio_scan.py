@@ -156,6 +156,96 @@ class ScanGuiMixin:
         if hazards or candidates or best:
             ax.legend(loc="lower right", fontsize=7)
 
+    def plot_scan_analysis_with_dfreq(
+        self,
+        topo_image,
+        topo_meta,
+        dfreq_image,
+        dfreq_meta,
+        quality=None,
+        landscape=None,
+        live_dfreq=None,
+    ):
+        fig, axes = plt.subplots(1, 2, figsize=(12, 5), constrained_layout=True)
+        topo_extent = self.scan_extent_A(topo_image, topo_meta, 0)
+        topo_im = axes[0].imshow(
+            topo_image,
+            origin="upper",
+            extent=topo_extent,
+            cmap="viridis",
+            aspect="equal",
+        )
+        axes[0].set_title("Topo Z (Ch 0)")
+        axes[0].set_xlabel("Scan X (A)")
+        axes[0].set_ylabel("Scan Y (A), positive up")
+        fig.colorbar(topo_im, ax=axes[0], label="Z (A)")
+        self.annotate_analysis_plot(
+            axes[0],
+            topo_image,
+            topo_extent,
+            quality=quality,
+            landscape=landscape,
+        )
+
+        if dfreq_image is not None:
+            dfreq_extent = self.scan_extent_A(dfreq_image, dfreq_meta or topo_meta, 2)
+            df_arr = np.asarray(dfreq_image, dtype=float)
+            finite = df_arr[np.isfinite(df_arr)]
+            if finite.size:
+                lo, hi = np.nanpercentile(finite, [2, 98])
+                if lo == hi:
+                    lo, hi = float(np.nanmin(finite)), float(np.nanmax(finite))
+            else:
+                lo, hi = None, None
+            df_im = axes[1].imshow(
+                df_arr,
+                origin="upper",
+                extent=dfreq_extent,
+                cmap="coolwarm",
+                aspect="equal",
+                vmin=lo,
+                vmax=hi,
+            )
+            axes[1].set_title("Scan dFreq (Ch 2)")
+            axes[1].set_xlabel("Scan X (A)")
+            axes[1].set_ylabel("Scan Y (A), positive up")
+            fig.colorbar(df_im, ax=axes[1], label="dFreq (Hz)")
+        else:
+            axes[1].text(
+                0.5,
+                0.5,
+                "Channel 2 dFreq image unavailable",
+                ha="center",
+                va="center",
+                wrap=True,
+            )
+            axes[1].set_axis_off()
+
+        summary = []
+        sharp = (quality or {}).get("topo_feature_sharpness") or {}
+        if sharp.get("category"):
+            summary.append("sharpness: {}".format(sharp.get("category")))
+        width = sharp.get("characteristic_edge_width_A_approx")
+        if width is not None:
+            summary.append("edge width~{:.3g} A".format(float(width)))
+        live_stats = (live_dfreq or {}).get("stats") or {}
+        mean_df = live_stats.get("mean_Hz")
+        if mean_df is not None:
+            summary.append("live avg dF={:.4g} Hz".format(float(mean_df)))
+        if summary:
+            axes[0].text(
+                0.01,
+                0.01,
+                "\n".join(summary),
+                transform=axes[0].transAxes,
+                va="bottom",
+                ha="left",
+                fontsize=8,
+                color="white",
+                bbox={"facecolor": "black", "alpha": 0.62, "pad": 4},
+            )
+        return fig, topo_extent
+
     def fetch_scan_plot(self, channel, chunk_lines):
         fig, _profile_fig, report = self.fetch_scan_plot_with_profile(
             channel,
@@ -262,31 +352,62 @@ class ScanGuiMixin:
                 channel=int(channel),
                 chunk_lines=int(chunk_lines),
             )
+            dfreq_image = None
+            dfreq_meta = None
+            try:
+                dfreq_image, dfreq_meta = self.runner.fetch_scan_image_to_line(
+                    channel=2,
+                    y_current=int(meta.get("y_current", -1)),
+                    chunk_lines=int(chunk_lines),
+                    store_last=False,
+                )
+            except Exception as exc:
+                dfreq_meta = {
+                    "available": False,
+                    "error": "{}: {}".format(type(exc).__name__, exc),
+                    "channel": 2,
+                }
             pixel = self.runner._pixel_size_A(int(channel))
             quality = self.runner.assess_tip_quality(
                 image,
                 pixel_size_A=pixel,
                 output_prefix=str(self.output_dir / output_prefix),
             )
+            live_dfreq = self.runner.sample_dfrequency_values(count=12, delay_s=0.05)
+            quality["dFrequency"] = live_dfreq.get("interpretation")
+            scan_dfreq_stats = None
+            if dfreq_image is not None:
+                scan_dfreq_stats = self.runner._array_stats(dfreq_image)
             landscape = self.nav.analyze_current_scan_landscape_map(
                 channel=int(channel),
                 output_prefix=str(self.output_dir / (output_prefix + "_landscape")),
             )
-            fig, extent = self.plot_scan_image_A(
+            fig, extent = self.plot_scan_analysis_with_dfreq(
                 image,
                 meta,
-                channel,
-                "Scan image used for analysis",
-                "topography / signal",
+                dfreq_image,
+                dfreq_meta,
                 quality=quality,
                 landscape=landscape,
+                live_dfreq=live_dfreq,
             )
             report = {
                 "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
                 "fetch_meta": self.jsonable(meta),
+                "scan_recorded_dFrequency_ch2": {
+                    "meta": self.jsonable(dfreq_meta),
+                    "stats": self.jsonable(scan_dfreq_stats),
+                    "channel_info": self.runner.scan_channel_info(2),
+                },
+                "live_average_dFrequency": self.jsonable(live_dfreq),
                 "extent_A": list(extent),
                 "pixel_size_A": pixel,
                 "tip_quality": quality,
+                "metal_tip_note": (
+                    "Current topo sharpness criteria are for a metal tip. "
+                    "CO/O or other functionalized-tip contrast should use a "
+                    "separate later classifier."
+                ),
                 "landscape": landscape,
             }
             report_path = self.output_dir / (output_prefix + "_gui_report.json")

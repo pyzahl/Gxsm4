@@ -211,7 +211,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         if action_reply is not None:
             return action_reply
         if re.search(
-            r"\b(set|change|adjust|make|configure)\b",
+            r"\b(set|change|adjust|make|configure|apply)\b",
             text,
             re.IGNORECASE,
         ):
@@ -258,15 +258,6 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         if self.looks_like_live_monitor_read(text_l):
             self.chat_context["last_action_domain"] = "monitor"
             return self.format_live_monitor_readback()
-        if self.looks_like_read_request(text_l):
-            keys = self.infer_parameter_keys(text_l, allow_context=True)
-            if keys or self.looks_like_scan_geometry_request(text_l):
-                self.chat_context["last_action_domain"] = "readback"
-                if self.looks_like_scan_geometry_request(text_l):
-                    return self.format_parameter_readback(list(KNOWN_READBACK_REFS))
-                return self.format_parameter_readback(
-                    [(PARAM_SPECS[key]["label"], PARAM_SPECS[key]["refname"]) for key in keys]
-                )
         if self.looks_like_write_request(text_l):
             keys = self.infer_parameter_keys(text_l, allow_context=True)
             if self.looks_like_scan_geometry_request(text_l):
@@ -278,6 +269,15 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                     text,
                     self.context_parameter_key(),
                     chat_arm=chat_arm,
+                )
+        if self.looks_like_read_request(text_l):
+            keys = self.infer_parameter_keys(text_l, allow_context=True)
+            if keys or self.looks_like_scan_geometry_request(text_l):
+                self.chat_context["last_action_domain"] = "readback"
+                if self.looks_like_scan_geometry_request(text_l):
+                    return self.format_parameter_readback(list(KNOWN_READBACK_REFS))
+                return self.format_parameter_readback(
+                    [(PARAM_SPECS[key]["label"], PARAM_SPECS[key]["refname"]) for key in keys]
                 )
         return None
 
@@ -605,7 +605,10 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         if has_geometry:
             parsed = self.parse_scan_geometry_request(text)
             if parsed is None:
-                return None
+                return (
+                    "I did not change scan geometry. Include explicit units, "
+                    "for example `700 A 400 points` or `70 nm 400 px`."
+                )
             range_A, points = parsed
             plan.append(
                 {
@@ -651,15 +654,15 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             return None
         write_kind = spec["write"]
         if write_kind == "bias":
-            target = self.resolve_numeric_target(
+            target = self.resolve_voltage_target_V(
                 text,
                 current_refname=spec["refname"],
                 percent_ok=True,
             )
             if target is None:
                 if self.is_relative_request(text):
-                    return "I did not change the bias. A relative bias change needs a valid current bias readback first."
-                return None
+                    return "I did not change the bias. Relative bias changes need a valid current bias readback and an explicit voltage unit, for example `increase bias by 25 mV`."
+                return self.missing_unit_message("bias", "`0.234 V` or `200 mV`")
             if abs(target) > self.safety_limits()["level1_max_abs_bias_V"]:
                 return (
                     "I did not change the bias. A target of {:.6g} V is outside "
@@ -674,8 +677,8 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             target_nA = self.resolve_current_target_nA(text, spec["refname"])
             if target_nA is None:
                 if self.is_relative_request(text):
-                    return "I did not change the current setpoint. A relative current change needs a valid current setpoint readback first."
-                return None
+                    return "I did not change the current setpoint. Relative current changes need a valid current readback and an explicit unit, for example `increase current by 2 pA`."
+                return self.missing_unit_message("current setpoint", "`10 pA` or `0.01 nA`")
             if target_nA > self.safety_limits()["level1_max_current_nA"]:
                 return (
                     "I did not change the current setpoint. The requested value "
@@ -691,7 +694,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 ),
             }
         if write_kind == "scan_speed":
-            target = self.resolve_numeric_target(
+            target = self.resolve_scan_speed_target_A_s(
                 text,
                 current_refname=spec["refname"],
                 percent_ok=True,
@@ -700,7 +703,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             if target is None:
                 if self.is_relative_request(text) or re.search(r"\b(faster|slower)\b", text.lower()):
                     return "I did not change the scan speed. A relative speed change needs a valid current scan-speed readback first."
-                return None
+                return self.missing_unit_message("scan speed", "`700 A/s` or `70 nm/s`")
             range_A = self.read_float_parameter("RangeX", fallback=700.0)
             return {
                 "action_name": "scan speed",
@@ -712,13 +715,13 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 ),
             }
         if write_kind in ("slope_x", "slope_y"):
-            target = self.resolve_numeric_target(text, current_refname=spec["refname"])
+            target = self.resolve_slope_target_A_per_A(text, current_refname=spec["refname"])
             if target is None:
                 if self.is_relative_request(text):
                     return "I did not change {}. A relative change needs a valid current readback first.".format(
                         spec["label"]
                     )
-                return None
+                return self.missing_unit_message(spec["label"], "`0.01 A/A`")
             if abs(target) > self.safety_limits()["level1_max_abs_scan_slope"]:
                 return "I did not change {}. Level 1 allows abs(slope) <= 0.1.".format(
                     spec["label"]
@@ -733,13 +736,13 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 ),
             }
         if write_kind in ("feedback_cp", "feedback_ci"):
-            target = self.resolve_numeric_target(text, current_refname=spec["refname"])
+            target = self.resolve_db_target(text, current_refname=spec["refname"])
             if target is None:
                 if self.is_relative_request(text):
                     return "I did not change {}. A relative change needs a valid current readback first.".format(
                         spec["label"]
                     )
-                return None
+                return self.missing_unit_message(spec["label"], "`-90 dB`")
             limits = self.safety_limits()["level1_feedback_cp_ci_range_dB"]
             if not (limits[0] <= target <= limits[1]):
                 return (
@@ -822,7 +825,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
     def looks_like_write_request(self, text_l):
         return bool(
             re.search(
-                r"\b(set|change|adjust|make|configure|increase|decrease|raise|lower|faster|slower)\b",
+                r"\b(set|change|adjust|make|configure|apply|increase|decrease|raise|lower|faster|slower)\b",
                 text_l,
             )
         )
@@ -871,7 +874,10 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
     def route_scan_geometry_write(self, text, chat_arm=False):
         parsed = self.parse_scan_geometry_request(text)
         if parsed is None:
-            return None
+            return (
+                "I did not change scan geometry. Include explicit units, "
+                "for example `700 A 400 points` or `70 nm 400 px`."
+            )
         range_A, points = parsed
         self.chat_context["last_action_domain"] = "scan"
         self.chat_context["last_parameter"] = "scan_geometry"
@@ -889,15 +895,15 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         write_kind = spec["write"]
         text_l = text.lower()
         if write_kind == "bias":
-            target = self.resolve_numeric_target(
+            target = self.resolve_voltage_target_V(
                 text,
                 current_refname=spec["refname"],
                 percent_ok=True,
             )
             if target is None:
                 if self.is_relative_request(text):
-                    return "I did not change the bias. A relative bias change needs a valid current bias readback first."
-                return None
+                    return "I did not change the bias. Relative bias changes need a valid current bias readback and an explicit voltage unit, for example `increase bias by 25 mV`."
+                return self.missing_unit_message("bias", "`0.234 V` or `200 mV`")
             if abs(target) > self.safety_limits()["level1_max_abs_bias_V"]:
                 return (
                     "I did not change the bias. A target of {:.6g} V is outside "
@@ -913,8 +919,8 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             target_nA = self.resolve_current_target_nA(text, spec["refname"])
             if target_nA is None:
                 if self.is_relative_request(text):
-                    return "I did not change the current setpoint. A relative current change needs a valid current setpoint readback first."
-                return None
+                    return "I did not change the current setpoint. Relative current changes need a valid current readback and an explicit unit, for example `increase current by 2 pA`."
+                return self.missing_unit_message("current setpoint", "`10 pA` or `0.01 nA`")
             if target_nA > self.safety_limits()["level1_max_current_nA"]:
                 return (
                     "I did not change the current setpoint. The requested value "
@@ -927,7 +933,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 lambda: self.set_current(target_nA, "nA", arm=True),
             )
         if write_kind == "scan_speed":
-            target = self.resolve_numeric_target(
+            target = self.resolve_scan_speed_target_A_s(
                 text,
                 current_refname=spec["refname"],
                 percent_ok=True,
@@ -936,7 +942,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             if target is None:
                 if self.is_relative_request(text) or re.search(r"\b(faster|slower)\b", text_l):
                     return "I did not change the scan speed. A relative speed change needs a valid current scan-speed readback first."
-                return None
+                return self.missing_unit_message("scan speed", "`700 A/s` or `70 nm/s`")
             range_A = self.read_float_parameter("RangeX", fallback=700.0)
             return self.execute_chat_level1_action(
                 "scan speed",
@@ -945,13 +951,13 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 lambda: self.set_scan_speed(target, range_A, arm=True),
             )
         if write_kind in ("slope_x", "slope_y"):
-            target = self.resolve_numeric_target(text, current_refname=spec["refname"])
+            target = self.resolve_slope_target_A_per_A(text, current_refname=spec["refname"])
             if target is None:
                 if self.is_relative_request(text):
                     return "I did not change {}. A relative change needs a valid current readback first.".format(
                         spec["label"]
                     )
-                return None
+                return self.missing_unit_message(spec["label"], "`0.01 A/A`")
             if abs(target) > self.safety_limits()["level1_max_abs_scan_slope"]:
                 return "I did not change {}. Level 1 allows abs(slope) <= 0.1.".format(
                     spec["label"]
@@ -967,13 +973,13 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 ),
             )
         if write_kind in ("feedback_cp", "feedback_ci"):
-            target = self.resolve_numeric_target(text, current_refname=spec["refname"])
+            target = self.resolve_db_target(text, current_refname=spec["refname"])
             if target is None:
                 if self.is_relative_request(text):
                     return "I did not change {}. A relative change needs a valid current readback first.".format(
                         spec["label"]
                     )
-                return None
+                return self.missing_unit_message(spec["label"], "`-90 dB`")
             limits = self.safety_limits()["level1_feedback_cp_ci_range_dB"]
             if not (limits[0] <= target <= limits[1]):
                 return (
@@ -1035,6 +1041,245 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 return current * (1.0 + sign * abs(percent) / 100.0)
         return self.last_number(text)
 
+    def si_quantity_specs(self):
+        return {
+            "voltage": {
+                "base_unit": "V",
+                "units": {
+                    "v": 1.0,
+                    "volt": 1.0,
+                    "volts": 1.0,
+                    "mv": 1e-3,
+                    "millivolt": 1e-3,
+                    "millivolts": 1e-3,
+                    "uv": 1e-6,
+                    "µv": 1e-6,
+                    "microvolt": 1e-6,
+                    "microvolts": 1e-6,
+                    "kv": 1e3,
+                },
+            },
+            "current": {
+                "base_unit": "nA",
+                "units": {
+                    "na": 1.0,
+                    "nanoamp": 1.0,
+                    "nanoamps": 1.0,
+                    "nanoampere": 1.0,
+                    "nanoamperes": 1.0,
+                    "pa": 1e-3,
+                    "picoamp": 1e-3,
+                    "picoamps": 1e-3,
+                    "picoampere": 1e-3,
+                    "picoamperes": 1e-3,
+                    "ua": 1e3,
+                    "µa": 1e3,
+                    "microamp": 1e3,
+                    "microamps": 1e3,
+                    "a": 1e9,
+                    "amp": 1e9,
+                    "amps": 1e9,
+                },
+            },
+            "length_A": {
+                "base_unit": "A",
+                "units": {
+                    "a": 1.0,
+                    "å": 1.0,
+                    "ang": 1.0,
+                    "angstrom": 1.0,
+                    "angstroms": 1.0,
+                    "nm": 10.0,
+                    "nanometer": 10.0,
+                    "nanometers": 10.0,
+                    "pm": 0.01,
+                    "picometer": 0.01,
+                    "picometers": 0.01,
+                    "um": 1e4,
+                    "µm": 1e4,
+                    "micrometer": 1e4,
+                    "micrometers": 1e4,
+                },
+            },
+            "scan_speed": {
+                "base_unit": "A/s",
+                "units": {
+                    "a/s": 1.0,
+                    "å/s": 1.0,
+                    "ang/s": 1.0,
+                    "angstrom/s": 1.0,
+                    "angstroms/s": 1.0,
+                    "a/sec": 1.0,
+                    "ang/sec": 1.0,
+                    "angstrom/sec": 1.0,
+                    "nm/s": 10.0,
+                    "nm/sec": 10.0,
+                    "um/s": 1e4,
+                    "µm/s": 1e4,
+                },
+            },
+            "angle": {
+                "base_unit": "deg",
+                "units": {
+                    "deg": 1.0,
+                    "degree": 1.0,
+                    "degrees": 1.0,
+                },
+            },
+            "db": {
+                "base_unit": "dB",
+                "units": {
+                    "db": 1.0,
+                },
+            },
+            "slope": {
+                "base_unit": "A/A",
+                "units": {
+                    "a/a": 1.0,
+                    "å/å": 1.0,
+                    "ang/ang": 1.0,
+                    "angstrom/angstrom": 1.0,
+                },
+            },
+            "points": {
+                "base_unit": "points",
+                "units": {
+                    "count": 1.0,
+                    "counts": 1.0,
+                    "point": 1.0,
+                    "points": 1.0,
+                    "px": 1.0,
+                    "pixel": 1.0,
+                    "pixels": 1.0,
+                },
+            },
+        }
+
+    def parse_si_quantity(self, text, kind):
+        spec = self.si_quantity_specs()[kind]
+        units = spec["units"]
+        unit_pattern = "|".join(
+            re.escape(unit) for unit in sorted(units, key=len, reverse=True)
+        )
+        pattern = re.compile(
+            r"([-+]?\d+(?:\.\d+)?)\s*({})(?![a-zA-Z/µÅå])".format(unit_pattern),
+            re.IGNORECASE,
+        )
+        matches = list(pattern.finditer(str(text)))
+        if not matches:
+            return None
+        match = matches[-1]
+        unit = match.group(2).lower()
+        return {
+            "value": float(match.group(1)) * units[unit],
+            "raw_value": float(match.group(1)),
+            "unit": match.group(2),
+            "base_unit": spec["base_unit"],
+            "text": match.group(0),
+        }
+
+    def missing_unit_message(self, label, expected):
+        return (
+            "I did not change {}. Please include an explicit unit, for example {}."
+        ).format(label, expected)
+
+    def voltage_unit_scale(self, unit):
+        unit = str(unit or "V").lower()
+        if unit in ("mv", "millivolt", "millivolts"):
+            return 0.001
+        return 1.0
+
+    def parse_last_voltage_literal_V(self, text):
+        parsed = self.parse_si_quantity(text, "voltage")
+        return None if parsed is None else parsed["value"]
+
+    def resolve_voltage_target_V(self, text, current_refname=None, percent_ok=False):
+        text_l = str(text).lower()
+        current = None
+        if current_refname:
+            current = self.read_float_parameter(current_refname, fallback=np.nan)
+            if not np.isfinite(current):
+                current = None
+        relative_requested = self.is_relative_request(text)
+        if relative_requested and current is None:
+            return None
+
+        delta_match = re.search(
+            r"\b(?:increase|raise|decrease|lower|up|down)\b[^-+\d]*"
+            r"([-+]?\d+(?:\.\d+)?)\s*(mv|millivolts?|v|volts?)\b",
+            text_l,
+        )
+        if delta_match and current is not None:
+            delta = float(delta_match.group(1)) * self.voltage_unit_scale(delta_match.group(2))
+            if re.search(r"\b(decrease|lower|down)\b", text_l):
+                delta = -abs(delta)
+            elif re.search(r"\b(increase|raise|up)\b", text_l):
+                delta = abs(delta)
+            if percent_ok and "%" in text_l:
+                return current * (1.0 + delta / 100.0)
+            return current + delta
+
+        if percent_ok and current is not None:
+            percent = self.parse_percent(text_l)
+            if percent is not None and re.search(r"\b(increase|raise|decrease|lower)\b", text_l):
+                sign = -1.0 if re.search(r"\b(decrease|lower)\b", text_l) else 1.0
+                return current * (1.0 + sign * abs(percent) / 100.0)
+
+        return self.parse_last_voltage_literal_V(text)
+
+    def resolve_quantity_target(self, text, kind, current_refname=None, percent_ok=False, relative_words=None):
+        text_l = str(text).lower()
+        current = None
+        if current_refname:
+            current = self.read_float_parameter(current_refname, fallback=np.nan)
+            if not np.isfinite(current):
+                current = None
+        relative_words = relative_words or {}
+        relative_requested = self.is_relative_request(text) or any(
+            re.search(r"\b{}\b".format(re.escape(word)), text_l)
+            for word in relative_words
+        )
+        if relative_requested and current is None:
+            return None
+        for word, factor in relative_words.items():
+            if re.search(r"\b{}\b".format(re.escape(word)), text_l) and current is not None:
+                percent = self.parse_percent(text_l)
+                return current * (1.0 + percent / 100.0) if percent is not None else current * factor
+        if re.search(r"\b(?:increase|raise|decrease|lower|up|down)\b", text_l) and current is not None:
+            parsed = self.parse_si_quantity(text, kind)
+            if parsed is None:
+                return None
+            delta = parsed["value"]
+            if re.search(r"\b(decrease|lower|down)\b", text_l):
+                delta = -abs(delta)
+            elif re.search(r"\b(increase|raise|up)\b", text_l):
+                delta = abs(delta)
+            if percent_ok and "%" in text_l:
+                return current * (1.0 + delta / 100.0)
+            return current + delta
+        if percent_ok and current is not None:
+            percent = self.parse_percent(text_l)
+            if percent is not None and re.search(r"\b(increase|raise|decrease|lower)\b", text_l):
+                sign = -1.0 if re.search(r"\b(decrease|lower)\b", text_l) else 1.0
+                return current * (1.0 + sign * abs(percent) / 100.0)
+        parsed = self.parse_si_quantity(text, kind)
+        return None if parsed is None else parsed["value"]
+
+    def resolve_scan_speed_target_A_s(self, text, current_refname=None, percent_ok=False, relative_words=None):
+        return self.resolve_quantity_target(
+            text,
+            "scan_speed",
+            current_refname=current_refname,
+            percent_ok=percent_ok,
+            relative_words=relative_words,
+        )
+
+    def resolve_slope_target_A_per_A(self, text, current_refname=None):
+        return self.resolve_quantity_target(text, "slope", current_refname=current_refname)
+
+    def resolve_db_target(self, text, current_refname=None):
+        return self.resolve_quantity_target(text, "db", current_refname=current_refname)
+
     def is_relative_request(self, text):
         return bool(
             re.search(
@@ -1056,8 +1301,7 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         if parsed is not None:
             value, unit = parsed
             return float(value) / 1000.0 if str(unit).lower() == "pa" else float(value)
-        target = self.resolve_numeric_target(text, current_refname=current_refname)
-        return target
+        return None
 
     def parse_percent(self, text_l):
         match = re.search(r"([-+]?\d+(?:\.\d+)?)\s*%", text_l)
@@ -1295,13 +1539,17 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
             pass
 
     def try_chat_parameter_write(self, text, chat_arm=False):
-        if not re.search(r"\b(set|change|adjust|make|configure)\b", text, re.IGNORECASE):
+        if not re.search(r"\b(set|change|adjust|make|configure|apply)\b", text, re.IGNORECASE):
             return None
         text_l = text.lower()
         if "bias" in text_l:
-            target = self.last_number(text)
+            target = self.resolve_voltage_target_V(
+                text,
+                current_refname="dsp-fbs-bias",
+                percent_ok=True,
+            )
             if target is None:
-                return None
+                return self.missing_unit_message("bias", "`0.234 V` or `200 mV`")
             if abs(target) > self.safety_limits()["level1_max_abs_bias_V"]:
                 return (
                     "I did not change the bias. A target of {:.3g} V is outside "
@@ -1316,9 +1564,9 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         if "current" in text_l and ("setpoint" in text_l or "set point" in text_l):
             parsed = self.parse_current_request(text)
             if parsed is None:
-                return None
+                return self.missing_unit_message("current setpoint", "`10 pA` or `0.01 nA`")
             value, unit = parsed
-            current_nA = float(value) / 1000.0 if str(unit).lower() == "pa" else float(value)
+            current_nA = float(value)
             if current_nA > self.safety_limits()["level1_max_current_nA"]:
                 return (
                     "I did not change the current setpoint. The requested value "
@@ -1326,14 +1574,14 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 ).format(current_nA, self.safety_limits()["level1_max_current_nA"])
             return self.execute_chat_level1_action(
                 "current setpoint",
-                "{} {}".format(value, unit),
+                "{} nA".format(current_nA),
                 chat_arm,
-                lambda: self.set_current(value, unit, arm=True),
+                lambda: self.set_current(current_nA, "nA", arm=True),
             )
         if "scan speed" in text_l:
-            target = self.last_number(text)
+            target = self.resolve_scan_speed_target_A_s(text, current_refname="dsp-fbs-scan-speed-scan")
             if target is None:
-                return None
+                return self.missing_unit_message("scan speed", "`700 A/s` or `70 nm/s`")
             range_A = self.read_float_parameter("RangeX", fallback=700.0)
             return self.execute_chat_level1_action(
                 "scan speed",
@@ -1344,7 +1592,10 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         if any(word in text_l for word in ("scan size", "scan range", "scan geometry", "points")):
             parsed = self.parse_scan_geometry_request(text)
             if parsed is None:
-                return None
+                return (
+                    "I did not change scan geometry. Include explicit units, "
+                    "for example `700 A 400 points` or `70 nm 400 px`."
+                )
             range_A, points = parsed
             return self.execute_chat_level1_action(
                 "scan geometry",
@@ -1353,9 +1604,9 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 lambda: self.set_scan_geometry(range_A, points, arm=True),
             )
         if "slope x" in text_l or "scan slope x" in text_l:
-            target = self.last_number(text)
+            target = self.resolve_slope_target_A_per_A(text, current_refname="dsp-adv-scan-slope-x")
             if target is None:
-                return None
+                return self.missing_unit_message("scan slope x", "`0.01 A/A`")
             if abs(target) > self.safety_limits()["level1_max_abs_scan_slope"]:
                 return "I did not change scan slope x. Level 1 allows abs(slope) <= 0.1."
             return self.execute_chat_level1_action(
@@ -1365,9 +1616,9 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 lambda: self.set_scan_slope(slope_x=target, arm=True),
             )
         if "slope y" in text_l or "scan slope y" in text_l:
-            target = self.last_number(text)
+            target = self.resolve_slope_target_A_per_A(text, current_refname="dsp-adv-scan-slope-y")
             if target is None:
-                return None
+                return self.missing_unit_message("scan slope y", "`0.01 A/A`")
             if abs(target) > self.safety_limits()["level1_max_abs_scan_slope"]:
                 return "I did not change scan slope y. Level 1 allows abs(slope) <= 0.1."
             return self.execute_chat_level1_action(
@@ -1376,11 +1627,11 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
                 chat_arm,
                 lambda: self.set_scan_slope(slope_y=target, arm=True),
             )
-        cp_match = re.search(r"\bcp\b[^-+\d]*([-+]?\d+(?:\.\d+)?)", text_l)
-        ci_match = re.search(r"\bci\b[^-+\d]*([-+]?\d+(?:\.\d+)?)", text_l)
-        if cp_match and ci_match:
-            cp = float(cp_match.group(1))
-            ci = float(ci_match.group(1))
+        if re.search(r"\bcp\b", text_l) and re.search(r"\bci\b", text_l):
+            cp = self.resolve_db_target(text_l.split("ci", 1)[0], current_refname="dsp-fbs-cp")
+            ci = self.resolve_db_target(text_l.split("ci", 1)[1], current_refname="dsp-fbs-ci")
+            if cp is None or ci is None:
+                return self.missing_unit_message("feedback CP/CI", "`CP -90 dB CI -90 dB`")
             return self.execute_chat_level1_action(
                 "feedback CP/CI",
                 "CP {}, CI {}".format(cp, ci),
@@ -1469,35 +1720,19 @@ class MicroscopeGradioBackend(ScanGuiMixin, GvpGuiMixin, TipPlannerGuiMixin):
         return None if not nums else float(nums[-1])
 
     def parse_current_request(self, text):
-        match = re.search(
-            r"([-+]?\d+(?:\.\d+)?)\s*(pA|nA)\b",
-            text,
-            re.IGNORECASE,
-        )
-        if match:
-            return float(match.group(1)), match.group(2)
-        value = self.last_number(text)
-        return None if value is None else (value, "nA")
+        parsed = self.parse_si_quantity(text, "current")
+        if parsed is None:
+            return None
+        return parsed["value"], "nA"
 
     def parse_scan_geometry_request(self, text):
         text_l = text.lower()
-        range_match = re.search(
-            r"([-+]?\d+(?:\.\d+)?)\s*(?:a|ang|angstrom|angstroms)\b",
-            text_l,
-        )
-        points_match = re.search(r"(\d+)\s*(?:x\s*\d+\s*)?points?\b", text_l)
-        if not points_match:
-            points_match = re.search(r"points?\s*(?:x|=|to)?\s*(\d+)", text_l)
-        range_A = (
-            float(range_match.group(1))
-            if range_match
-            else self.read_float_parameter("RangeX", fallback=700.0)
-        )
-        points = (
-            int(points_match.group(1))
-            if points_match
-            else int(self.read_float_parameter("PointsX", fallback=400))
-        )
+        range_parsed = self.parse_si_quantity(text_l, "length_A")
+        points_parsed = self.parse_si_quantity(text_l, "points")
+        if range_parsed is None or points_parsed is None:
+            return None
+        range_A = float(range_parsed["value"])
+        points = int(round(points_parsed["value"]))
         return range_A, points
 
     def read_float_parameter(self, refname, fallback):

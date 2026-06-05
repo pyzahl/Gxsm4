@@ -1640,6 +1640,119 @@ class MicroscopeActionRunner:
         self.data["last_scan_auxiliary_channels"] = summaries
         return summaries
 
+    def sample_dfrequency_values(self, count=12, delay_s=0.05):
+        """Read several live dFreq snapshots and return robust summary stats."""
+        values = []
+        for _ in range(int(count)):
+            try:
+                values.append(float(self.dFreq()))
+            except Exception:
+                values.append(float("nan"))
+            if delay_s > 0:
+                time.sleep(float(delay_s))
+        arr = np.asarray(values, dtype=float)
+        finite = arr[np.isfinite(arr)]
+        stats = {"count": int(finite.size)}
+        if finite.size:
+            stats.update(
+                {
+                    "mean_Hz": float(np.nanmean(finite)),
+                    "median_Hz": float(np.nanmedian(finite)),
+                    "std_Hz": float(np.nanstd(finite)),
+                    "min_Hz": float(np.nanmin(finite)),
+                    "max_Hz": float(np.nanmax(finite)),
+                }
+            )
+            interpretation = self.interpret_dFreq(stats["mean_Hz"])
+        else:
+            interpretation = self.interpret_dFreq(None)
+        return {
+            "values_Hz": values,
+            "stats": stats,
+            "interpretation": interpretation,
+            "note": "Live rtquery('f') dFreq snapshots; mean is used in scan analysis.",
+        }
+
+    def topo_feature_sharpness(self, image, pixel_size_A=1.0):
+        """
+        Estimate topography feature/edge sharpness for metal-tip assessment.
+
+        This is not a CO/O-functionalized-tip classifier. It is intended to
+        track whether metal-tip topo features and step edges look crisp or
+        blurred at the current scan scale.
+        """
+        arr = np.asarray(image, dtype=float)
+        valid = np.isfinite(arr)
+        if valid.sum() < 16:
+            return {"available": False, "message": "Not enough finite topo data."}
+        ny, nx = arr.shape
+        y_grid, x_grid = np.mgrid[:ny, :nx]
+        design = np.column_stack(
+            [x_grid[valid].ravel(), y_grid[valid].ravel(), np.ones(valid.sum())]
+        )
+        coeffs, *_ = np.linalg.lstsq(design, arr[valid].ravel(), rcond=None)
+        leveled = arr - (coeffs[0] * x_grid + coeffs[1] * y_grid + coeffs[2])
+        line_flat = leveled - np.nanmedian(leveled, axis=1, keepdims=True)
+        gy, gx = np.gradient(line_flat)
+        grad_mag = np.hypot(gx, gy)
+        finite_grad = grad_mag[np.isfinite(grad_mag)]
+        finite_img = line_flat[np.isfinite(line_flat)]
+        if finite_grad.size == 0 or finite_img.size == 0:
+            return {"available": False, "message": "No finite gradient data."}
+        robust_z_range = float(
+            np.nanpercentile(finite_img, 99) - np.nanpercentile(finite_img, 1)
+        )
+        grad_p50 = float(np.nanpercentile(finite_grad, 50))
+        grad_p90 = float(np.nanpercentile(finite_grad, 90))
+        grad_p95 = float(np.nanpercentile(finite_grad, 95))
+        grad_p99 = float(np.nanpercentile(finite_grad, 99))
+        px = max(float(pixel_size_A), 1e-12)
+        grad_p95_A_per_A = grad_p95 / px
+        characteristic_width_A = (
+            None if grad_p95 <= 0 else float(robust_z_range / grad_p95 * px)
+        )
+        edge_mask = finite_grad >= grad_p95
+        edge_fraction = float(np.count_nonzero(edge_mask) / max(finite_grad.size, 1))
+        if characteristic_width_A is None:
+            category = "unknown"
+            message = "Feature sharpness could not be estimated."
+        elif characteristic_width_A <= 3.0 * px:
+            category = "sharp_for_metal_tip"
+            message = (
+                "Topo features/edges are crisp at this pixel scale; this is "
+                "consistent with a good metal tip, not a functionalized-tip test."
+            )
+        elif characteristic_width_A <= 8.0 * px:
+            category = "moderate_metal_tip_sharpness"
+            message = (
+                "Topo features are reasonably defined but not atomically sharp; "
+                "may still be good for metal-tip imaging."
+            )
+        else:
+            category = "blurred_features"
+            message = (
+                "Topo features/edges appear broad relative to pixel size; this "
+                "can indicate a blunt, contaminated, or multiple tip."
+            )
+        return {
+            "available": True,
+            "pixel_size_A": float(pixel_size_A),
+            "robust_z_range_A": robust_z_range,
+            "gradient_A_per_px": {
+                "p50": grad_p50,
+                "p90": grad_p90,
+                "p95": grad_p95,
+                "p99": grad_p99,
+            },
+            "gradient_A_per_A": {
+                "p95": grad_p95_A_per_A,
+            },
+            "characteristic_edge_width_A_approx": characteristic_width_A,
+            "edge_pixel_fraction_top5pct": edge_fraction,
+            "category": category,
+            "message": message,
+        }
+
     def plot_scan_image(
         self,
         image,
@@ -1830,6 +1943,10 @@ class MicroscopeActionRunner:
                 ),
             },
             "directional_gradient_asymmetry": {"x": asym_x, "y": asym_y},
+            "topo_feature_sharpness": self.topo_feature_sharpness(
+                line_flat,
+                pixel_size_A=pixel_size_A,
+            ),
             "verdict": verdict,
             "confidence": confidence,
         }

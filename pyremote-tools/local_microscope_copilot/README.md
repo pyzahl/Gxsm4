@@ -48,6 +48,26 @@ ollama pull qwen3:8b
 ./local_microscope_copilot.py --model qwen3:8b
 ```
 
+Gemma alternative for comparison on the 16 GB GPU:
+
+```bash
+ollama pull gemma3:12b
+./local_microscope_copilot.py --model gemma3:12b
+```
+
+For the Gradio GUI/service wrapper, restart only Gradio with the model override:
+
+```bash
+./copilot_services.sh restart gradio --live --https --require-auth --host 0.0.0.0 --port 7870 --model gemma3:12b
+```
+
+Smaller/larger Gemma checks:
+
+```bash
+ollama pull gemma3:4b    # quick/CPU-ish comparison
+ollama pull gemma3:27b   # may exceed practical 16 GB GPU memory or run slowly
+```
+
 See `local_microscope_copilot_setup.md` for details and safety notes.
 
 ## Gradio GUI

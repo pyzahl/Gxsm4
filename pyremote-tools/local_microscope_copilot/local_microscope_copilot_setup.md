@@ -78,11 +78,39 @@ ollama pull qwen3:14b
 ./local_microscope_copilot.py --model qwen3:14b
 ```
 
+Gemma alternative:
+
+```bash
+ollama pull gemma3:4b
+ollama pull gemma3:12b
+./local_microscope_copilot.py --model gemma3:12b
+```
+
+For the Gradio GUI:
+
+```bash
+./copilot_services.sh restart gradio --live --https --require-auth --host 0.0.0.0 --port 7870 --model gemma3:12b
+```
+
+To make Gemma the default without passing `--model`, edit
+`local_microscope_copilot_config.json` and set:
+
+```json
+"model": "gemma3:12b"
+```
+
+Ollama's current Gemma 3 tags include `gemma3:4b`, `gemma3:12b`, and
+`gemma3:27b`. Start with `gemma3:12b` on a 16 GB GPU. `gemma3:27b` is useful
+to test later, but may spill to CPU or run slowly on 16 GB.
+
 Practical recommendation:
 
 - `qwen3:4b`: responsive CPU fallback, adequate command parser.
 - `qwen3:8b`: recommended operator copilot on 16 GB GPU.
 - `qwen3:14b`: better reasoning, may be slower/tighter on 16 GB.
+- `gemma3:4b`: quick Gemma comparison.
+- `gemma3:12b`: recommended first Gemma test on 16 GB GPU.
+- `gemma3:27b`: larger Gemma test; likely slower/tighter on 16 GB.
 
 ## Install Ollama
 
@@ -132,6 +160,20 @@ support is confirmed on this OS.
 ## Safety Model
 
 The local LLM never calls GXSM directly. It asks this wrapper for tools.
+Chat hardware writes are parsed by a deterministic SI-unit layer before the
+LLM response is used. Physical write requests must include the correct unit
+family and are converted to the GXSM base units:
+
+- bias/GVP voltage: `V`, `mV`, `uV`/`µV` -> GXSM Volts
+- current setpoint: `nA`, `pA`, `uA`/`µA` -> GXSM nA
+- scan range/local distances: `A`/`Å`, `nm`, `pm`, `um`/`µm` -> Angstrom
+- scan speed: `A/s`, `nm/s`, `um/s`/`µm/s` -> Angstrom/s
+- feedback gains: `dB`
+- scan slope: `A/A`
+- count-like values such as scan points accept `points`, `px`, or `counts`
+
+Wrong-unit requests are rejected. For example, `set bias 200 mV` is accepted as
+`0.2 V`, but `set bias 1 Ang` and `set current 10 mV` are rejected.
 
 Read-only tools include:
 

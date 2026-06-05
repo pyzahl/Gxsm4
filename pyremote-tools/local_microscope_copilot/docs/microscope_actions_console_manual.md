@@ -335,6 +335,7 @@ quality = runner.assess_tip_quality(
 )
 print(quality["verdict"])
 print(quality["autocorrelation_secondary_peaks"][:3])
+print(quality["topo_feature_sharpness"])
 ```
 
 Combine dFreq with image assessment:
@@ -344,6 +345,14 @@ df = runner.dFreq()
 quality["dFrequency"] = runner.interpret_dFreq(df)
 print(runner.tip_quality_is_poor(quality))
 ```
+
+The Gradio `Tip / Landscape Analysis` tab additionally fetches `Ch=2` as the
+scan-recorded dFrequency image and plots it next to the `Ch=0` topo image. The
+JSON report includes both `scan_recorded_dFrequency_ch2` statistics and a
+`live_average_dFrequency` sampled from `rtquery("f")`. Topo sharpness is reported
+under `tip_quality.topo_feature_sharpness`; these criteria are for judging a
+good metal tip and are intentionally not yet a CO/O-functionalized-tip
+classifier.
 
 Find a clean local patch:
 
