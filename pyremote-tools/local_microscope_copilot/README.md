@@ -4,6 +4,26 @@ running them, and never allow unattended control of live microscope hardware.**
 
 # Local Microscope Copilot
 
+The Local Microscope Copilot connects to a live GXSM4 microscope session and
+helps with repetitive microscope work at any time: monitoring the live
+microscope state as X, Y, Z, bias, and other key readings.
+
+A small XY world view indicates the live tip position and tracks known surface
+imperfections.
+
+Basic SPM operations and adjustments can be instructed via a chatbot in free
+text form, powered by an LLM.
+
+An automated tip-tune loop is being developed to improve the SPM tip on
+typical metal surfaces in the presence of many molecules and obstacles to
+be avoided.
+
+Three security levels are implemented, with additional gates before critical
+operation execution.
+
+For manual and automated tip optimization, parameterized bias-pulse and
+tip-dip-tune GVP programs can be generated, loaded, and executed.
+
 Local LLM wrapper for GXSM4 pyremote microscope workflows.
 
 This folder contains:
