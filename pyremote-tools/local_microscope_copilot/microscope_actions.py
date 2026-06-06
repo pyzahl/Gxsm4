@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import importlib
 import json
+import os
 from pathlib import Path
 import requests
 import time
@@ -1604,7 +1605,7 @@ class MicroscopeActionRunner:
         self,
         channel=0,
         y_current=None,
-        chunk_lines=120,
+        chunk_lines=1024,
         store_last=True,
         pre_fetch_settle_s=0.0,
         chunk_delay_s=0.0,
@@ -1615,17 +1616,29 @@ class MicroscopeActionRunner:
 
         gxsm = self.connect()
         dims = gxsm.get_dimensions(channel)
+        nx = max(1, int(dims[0]))
         ny = int(dims[1])
         if y_current is None:
             y_current = int(float(gxsm.y_current()))
         y_count = ny if y_current >= ny - 1 else max(1, min(ny, int(y_current) + 1))
 
+        # GXSM4 currently provides a 16 MB PySHM block for get_slice data.
+        # Keep one returned float image chunk comfortably below that limit.
+        payload_budget_mb = float(os.environ.get("GXSM_GETSLICE_MAX_PAYLOAD_MB", "12.0"))
+        bytes_per_float = 4
+        max_lines_by_payload = max(
+            1,
+            int((payload_budget_mb * 1024.0 * 1024.0) // (nx * bytes_per_float)),
+        )
+        requested_chunk_lines = max(1, int(chunk_lines))
+        effective_chunk_lines = max(1, min(requested_chunk_lines, max_lines_by_payload))
+
         if pre_fetch_settle_s and float(pre_fetch_settle_s) > 0:
             time.sleep(float(pre_fetch_settle_s))
 
         chunks = []
-        for yi in range(0, y_count, chunk_lines):
-            yn = min(chunk_lines, y_count - yi)
+        for yi in range(0, y_count, effective_chunk_lines):
+            yn = min(effective_chunk_lines, y_count - yi)
             block = self.get_slice_array(gxsm, channel, 0, 0, yi, yn)
             if block.ndim != 2:
                 raise RuntimeError(
@@ -1644,6 +1657,11 @@ class MicroscopeActionRunner:
             "dimensions": list(dims),
             "y_current": int(y_current),
             "fetched_y_count": int(y_count),
+            "requested_chunk_lines": int(requested_chunk_lines),
+            "effective_chunk_lines": int(effective_chunk_lines),
+            "max_lines_by_payload": int(max_lines_by_payload),
+            "payload_budget_mb": float(payload_budget_mb),
+            "get_slice_chunk_count": int(len(chunks)),
             "shape": list(image.shape),
             "stats": self._array_stats(image),
         }
@@ -5235,6 +5253,25 @@ class LandscapeNavigationController:
         """
         memory = self._load_landscape_memory_entry(memory_file)
         frame = self._normalize_memory_scan_frame(memory.get("scan_frame", {}))
+        if not frame.get("RangeX_A"):
+            frame = self._normalize_memory_scan_frame(
+                self.scan_frame_world_footprint(channel=0)
+            )
+            memory = dict(memory)
+            memory["scan_frame"] = frame
+            memory["scan_frame_source"] = (
+                "live current scan settings fallback; memory entry had no scan_frame"
+            )
+        missing = [
+            key for key in ("RangeX_A", "RangeY_A", "OffsetX_A", "OffsetY_A")
+            if frame.get(key) is None
+        ]
+        if missing:
+            raise KeyError(
+                "scan_frame missing {}; analyze current scan or refresh live scan settings first".format(
+                    ", ".join(missing)
+                )
+            )
         old_range_x = float(frame["RangeX_A"])
         old_range_y = float(frame["RangeY_A"])
         old_offset_x = float(frame["OffsetX_A"])
@@ -5757,19 +5794,34 @@ class LandscapeNavigationController:
         return data
 
     def _normalize_memory_scan_frame(self, frame):
-        if "world_corners" in frame:
-            return frame
-        if "world_footprint_corners" in frame:
+        normalized = dict(frame or {})
+        aliases = {
+            "RangeX_A": ("RangeX_A", "RangeX", "range_x_A"),
+            "RangeY_A": ("RangeY_A", "RangeY", "range_y_A"),
+            "OffsetX_A": ("OffsetX_A", "OffsetX", "offset_x_A"),
+            "OffsetY_A": ("OffsetY_A", "OffsetY", "offset_y_A"),
+            "Rotation_deg": ("Rotation_deg", "Rotation", "rotation_deg"),
+        }
+        for canonical, keys in aliases.items():
+            if normalized.get(canonical) is not None:
+                continue
+            for key in keys:
+                if key in normalized and normalized.get(key) is not None:
+                    normalized[canonical] = normalized.get(key)
+                    break
+
+        if "world_corners" in normalized:
+            return normalized
+        if "world_footprint_corners" in normalized:
             corners = {}
-            for corner in frame["world_footprint_corners"]:
+            for corner in normalized["world_footprint_corners"]:
                 corners[corner["name"]] = {
                     "world_x_A": corner["world_x_A"],
                     "world_y_A": corner["world_y_A"],
                 }
-            normalized = dict(frame)
             normalized["world_corners"] = corners
             return normalized
-        return frame
+        return normalized
 
     def _direction_to_local_shift(self, direction, shift_x, shift_y):
         direction = str(direction).lower().replace("-", "_")

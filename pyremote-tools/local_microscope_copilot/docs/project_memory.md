@@ -319,8 +319,11 @@ the maintained C++ bridge reference. `remote_getslice()` also reads scan
 `mem2d` directly from the PySHM server thread; GXSM allows live scan fetches,
 but planner image fetches should be sparse, chunked, and separated by deliberate
 settle time rather than tightly chained. Current wrapper default:
-`GXSM_PYSHM_MIN_INTERVAL_S=0.50`; scan-line planner polling is seconds-scale,
-not sub-second.
+`GXSM_PYSHM_MIN_INTERVAL_S=0.05`; scan-line planner polling is seconds-scale,
+not sub-second. Scan-image chunks are payload-aware via
+`GXSM_GETSLICE_MAX_PAYLOAD_MB=12.0`, so ordinary 400 x 400 float scans fit in
+one `get_slice` transaction while larger scans split automatically below the
+16 MB SHM block limit.
 
 ## Current Handoff Snapshot, 2026-06-05
 

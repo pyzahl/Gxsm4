@@ -27,7 +27,9 @@ arguments into `/gxsm4_py_shm_data_block`, signals GXSM4, waits for the status
 flag to return ready, then copies and unpickles the returned payload. Do not
 interleave PySHM requests. The wrapper uses a process-local `RLock` plus the
 cross-process lock file `/tmp/gxsm4_pyshm_transaction.lock` by default; set
-`GXSM_PYSHM_LOCK_FILE` to share a different lock path.
+`GXSM_PYSHM_LOCK_FILE` to share a different lock path. Lock acquisition is
+bounded by `GXSM_PYSHM_LOCK_TIMEOUT_S`, which defaults to the PySHM transaction
+timeout.
 
 Returned NumPy arrays, especially from `get_slice`, are pickled by GXSM4's
 embedded Python/NumPy. For live use, run the external GUI/scripts with a Python
@@ -43,6 +45,9 @@ layer:
   `gxsm.get`, `gxsm.set`, `gxsm.action`, `get_slice`, or GVP requests.
 - All external tools that talk to PySHM should use the same lock path
   (`GXSM_PYSHM_LOCK_FILE`, default `/tmp/gxsm4_pyshm_transaction.lock`).
+- If a second process is holding the global lock, callers wait up to
+  `GXSM_PYSHM_LOCK_TIMEOUT_S` before raising a clear timeout instead of
+  silently freezing.
 - The external Python and NumPy must match the ABI expected by the GXSM4
   embedded Python/NumPy that created the returned object.
 - Prefer chunked `get_slice` reads and immediately copy returned arrays into
@@ -111,8 +116,11 @@ gxsm.scanline()
 gxsm.scanylookup()
 ```
 
-Start/stop scan are Level 1 GUI operations in the copilot. They still require
-the arm checkbox in the web GUI.
+Start/stop/restart scan are Level 1 GUI operations in the copilot. They still
+require the arm checkbox in the web GUI. The restart sequence sends
+`stopscan`, waits `controller.scan_restart.autosave_wait_s` seconds (default
+2 s, allowing GXSM AutoSave to finish if enabled), tries the configured
+AutoSave checkbox query action IDs, then sends `startscan`.
 
 ## Data Fetching
 
@@ -148,8 +156,14 @@ timer threads or in parallel with `gxsm.get`, `gxsm.set`, `gxsm.action`, GVP
 execution, or other PySHM methods. `get_slice` can be used while scanning, but
 planner/analysis workflows should leave deliberate settle time before image
 fetches and short delays between chunks instead of issuing PySHM calls
-back-to-back. The bundled wrapper defaults to at least 0.5 s between PySHM
+back-to-back. The bundled wrapper defaults to at least 0.05 s between PySHM
 transactions via `GXSM_PYSHM_MIN_INTERVAL_S`.
+
+The scan-image fetcher also caps each `get_slice` request by data payload size.
+With the current 16 MB PySHM block and float scan data, the default
+`GXSM_GETSLICE_MAX_PAYLOAD_MB=12.0` leaves overhead for pickling while allowing
+typical 400 x 400 scans to return in one `get_slice` transaction. Very wide
+or very large scans are split automatically.
 
 The controller fetches a scan image from the top down in chunks:
 

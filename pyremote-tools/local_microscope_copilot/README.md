@@ -193,7 +193,9 @@ GUI microscope-operation gate and skips refresh cycles while the Tip Tune
 Planner or another PySHM action is active. Current-tip marker reads remain
 explicit button actions. PySHM commands use a process-local lock plus the
 cross-process lock file `/tmp/gxsm4_pyshm_transaction.lock`; external scripts
-should use the same wrapper/lock path.
+should use the same wrapper/lock path. The lock wait is bounded by
+`GXSM_PYSHM_LOCK_TIMEOUT_S` so a competing or hung process reports a timeout
+instead of stalling indefinitely.
 
 Override paths when needed:
 
@@ -216,7 +218,7 @@ router understands aliases and recent context, for example:
 - `read bias`, `show current setpoint`, `report scan geometry`
 - `set bias to 0.2 V`, `set current setpoint to 10 pA`
 - `increase bias by 0.05 V`, `make scan speed 20% faster`
-- `start scan`, `stop scan`, and short context requests like `start it`
+- `start scan`, `stop scan`, `restart scan`, and short context requests like `start it`
 - `analyze tip shape`, routed to deterministic scan/tip analysis
 
 Live-changing chat commands still require Control Level 1 or higher plus the

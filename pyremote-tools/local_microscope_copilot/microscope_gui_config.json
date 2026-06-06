@@ -39,13 +39,13 @@
     },
     "scan_image": {
       "channel": 0,
-      "lines": 120,
+      "lines": 1024,
       "auto_refresh": false,
       "refresh_interval_s": 2.0
     },
     "analysis": {
       "channel": 0,
-      "lines": 160,
+      "lines": 1024,
       "output_prefix": "gui_scan_analysis",
       "candidate_index": 1,
       "arm_tip_move": false
@@ -53,7 +53,7 @@
     "tip_planner": {
       "arm_action": false,
       "channel": 0,
-      "lines": 180,
+      "lines": 1024,
       "patch_A": 80.0,
       "max_candidates": 12,
       "max_large_hazards": 8,

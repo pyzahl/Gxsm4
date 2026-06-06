@@ -262,14 +262,16 @@ For external tools this means:
 
 - Use system Python/NumPy or a venv created with `--system-site-packages`.
 - Do not install a separate pip NumPy wheel into the copilot venv.
-- Fetch in chunks rather than trying to move huge images in one request.
+- Fetch in chunks sized to the PySHM block rather than trying to move huge
+  images in one request. The copilot defaults to a 12 MB `get_slice` data
+  budget inside the 16 MB SHM block.
 - Copy returned arrays on the external side before additional processing.
 - Never run `get_slice` concurrently with another PySHM request.
 - Give GXSM ample time between PySHM actions. `remote_getslice()` is allowed
   while scanning from the GXSM side, but external tools should not hammer
   `y_current`, `get_slice`, auxiliary-channel fetches, and analysis requests
   back-to-back.
-- The external wrapper enforces a default minimum PySHM cadence of 0.5 s
+- The external wrapper enforces a default minimum PySHM cadence of 0.05 s
   between completed transactions. Override with `GXSM_PYSHM_MIN_INTERVAL_S`
   only for controlled testing.
 

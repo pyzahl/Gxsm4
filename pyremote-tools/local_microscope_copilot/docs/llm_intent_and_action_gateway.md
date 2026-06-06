@@ -32,8 +32,8 @@ actually executed it.
    `enforce_chat_action_boundary()`.
 
 This order is intentional.  Clear commands such as `set bias to 0.2 V`, `start
-scan`, `set offset X and Y to 0 A`, or `shift image 100 A left` should be
-handled by deterministic parsing before the local model is involved.
+scan`, `restart scan`, `set offset X and Y to 0 A`, or `shift image 100 A left`
+should be handled by deterministic parsing before the local model is involved.
 
 ## Deterministic Parser
 
@@ -80,6 +80,7 @@ Allowed intents are deliberately small:
 - `shift_image`
 - `set_scan_geometry`
 - `start_scan`
+- `restart_scan`
 - `stop_scan`
 - `read_parameter`
 - `analyze_scan`

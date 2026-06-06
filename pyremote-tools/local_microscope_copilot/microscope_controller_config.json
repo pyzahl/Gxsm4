@@ -50,6 +50,14 @@
       }
     },
     "level3_thv_base_url": "http://192.168.40.10/",
+    "scan_restart": {
+      "autosave_wait_s": 2.0,
+      "autosave_check_actions": [
+        "GETCHECK-AutoSave",
+        "GETCHECK-autosave",
+        "GETCHECK-AUTOSAVE"
+      ]
+    },
     "safety_limits": {
       "level1_max_abs_bias_V": 1.0,
       "level1_max_current_nA": 0.05,

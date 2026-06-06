@@ -69,8 +69,12 @@ class gxsm_process():
                         "GXSM_PYSHM_LOCK_FILE",
                         "/tmp/gxsm4_pyshm_transaction.lock",
                 )
+                self.pyshm_file_lock_timeout_s = float(os.environ.get(
+                        "GXSM_PYSHM_LOCK_TIMEOUT_S",
+                        str(self.pyshm_timeout_s),
+                ))
                 self.pyshm_file_lock_fd = None
-                self.pyshm_min_interval_s = float(os.environ.get("GXSM_PYSHM_MIN_INTERVAL_S", "0.50"))
+                self.pyshm_min_interval_s = float(os.environ.get("GXSM_PYSHM_MIN_INTERVAL_S", "0.05"))
                 self._last_pyshm_completion_s = 0.0
                 #self.Masyncio = use_asyncio
                 
@@ -126,7 +130,20 @@ class gxsm_process():
         def pyshm_transaction_lock(self):
                 if self.pyshm_file_lock_fd is None:
                         self.pyshm_file_lock_fd = open(self.pyshm_file_lock_path, "a+")
-                fcntl.flock(self.pyshm_file_lock_fd.fileno(), fcntl.LOCK_EX)
+                start_time = time.monotonic()
+                while True:
+                        try:
+                                fcntl.flock(self.pyshm_file_lock_fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                                break
+                        except BlockingIOError:
+                                if time.monotonic() - start_time > self.pyshm_file_lock_timeout_s:
+                                        raise TimeoutError(
+                                                "Timed out after {:.1f}s waiting for GXSM PySHM global lock at {}.".format(
+                                                        self.pyshm_file_lock_timeout_s,
+                                                        self.pyshm_file_lock_path,
+                                                )
+                                        )
+                                time.sleep(0.05)
                 try:
                         yield
                 finally:

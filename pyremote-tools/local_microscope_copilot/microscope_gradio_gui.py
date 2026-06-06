@@ -478,6 +478,7 @@ Allowed intents:
 - shift_image: parameters {"amount": "number with length unit", "direction": "left|right|up|down"}
 - set_scan_geometry: parameters {"range": "number with length unit, optional", "points": integer optional, "rotation": "number deg optional"}
 - start_scan: parameters {}
+- restart_scan: parameters {}
 - stop_scan: parameters {}
 - read_parameter: parameters {"parameter": "bias|current_setpoint|scan_speed|rotation|offset_x|offset_y|feedback_cp|feedback_ci|slope_x|slope_y|scan_geometry|all"}
 - analyze_scan: parameters {}
@@ -492,6 +493,7 @@ Rules:
 - For "set/apply bias", use set_parameter bias.
 - For "offset X and Y to 0A", use set_offsets_xy.
 - For "shift image/feature left/right/up/down", use shift_image.
+- For "restart scan", use restart_scan.
 - Use confidence below 0.75 if not clear.
 
 User request: __USER_REQUEST__
@@ -574,6 +576,13 @@ User request: __USER_REQUEST__
                     "startscan",
                     chat_arm,
                     lambda: self.start_scan(arm=True),
+                )
+            if name == "restart_scan":
+                return self.execute_chat_level1_action(
+                    "restart scan",
+                    "stopscan -> wait/autosave check -> startscan",
+                    chat_arm,
+                    lambda: self.restart_scan(arm=True),
                 )
             if name == "stop_scan":
                 return self.execute_chat_level1_action(
@@ -727,6 +736,9 @@ User request: __USER_REQUEST__
         if self.looks_like_tip_or_scan_analysis(text_l):
             self.chat_context["last_action_domain"] = "analysis"
             return self.try_chat_scan_analysis(text)
+        restart_reply = self.route_restart_scan_intent(text_l, chat_arm=chat_arm)
+        if restart_reply is not None:
+            return restart_reply
         compound_reply = self.route_compound_level1_intent(text, chat_arm=chat_arm)
         if compound_reply is not None:
             return compound_reply
@@ -1430,11 +1442,24 @@ User request: __USER_REQUEST__
         mentions_scan = any(word in text_l for word in ("scan", "scanning", "image"))
         context_scan = self.chat_context.get("last_action_domain") == "scan"
         if mentions_scan or context_scan:
-            if re.search(r"\b(start|begin|run|go|resume|restart)\b", text_l):
+            if re.search(r"\b(start|begin|run|go|resume)\b", text_l):
                 return "start"
             if re.search(r"\b(stop|halt|abort|end|pause)\b", text_l):
                 return "stop"
         return None
+
+    def route_restart_scan_intent(self, text_l, chat_arm=False):
+        if not re.search(r"\b(restart|rerun|re[- ]?start)\b", text_l):
+            return None
+        if not any(word in text_l for word in ("scan", "scanning", "image")):
+            return None
+        self.chat_context["last_action_domain"] = "scan"
+        return self.execute_chat_level1_action(
+            "restart scan",
+            "stopscan -> wait/autosave check -> startscan",
+            chat_arm,
+            lambda: self.restart_scan(arm=True),
+        )
 
     def infer_parameter_keys(self, text_l, allow_context=False):
         matches = []
@@ -2500,7 +2525,7 @@ User request: __USER_REQUEST__
         return None
 
     def execute_chat_level1_action(self, action_name, target, chat_arm, callback):
-        is_scan_action = action_name in ("start scan", "stop scan")
+        is_scan_action = action_name in ("start scan", "stop scan", "restart scan")
         is_load_action = str(action_name).startswith("load ")
         blocked_phrase = (
             "I did not execute {}".format(action_name)
@@ -4312,6 +4337,74 @@ User request: __USER_REQUEST__
         except Exception as exc:
             return {"error": str(exc), "traceback": traceback.format_exc()}
 
+    def restart_scan(self, arm):
+        blocked = self.require_control_level(1, "restart scan")
+        if blocked:
+            return blocked
+        cancelled = self.require_arm(arm, "restart scan")
+        if cancelled:
+            return cancelled
+        return self.run_microscope_operation(
+            "restart scan",
+            lambda: self._restart_scan_unlocked(),
+        )
+
+    def read_autosave_check_status_unlocked(self):
+        actions = self.controller_default(
+            "scan_restart.autosave_check_actions",
+            ["GETCHECK-AutoSave", "GETCHECK-autosave", "GETCHECK-AUTOSAVE"],
+        )
+        tried = []
+        if self.runner.dry_run:
+            return {
+                "dry_run": True,
+                "status": None,
+                "action": None,
+                "tried_actions": list(actions),
+            }
+        gxsm = self.runner.connect()
+        for action in actions:
+            try:
+                value = gxsm.action(str(action))
+                return {
+                    "status": value,
+                    "action": str(action),
+                    "tried_actions": tried + [str(action)],
+                }
+            except Exception as exc:
+                tried.append({
+                    "action": str(action),
+                    "error": "{}: {}".format(type(exc).__name__, exc),
+                })
+        return {
+            "status": None,
+            "action": None,
+            "tried_actions": tried,
+            "note": "No configured AutoSave CHECK action returned successfully.",
+        }
+
+    def _restart_scan_unlocked(self):
+        wait_s = float(self.controller_default("scan_restart.autosave_wait_s", 2.0))
+        result = {
+            "sequence": "stopscan -> wait -> autosave CHECK status -> startscan",
+            "wait_s": wait_s,
+        }
+        stop_result = self._stop_scan_unlocked()
+        result["stop_scan"] = stop_result
+        if isinstance(stop_result, dict) and stop_result.get("error"):
+            result["error"] = "stop_scan_failed"
+            return self.jsonable(result)
+
+        if wait_s > 0:
+            time.sleep(wait_s)
+        result["autosave_check"] = self.read_autosave_check_status_unlocked()
+
+        start_result = self._start_scan_unlocked()
+        result["start_scan"] = start_result
+        if isinstance(start_result, dict) and start_result.get("error"):
+            result["error"] = "start_scan_failed"
+        return self.jsonable(result)
+
     def set_bias(self, bias_V, arm):
         blocked = self.require_control_level(1, "set bias")
         if blocked:
@@ -4753,7 +4846,7 @@ def build_ui(backend):
                 scan_channel = gr.Number(value=gd("scan_image.channel", 0), label="Channel", precision=0)
                 scan_lines = gr.Number(
                     value=gd("scan_image.lines", 120),
-                    label="Recent/full lines to fetch",
+                    label="Max get_slice chunk lines",
                     precision=0,
                 )
                 scan_auto = gr.Checkbox(
@@ -4790,7 +4883,7 @@ def build_ui(backend):
         with gr.Tab("Tip / Landscape Analysis"):
             with gr.Row():
                 ana_channel = gr.Number(value=gd("analysis.channel", 0), label="Channel", precision=0)
-                ana_lines = gr.Number(value=gd("analysis.lines", 160), label="Lines to fetch", precision=0)
+                ana_lines = gr.Number(value=gd("analysis.lines", 160), label="Max get_slice chunk lines", precision=0)
                 ana_prefix = gr.Textbox(value=gd("analysis.output_prefix", "gui_scan_analysis"), label="Output prefix")
                 ana_btn = gr.Button("Analyze Current Scan")
             with gr.Row():
@@ -4847,7 +4940,7 @@ def build_ui(backend):
             with gr.Accordion("Analyze And Select Work Site", open=True):
                 with gr.Row():
                     planner_channel = gr.Number(value=gd("tip_planner.channel", 0), label="Channel", precision=0)
-                    planner_lines = gr.Number(value=gd("tip_planner.lines", 180), label="Lines to fetch", precision=0)
+                    planner_lines = gr.Number(value=gd("tip_planner.lines", 180), label="Max get_slice chunk lines", precision=0)
                     planner_patch = gr.Number(value=gd("tip_planner.patch_A", 80.0), label="Flat patch size (A)")
                     planner_candidates = gr.Number(value=gd("tip_planner.max_candidates", 12), label="Max candidates", precision=0)
                 with gr.Row():
