@@ -1,8 +1,9 @@
-import St from 'gi://St';
-
-// template only
-// Create a label widget
-//const myLabel = new St.Label({
-//    text: "Hello Gxsm",
-//    style_class: "gxsm-label" // Reference name for CSS
-//});
+/* template class applied to an button */
+.gxsm-wm-panel-button {
+    color: #00ffcc;
+    background-color: rgba(40, 40, 40, 0.8);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-weight: bold;
+    transition: all 200ms ease-in-out;
+}
