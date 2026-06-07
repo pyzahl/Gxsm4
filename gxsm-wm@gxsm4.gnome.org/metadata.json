@@ -1,0 +1,11 @@
+{
+  "uuid": "gxsm-wm@gxsm4.gnome.org",
+  "name": "Gxsm WM",
+  "description": "WAYLAND FIX",
+  "shell-version": [
+      "47",
+      "48",
+      "49",
+      "50"
+  ]
+}

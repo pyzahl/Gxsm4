@@ -939,6 +939,7 @@ void AppBase::position_auto (){
                                                         g_error ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);
                                                         g_free (hyprctl_cmdline);
                                                         g_error_free (error);
+                                                        g_free (title);
                                                         return;
                                                 }
                                                 
@@ -958,6 +959,7 @@ void AppBase::position_auto (){
                                                                                    (int)window_geometry[WGEO_YPOS],
                                                                                    title
                                                                                    );
+                                                g_free (title);
 #ifdef HYPR_VERBOSE
                                                 if (once) g_print("Attempting: %s\n", hyprctl_cmdline);
 #endif
@@ -979,15 +981,60 @@ void AppBase::position_auto (){
                                                 g_free (stdout_buf);
                                                 g_free (stderr_buf);
 
-                                                g_free (title);
                                                 
                                         } else if (wayland_display != NULL) {
-                                                if (once){
-                                                        g_message ("A Wayland compositor is running, but it might not be Hyprland.\n");
-                                                        g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                                // WAYLAND hack via busctl and GXSM-WM Gnome Shell Extension 
+
+                                                gchar *stdout_buf = NULL;
+                                                gchar *stderr_buf = NULL;
+                                                gint exit_status;
+                                                GError *error = NULL;
+
+                                                gchar *title = NULL;
+                                                if (strncmp(main_title_buffer, "Ch", 2) == 0){
+                                                        gchar *tmp = g_strndup (main_title_buffer,3);
+                                                        title = g_strdup_printf("^(%s.*)$", tmp); g_free (tmp);
+                                                } else  title = g_strdup (main_title_buffer);
+
+
+                                                // Execute shell command for busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiii "gxsm4" "Gxsm4" 100 100 500 600
+                                                gchar *wClass = !strcmp(title, "Gxsm4") ? "gxsm4" : "org.gnome.gxsm4";
+                                                gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiii '%s' '%s' %d %d %d %d",
+                                                                                         wClass, title,
+                                                                                         (int)window_geometry[WGEO_XPOS],
+                                                                                         (int)window_geometry[WGEO_YPOS],
+                                                                                         (int)window_geometry[WGEO_WIDTH],
+                                                                                         (int)window_geometry[WGEO_HEIGHT]
+                                                                                         );
+                                                g_print("Attempting Wayland Hack via Gxsm-WM Extension: %s\n", busctl_cmdline);
+                                                g_spawn_command_line_sync (busctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
+                                                
+                                                once = true; // test
+                                                if (error != NULL) {
+                                                        g_error ("Sorry I tried. Error executing command: %s E: %s -- make sure: busctl is installed and activate GxsmWM Extension for Gnome Shell!\n", busctl_cmdline, error->message);
+                                                        g_free (busctl_cmdline);
+                                                        g_error_free (error);
+                                                        return;
+                                                }
+                                                if (once || exit_status){
+                                                        g_print ("Attempted: %s\n", busctl_cmdline);
+                                                        g_print ("Stdout: %s\n", stdout_buf);
+                                                        g_print ("Stderr: %s\n", stderr_buf);
+                                                        g_print ("Exit Status: %d\n", exit_status);
                                                         once = false;
                                                 }
-                                                g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
+                                                g_free (busctl_cmdline);
+                                                g_free (stdout_buf);
+                                                g_free (stderr_buf);
+
+                                                g_free (title);
+
+                                                
+                                                // busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiii "gxsm4" "Gxsm4" 100 100 500 600
+                                                // busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ss "gxsm4" "Gxsm4"                
+                                                // => s "[100, 100, 500, 600]"
+
+                                                //g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
                                         } else {
                                                 g_message ("Wayland some what, but No Wayland compositor detected.\n");
                                         }
@@ -1073,12 +1120,7 @@ void AppBase::resize_auto (){
                                                 g_free (stderr_buf);
                                                 g_free (title);
                                         } else if (wayland_display != NULL) {
-                                                if (once){
-                                                        g_message ("A Wayland compositor is running, but it might not be Hyprland.\n");
-                                                        g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
-                                                        once = false;
-                                                }
-                                                g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
+                                                // done with position_auto
                                         } else {
                                                 g_message ("Wayland some what, but No Wayland compositor detected.\n");
                                         }
@@ -1287,12 +1329,83 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                                 //g_free (stdout_buf); // static, caching
                                 
                         } else if (wayland_display != NULL) {
-                                if (once){
-                                        g_message ("A Wayland compositor is running, but it might not be Hyprland.\n");
-                                        g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
-                                        once = false;
+                                // WAYLAND hack via busctl and GXSM-WM Gnome Shell Extension 
+                                static gint64 tlast=0;
+                                static gchar *stdout_buf = NULL;
+                                gchar *stderr_buf = NULL;
+                                gint exit_status;
+                                GError *error = NULL;
+
+                                gchar *title = NULL;
+                                if (strncmp(main_title_buffer, "Ch", 2) == 0){
+                                        gchar *tmp = g_strndup (main_title_buffer,3);
+                                        title = g_strdup_printf("^(%s.*)$", tmp); g_free (tmp);
+                                } else  title = g_strdup (main_title_buffer);
+
+                                        
+                                // Execute shell command for busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ss "gxsm4" "Gxsm4"
+                                gchar *wClass = !strcmp(title, "Gxsm4") ? "gxsm4" : "org.gnome.gxsm4";
+                                gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ss '%s' '%s'",
+                                                                         wClass, title
+                                                                         );
+                                g_free (title);
+                                g_print("Attempting Wayland Hack via Gxsm-WM Extension: %s\n", busctl_cmdline);
+                                g_spawn_command_line_sync (busctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
+
+                                once = true; // test
+
+                                if (error != NULL) {
+                                        g_error ("Sorry I tried. Error executing command: %s E: %s (make sure to have busctl and the Gxsm-WM Extension insatlled and actiavted)\n", busctl_cmdline, error->message);
+                                        g_free (busctl_cmdline);
+                                        g_error_free (error);
+                                        return;
                                 }
-                                g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
+                                
+                                if (once || exit_status){
+                                        g_print ("Attempted: %s\n", busctl_cmdline);
+                                        g_print ("Stdout: %s\n", stdout_buf);
+                                        g_print ("Stderr: %s\n", stderr_buf);
+                                        g_print ("Exit Status: %d\n", exit_status);
+                                }
+                                g_free (stderr_buf);
+                                g_free (busctl_cmdline);
+                                // parse
+                                int count = 0;
+                                int lookup[] = { WGEO_XPOS, WGEO_YPOS, WGEO_WIDTH, WGEO_HEIGHT };
+
+                                if (strlen(stdout_buf) > 5){
+                                        if (stdout_buf[0] == 's'){
+                                                if (stdout_buf[3] == '['){
+                                                        int offset = 4;
+                                                        int temp;
+                                                        int matched;
+                                                        while (sscanf(stdout_buf + offset, "%d%n", &temp, &matched) == 1) {
+                                                                if (count < 3)
+                                                                        window_geometry[lookup[count++]] = temp;
+                                                                else
+                                                                        break;
+                                                                offset += matched;
+                                                
+                                                                while (stdout_buf[offset] == ',' || stdout_buf[offset] == ' ') {
+                                                                        offset++;
+                                                                }
+                                                        }
+                                                } else g_print ("Window not availabe.\n");
+                                        } else g_print ("Error parsing result: not a string\n");
+                                } else g_print ("Error parsing result: invalid string\n");
+                                
+                                g_print ("Window '%s' at %d %d, WH %d %d  [parsed: %d ** %s]\n",
+                                         main_title_buffer,
+                                         window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS],
+                                         window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT],
+                                         count, count==3 ? "OK":"EE"
+                                         );
+                                g_free (stdout_buf); 
+                                        
+
+                                once = false;
+                                
+                                //g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
                         } else {
                                 g_message ("Wayland some what, but No Wayland compositor detected.\n");
                         }
