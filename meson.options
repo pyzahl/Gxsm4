@@ -1,0 +1,1 @@
+option('extension-target', type: 'string', value: 'system', description: 'install destination for gnome-shell-extension: system or home')
