@@ -321,7 +321,7 @@ static gint PanView_tip_refresh_callback (PanView *pv){
 }
 
 
-PanView::PanView (Gxsm4app *app):AppBase(app,"PANV"){
+PanView::PanView (Gxsm4app *app):AppBase(app, "Pan View and OSD"){
  	int i;
 
         scan_org = NULL;

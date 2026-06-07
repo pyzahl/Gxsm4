@@ -984,7 +984,25 @@ void AppBase::position_auto (){
                                                 
                                         } else if (wayland_display != NULL) {
                                                 // WAYLAND hack via busctl and GXSM-WM Gnome Shell Extension 
-
+                                                /*
+{class=gxsm4 title=Gxsm4 geometry=[0, 34, 428, 583]},
+{class=org.gnome.gxsm4 title=RPSPMC PACPLL Control for RedPitaya geometry=[2542, 379, 1449, 903]},
+{class=org.gnome.gxsm4 title=Pan View and OSD geometry=[2102, 128, 241, 241]},
+{class=org.gnome.gxsm4 title=HUD Probe Indicator geometry=[1372, 32, 548, 657]},
+{class=org.gnome.gxsm4 title=RP-SPM Control Window geometry=[1953, 150, 1854, 791]},
+{class=org.gnome.gxsm4 title=GXSM Activity Monitor and Logbook geometry=[402, 606, 1193, 422]},
+{class=org.gnome.gxsm4 title=SPM Scan Control geometry=[1484, 718, 423, 331]},
+{class=org.gnome.gxsm4 title=Multi Dimensional Movie Control geometry=[555, 903, 488, 177]},
+{class=org.gnome.gxsm4 title=Channel Selector geometry=[8, 631, 334, 372]},
+{class=org.gnome.gxsm4 title=Ch5:0:1: X+ Time-Mon Q1/1 Float[4] geometry=[2464, 425, 391, 703]},
+{class=org.gnome.gxsm4 title=Ch6:0:1: X+ 05-IN1-RF-FBW Q1/1 Float[4] geometry=[2836, 425, 391, 703]},
+{class=org.gnome.gxsm4 title=Ch4:0:1: X+ Excitation Q1/1 Float[4] geometry=[2093, 425, 391, 703]},
+{class=org.gnome.gxsm4 title=Ch3:0:1: X+ dFrequency Q1/1 Float[4] geometry=[1721, 425, 391, 703]},
+{class=org.gnome.gxsm4 title=Ch2:0:1: X+ Current Q1/1 Float[4] geometry=[1350, 425, 391, 703]},
+{class=org.gnome.gxsm4 title=Ch1:0:1: M X+ ZS-Topo Q1/1 Float[4] geometry=[979, 425, 391, 399]},
+{class=org.gnome.gxsm4 title=Red Line Ch1 geometry=[979, 1005, 391, 311]},
+                                                */
+                                                
                                                 gchar *stdout_buf = NULL;
                                                 gchar *stderr_buf = NULL;
                                                 gint exit_status;
@@ -999,14 +1017,16 @@ void AppBase::position_auto (){
 
                                                 // Execute shell command for busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiii "gxsm4" "Gxsm4" 100 100 500 600
                                                 gchar *wClass = !strcmp(title, "Gxsm4") ? "gxsm4" : "org.gnome.gxsm4";
-                                                gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiii '%s' '%s' %d %d %d %d",
+                                                gint  op = 0; // !strcmp(title, "Gxsm4") ? 1 : 0;
+                                                gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiiii -- '%s' '%s' %d %d %d %d %d",
                                                                                          wClass, title,
                                                                                          (int)window_geometry[WGEO_XPOS],
                                                                                          (int)window_geometry[WGEO_YPOS],
                                                                                          (int)window_geometry[WGEO_WIDTH],
-                                                                                         (int)window_geometry[WGEO_HEIGHT]
+                                                                                         (int)window_geometry[WGEO_HEIGHT],
+                                                                                         op
                                                                                          );
-                                                g_print("Attempting Wayland Hack via Gxsm-WM Extension: %s\n", busctl_cmdline);
+                                                //g_print("Attempting Wayland Hack via Gxsm-WM Extension: %s\n", busctl_cmdline);
                                                 g_spawn_command_line_sync (busctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
                                                 
                                                 once = true; // test
@@ -1017,8 +1037,8 @@ void AppBase::position_auto (){
                                                         return;
                                                 }
                                                 if (once || exit_status){
-                                                        g_print ("Attempted: %s\n", busctl_cmdline);
-                                                        g_print ("Stdout: %s\n", stdout_buf);
+                                                        g_print ("***\nAttempted: %s\n", busctl_cmdline);
+                                                        g_print ("Stdout: %s", stdout_buf);
                                                         g_print ("Stderr: %s\n", stderr_buf);
                                                         g_print ("Exit Status: %d\n", exit_status);
                                                         once = false;
@@ -1349,7 +1369,7 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                                                                          wClass, title
                                                                          );
                                 g_free (title);
-                                g_print("Attempting Wayland Hack via Gxsm-WM Extension: %s\n", busctl_cmdline);
+                                //g_print("Attempting Wayland Hack via Gxsm-WM Extension: %s\n", busctl_cmdline);
                                 g_spawn_command_line_sync (busctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
 
                                 once = true; // test
@@ -1362,8 +1382,8 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                                 }
                                 
                                 if (once || exit_status){
-                                        g_print ("Attempted: %s\n", busctl_cmdline);
-                                        g_print ("Stdout: %s\n", stdout_buf);
+                                        g_print ("***\nAttempted: %s\n", busctl_cmdline);
+                                        g_print ("Stdout: %s", stdout_buf);
                                         g_print ("Stderr: %s\n", stderr_buf);
                                         g_print ("Exit Status: %d\n", exit_status);
                                 }
@@ -1380,7 +1400,7 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                                                         int temp;
                                                         int matched;
                                                         while (sscanf(stdout_buf + offset, "%d%n", &temp, &matched) == 1) {
-                                                                if (count < 3)
+                                                                if (count < 4)
                                                                         window_geometry[lookup[count++]] = temp;
                                                                 else
                                                                         break;
@@ -1398,7 +1418,7 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                                          main_title_buffer,
                                          window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS],
                                          window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT],
-                                         count, count==3 ? "OK":"EE"
+                                         count, count==4 ? "OK":"EE"
                                          );
                                 g_free (stdout_buf); 
                                         

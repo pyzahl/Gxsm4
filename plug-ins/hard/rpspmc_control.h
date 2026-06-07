@@ -132,7 +132,7 @@ public:
 // GUI for hardware template specific controls
 class RPSPMC_Control : public AppBase{
 public:
-        RPSPMC_Control(Gxsm4app *app):AppBase(app){
+        RPSPMC_Control(Gxsm4app *app):AppBase(app,"RP-SPM Control Window"){
                 vpg_window = NULL;
                 vpg_app_window = NULL;
                 vpg_grid = NULL;

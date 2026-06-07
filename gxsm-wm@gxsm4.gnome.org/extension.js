@@ -1,3 +1,35 @@
+/* Gxsm - Gnome X Scanning Microscopy
+ * universal STM/AFM/SARLS/SPALEED/... controlling and
+ * data analysis software
+ * 
+ * Copyright (C) 1999,2000,2001,2002,2003 Percy Zahl
+ *
+ * Authors: Percy Zahl <zahl@users.sf.net>
+ * additional features: Andreas Klust <klust@users.sf.net>
+ * WWW Home: http://gxsm.sf.net
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+//
+// Gnome Shell Extension Hack for Gxsm Window Management under Wayland
+// install (copy) files to ~/.local/share/gnome-shell/extensions/gxsm-wm@gxsm4.gnome.org
+// re-Login to Wayland
+// Enable Extension 'Gxsm WM' using Gnome Extension Manage
+//
+
 import Gio from 'gi://Gio';
 import Meta from 'gi://Meta';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
@@ -7,10 +39,16 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 // 
 // └─ /org/gnome/Shell/Extensions/GxsmWmExtension
 
-// busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiii "gxsm4" "Gxsm4" 100 100 500 600
-// busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ss "gxsm4" "Gxsm4"                
-// => s "[100, 100, 500, 600]"
+// Set Window Geometry: SetGeoAction (wClass, title, x,y,w,h,op); use op=0
+// busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiiii -- "gxsm4" "Gxsm4" 100 100 500 600 0
 
+// Query Window Geometry: GetGeoAction (wClass, title);
+// busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ss "gxsm4" "Gxsm4"                
+// => 's "[100, 100, 500, 600]"' or 's "WNA"' (Window not available)
+
+// Query all Windows GetGeoAction ('*', '');
+// busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ss "*" ""
+// list: '{class=...},...'
 
 // Define the XML interface for your custom D-Bus object
 const GXSMWMXML = `
@@ -28,6 +66,7 @@ const GXSMWMXML = `
       <arg type="i" direction="in" name="y"/>
       <arg type="i" direction="in" name="width"/>
       <arg type="i" direction="in" name="height"/>
+      <arg type="i" direction="in" name="op"/>
       <arg type="s" direction="out" name="res"/>
     </method>
   </interface>
@@ -49,6 +88,7 @@ export default class GxsmWm extends Extension {
 
     getWindowGeometryByClassAndTitle(targetClass, targetTitle) {
 	// Get all window actors across all workspaces
+	let list='';
 	let windowActors = global.get_window_actors();
 	
 	for (let actor of windowActors) {
@@ -59,19 +99,31 @@ export default class GxsmWm extends Extension {
             let wmClass = win.get_wm_class(); // returns e.g., "firefox" or "org.gnome.Nautilus"
             let title = win.get_title();      // returns the current visible window title string
 
+	    if (targetClass === '*'){
+		let rect = win.get_frame_rect(); 
+		let winfo = `{class=${wmClass} title=${title} geometry=[${rect.x}, ${rect.y}, ${rect.width}, ${rect.height}]},`;
+		list = list + winfo;
+		log (winfo);
+		continue;
+	    }
+	    
 	    const regex = new RegExp(targetTitle, "g"); 
 	    
             if (wmClass === targetClass && title.match(regex)) {
 		// Get frame geometry matching move_resize_frame requirements
 		let rect = win.get_frame_rect(); 
-		return rect;
+		return `[${rect.x}, ${rect.y}, ${rect.width}, ${rect.height}]`;
             }
 	}
-	return null; // Window not found
+	
+	if (targetClass === '*')
+	    return list;
+	else
+	    return 'WNA'; // Window not found
     }
 
     
-    moveResizeByTitleAndClass(targetClass, targetTitle, x, y, width, height) {
+    moveResizeByTitleAndClass(targetClass, targetTitle, x, y, width, height, op) {
 	let windowActors = global.get_window_actors();
 	
 	for (let actor of windowActors) {
@@ -80,13 +132,15 @@ export default class GxsmWm extends Extension {
             
             // Wayland native apps use app_id for class; XWayland uses wm_class
             let wmClass = win.get_wm_class();
-            let title = win.get_title();
-	    
+            let title = win.get_title();   
 	    const regex = new RegExp(targetTitle, "g"); 
 	    
             if (wmClass === targetClass && title.match(regex)) {
 		// true = move/resize frame, false = move/resize client area only
-		win.move_resize_frame(true, x, y, width, height);
+		if (op)
+		    win.move_resize_frame(true, x, y, width, height);
+		else
+		    win.move_resize_frame(false, x, y, width, height);
 		return 'OK';
             }
 	}
@@ -96,17 +150,11 @@ export default class GxsmWm extends Extension {
     // This is the function you want to execute from the shell
     GetGeoAction(wClass, wTitle) {
         //log(`GXSM-WM SHELL EXT GetGeo: ${wClass} >${wTitle}<`);
-	let geo = this.getWindowGeometryByClassAndTitle(wClass, wTitle);
-	if (geo === null){
-	    return 'WNA'; // window not available
-	}
-        //log(`GEO: [${geo.x}, ${geo.y}, ${geo.width}, ${geo.height}]`);
-	return `[${geo.x}, ${geo.y}, ${geo.width}, ${geo.height}]`;
-
+	return this.getWindowGeometryByClassAndTitle(wClass, wTitle);
     }
     
-    SetGeoAction(wClass, wTitle, x, y, width, height) {
+    SetGeoAction(wClass, wTitle, x, y, width, height, op) {
         //log(`GXSM-WM SHELL EXT SetGeo: ${wClass} >${wTitle}< [${x} ${y} ${width} ${height}]`);
-	return this.moveResizeByTitleAndClass(wClass, wTitle, x, y, width, height);
+	return this.moveResizeByTitleAndClass(wClass, wTitle, x, y, width, height, op);
     }
 }
