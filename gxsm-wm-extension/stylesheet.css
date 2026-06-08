@@ -1,0 +1,9 @@
+/* template class applied to an button */
+.gxsm-wm-panel-button {
+    color: #00ffcc;
+    background-color: rgba(40, 40, 40, 0.8);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-weight: bold;
+    transition: all 200ms ease-in-out;
+}

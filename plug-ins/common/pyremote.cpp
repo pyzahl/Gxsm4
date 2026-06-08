@@ -4980,14 +4980,16 @@ gboolean py_gxsm_console::preset_panes (gpointer user_data)
         scwidth = gtk_widget_get_width (pygc->scec);
         scwidth += gtk_widget_get_width (pygc->sc_label[0]);
 
-        int hwidth = gtk_widget_get_width (pygc->hpaned_scpane);
-        gtk_paned_set_position (GTK_PANED(pygc->hpaned_scpane), hwidth-scwidth);
+        if (scwidth > 0){
+        
+                int hwidth = gtk_widget_get_width (pygc->hpaned_scpane);
+                gtk_paned_set_position (GTK_PANED(pygc->hpaned_scpane), hwidth-scwidth);
+                
+                int vheight = gtk_widget_get_height (pygc->vpaned);
+                gtk_paned_set_position (GTK_PANED(pygc->vpaned), (int)(vheight*0.67));
 
-        int vheight = gtk_widget_get_height (pygc->vpaned);
-        gtk_paned_set_position (GTK_PANED(pygc->vpaned), (int)(vheight*0.67));
-
-        //g_message ("PYRemote: hw: %d, scw: %d, vh: %d *****************", hwidth, scwidth, vheight);
-
+                g_message ("PYRemote: hw: %d, scw: %d, vh: %d *****************", hwidth, scwidth, vheight);
+        }
         return G_SOURCE_REMOVE; // finish IDLE task
 }
 
