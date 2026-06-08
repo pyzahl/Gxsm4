@@ -1711,7 +1711,7 @@ GtkWidget* BuildParam::grid_add_check_button_remote_enabled (const gchar* labelt
         }
         if (control_id){
                 const gchar *acidC=g_strdup_printf("CHECK-%s", control_id);
-                gchar *tooltip = g_strconcat ("Remote example: action ([UN|GET]", acidC, ")", NULL); 
+                gchar *ctooltip = g_strconcat ("Remote example: action ([UN|GET]", acidC, ")", NULL); 
                 remote_action_cb *raC = new remote_action_cb (acidC, remote_cb_check, button, cb_data);
                 g_free(acidC);
                 gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, raC ); 
@@ -1726,6 +1726,9 @@ GtkWidget* BuildParam::grid_add_check_button_remote_enabled (const gchar* labelt
                 g_free(acidGC);
                 raGC->point_return_data_to_cbdata ();
                 gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, raGC ); 
+
+                gtk_widget_set_tooltip_text (button, ctooltip);
+                g_free (ctooltip);
         } else
                 if (tooltip)
                         gtk_widget_set_tooltip_text (button, tooltip);
