@@ -2110,7 +2110,7 @@ static PyObject* remote_getslice(PyObject *self, PyObject *args)
 		return Py_BuildValue("i", -1);
 
 	Scan *src =gapp->xsm->GetScanChannel (ch);
-        if (t >= 0) // select time element
+        if (src && t >= 0) // select time element
                 src->retrieve_time_element (t);
         if (src && (yi+yn) <= src->mem2d->GetNy()){
                 g_message ("remote_getslice from mem2d scan data in (dz scaled to unit) CH%d, Ys=%d Yf=%d", (int)ch, (int)yi, (int)(yi+yn));
@@ -2157,7 +2157,7 @@ static PyObject* remote_getslice_v(PyObject *self, PyObject *args)
         int x = (int)xl;
         
 	Scan *src =gapp->xsm->GetScanChannel (ch);
-        if (t >= 0) // select time element
+        if (src && t >= 0) // select time element
                 src->retrieve_time_element (t);
         if (src && (yi+yn) <= src->mem2d->GetNy()){
                 g_message ("remote_getslice_v from mem2d scan data in (dz scaled to unit) CH%d, Ys=%d Yf=%d", (int)ch, (int)yi, (int)(yi+yn));
