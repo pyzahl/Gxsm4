@@ -1368,7 +1368,7 @@ static PyObject* remote_action(PyObject *self, PyObject *args)
         idle_data.wait_join = true;
         g_idle_add (main_context_action_from_thread, (gpointer)&idle_data);
         WAIT_JOIN_MAIN;
-        if ( idle_data.ra_info )
+        if ( idle_data.ra_info ){
                 if ( idle_data.ra_info->data_length > 0){
                         g_message ("remote_action: returned with data_length=%d ", idle_data.ra_info->data_length);
                         npy_intp dims[2];
@@ -1378,6 +1378,11 @@ static PyObject* remote_action(PyObject *self, PyObject *args)
                         PyArray_ENABLEFLAGS((PyArrayObject*) pyarr, NPY_ARRAY_OWNDATA);
                         return Py_BuildValue("Os", pyarr, idle_data.ra_info->return_data); // Python code will receive the array as numpy array.
                 }
+                if ( idle_data.ra_info->return_data){
+                        g_message ("remote_action: returned with return_data string: %s ", idle_data.ra_info->return_data);
+                        return Py_BuildValue("s", idle_data.ra_info->return_data); // Python code will receive the string
+                }
+        }
         g_message ("remote_action: completed with ret=%d ", idle_data.ret);
         return Py_BuildValue("i", idle_data.ret);
 }
@@ -5211,7 +5216,7 @@ gpointer PySHMServer_Run(gpointer data){
         const char *gxsm_shm_data = "/gxsm4_py_shm_data_block";
         static int shm_data_fd = -1;
         static void *shm_data_ptr = NULL;
-        static size_t shm_data_size = 1048576+128; // make it a PyObject! -- fixed 1MB block + header for methode name and actual data size, fixed for a start.
+        static size_t shm_data_size = 16*1048576+128; // make it a PyObject! -- fixed 16MB block + header for methode name and actual data size, fixed for a start.
 
         PI_DEBUG_GM(DBG_L0, "PySHM: Init PySHM Server startup.");
 

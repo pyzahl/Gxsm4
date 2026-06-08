@@ -1555,6 +1555,9 @@ static void remote_cb_check( GtkWidget *widget, gpointer *data ){
 static void remote_cb_uncheck( GtkWidget *widget, gpointer *data ){
 	gtk_check_button_set_active (GTK_CHECK_BUTTON (widget), false); 
 }
+static void remote_cb_getcheck( GtkWidget *widget, gpointer *data ){
+	*data = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)) ? "TRUE":"FALSE"; 
+}
 
 GtkWidget* BuildParam::grid_add_check_button_remote_enabled (const gchar* labeltxt, const gchar *tooltip, int bwx,
                                                              GCallback cb, gpointer cb_data, guint64 source, guint64 mask, const gchar *control_id){
@@ -1575,7 +1578,7 @@ GtkWidget* BuildParam::grid_add_check_button_remote_enabled (const gchar* labelt
         }
         if (control_id){
                 const gchar *acidC=g_strdup_printf("CHECK-%s", control_id);
-                gchar *tooltip = g_strconcat ("Remote example: action ([UN]", acidC, ")", NULL); 
+                gchar *tooltip = g_strconcat ("Remote example: action ([UN|GET]", acidC, ")", NULL); 
                 remote_action_cb *raC = new remote_action_cb (acidC, remote_cb_check, button, cb_data);
                 g_free(acidC);
                 gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, raC ); 
@@ -1584,6 +1587,12 @@ GtkWidget* BuildParam::grid_add_check_button_remote_enabled (const gchar* labelt
                 remote_action_cb *raUC = new remote_action_cb (acidUC, remote_cb_uncheck, button, cb_data);
                 g_free(acidUC);
                 gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, raUC ); 
+
+                const gchar *acidGC=g_strdup_printf("GETCHECK-%s", control_id);
+                remote_action_cb *raGC = new remote_action_cb (acidGC, remote_cb_getcheck, button, cb_data);
+                g_free(acidGC);
+                raGC->point_return_data_to_cbdata ();
+                gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, raGC ); 
         } else
                 if (tooltip)
                         gtk_widget_set_tooltip_text (button, tooltip);
