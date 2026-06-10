@@ -278,7 +278,7 @@ void rpspmc_hwi_dev::delayed_tip_move_update (){
                 jdata_i[0] = 0x0001; // GVP OPTIONS: Feedback ON! *** WATCH THIS ***
                 jdata[0] = main_get_gapp()->xsm->Inst->XA2Volt (main_get_gapp()->xsm->Inst->Dig2XA (requested_tip_move_xy[0]));
                 jdata[1] = main_get_gapp()->xsm->Inst->YA2Volt (main_get_gapp()->xsm->Inst->Dig2YA (requested_tip_move_xy[1]));
-                jdata[2] = RPSPMC_ControlClass->scan_speed_x_requested;
+                jdata[2] = main_get_gapp()->xsm->Inst->XA2Volt (RPSPMC_ControlClass->scan_speed_x_requested); // Ang/s to V/s (assuming X close to Y here actual vs vector)
                 
                 g_message ("Set ScanPosXY (delayed): %g, %g D => %g, %g V @%gV/s", requested_tip_move_xy[0], requested_tip_move_xy[1], jdata[0], jdata[1], jdata[2]);
 

@@ -63,6 +63,7 @@ public:
 
                 send_msg_func=NULL;
                 shm_memory=NULL;
+                wspp_asio_gthread=NULL;
                 
                 port=9003;
 
@@ -75,6 +76,8 @@ public:
                 
                 // Initialize ASIO
                 client->init_asio();
+                //server->set_reuse_addr(true); // Allow immediate port binding
+                
                 //client->start_perpetual(); //*
                 //client->reset(new websocketpp::lib::thread(&wsppclient::run, &client)); //*
                 

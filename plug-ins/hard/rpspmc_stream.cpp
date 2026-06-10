@@ -158,6 +158,10 @@ void RP_stream::stream_connect_cb (gboolean connect){
                         client->close(con, websocketpp::close::status::normal, "", ec);
                         //client->stop();
                         // close(websocketpp::connection_hdl, websocketpp::close::status::value, const std::string&, std::error_code&)
+
+                        // Wait for the background thread running m_client.run() to finish
+                        g_thread_join (wspp_asio_gthread);
+                        wspp_asio_gthread=NULL;
                         
                         update_health ("Dissconnected RP stream.\n");
                         con = NULL;
