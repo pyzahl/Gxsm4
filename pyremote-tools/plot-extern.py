@@ -7,6 +7,8 @@ import time
 # connect to gxsm4 process and start wrapper class
 import gxsm4process as gxsm4
 
+gxsm = gxsm4.gxsm_process(2)
+
 def fetch_vpdata_analysis(verbose=True, plot=False, start_idx=600, end_idx=1600):
     """
     Fetch VP-data from GXSM4 and return as numpy arrays for analysis.
@@ -133,3 +135,53 @@ if __name__ == '__main__':
         print("  data['xy']                 -> position [x, y, ix, iy]")
         print("  data['columns']            -> raw array (all points)")
         print("="*60)
+
+
+
+if 0:
+
+    #gxsm.action('DSP_VP_VP_EXECUTE')
+
+    # wait to complete
+    #time.sleep(4) 
+
+    ch = 0
+    # fetch vpdata of last probe -- if exists, else error
+    print ('*** Getting last vpdata set from master scan in ch=',ch)
+    print( gxsm.get_probe_event(ch,-1) )  # ch=1, -1: get last VPdata set
+    columns, labels, units, xy = gxsm.get_probe_event(ch,-1)  # ch=1, get last VPdata set
+    # zip together for convenient data access
+    #vpdata  = dict (zip (labels, columns[:,600:1600])) ## cut off points 0..100 (initial ramp points)
+    vpdata  = dict (zip (labels, columns)) ## cut off points 0..100 (initial ramp points)
+    vpunits = dict (zip (labels, units))
+
+    # we got:
+    print ('VP Data     @XY:', xy)
+    print ('VP Units[Sets] :', vpunits)
+    print ('Set Size       :', vpdata[labels[0]].shape)
+    #print ('VPData         :', vpdata)
+
+    #VP Units[Sets] : {'ZS-Topo': 'Å', 'Current': 'nA', 'dFrequency': 'Hz', 'Time-Mon': 'ms'}
+
+    # setup what to print
+    x='Zmon'
+    #x='Time'
+    #x='ZS-Topo'
+    #y='dFrequency'
+    #y='Current'
+    y='McBSP_Freq'
+
+    # Create VPDATA plot
+    plt.figure(figsize=(6, 4))
+    plt.title('VP-Data Plot')
+    plt.plot (vpdata[x], vpdata[y], '-', alpha=0.8, label=y)
+    plt.xlabel('{} in {}'.format(x, vpunits[x]))
+    plt.ylabel('{} in {}'.format(y, vpunits[y]))
+
+    #plt.ylim (-1, 1)
+    #plt.xlim (-0.1, 0.2)
+    plt.legend()
+    plt.grid()
+    plt.show()
+    #plt.savefig('/tmp/vpdata-plot-demo.png')
+

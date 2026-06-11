@@ -2101,12 +2101,12 @@ void RPSPMC_Control::create_folder (){
         bp->grid_add_label ("JR", "X-JMPR"); EC_vpc_exthdr_list = g_slist_prepend( EC_vpc_exthdr_list, bp->label); gtk_widget_hide (bp->label);
 
         bp->grid_add_label ("VX", "Enable VecEXtension OPCodes. Option bit 7");
-        bp->grid_add_label ("HS", "Enable Max Sampling. Option bit 6");
-        bp->grid_add_label ("5", "Option bit 5");
+        bp->grid_add_label ("RF", "RF Enable Max Sampling 16bit IN1|IN2 on S15, IN2 8bit 4x on S14, else IN2 8bit x 8FSS in S14,15. Option bit 6");
+        bp->grid_add_label ("FS", "Full Speed Sampling. Option bit 5");
         bp->grid_add_label ("4", "Option bit 4");
-        bp->grid_add_label ("3", "Option bit 3");
-        bp->grid_add_label ("2", "Option bit 2");
-        bp->grid_add_label ("1", "Option bit 1");
+        bp->grid_add_label ("R", "Digital Lock-In Reset. Option bit 3");
+        bp->grid_add_label ("B", "Pulse B. Option bit 2");
+        bp->grid_add_label ("A", "Pulse A. Option bit 1");
 
         bp->set_input_width_chars (4);
         bp->set_label_width_chars (4);
@@ -2482,16 +2482,13 @@ void RPSPMC_Control::create_folder (){
                         PI_DEBUG (DBG_L4, "GRAPHS*** SWPS init i=" << i << " k=" << k << " " << rpspmc_source_signals[i].label << " sfac=" << rpspmc_source_signals[i].scale_factor);
                         g_message ("GRAPHS*** SWPS init i=%d k=%d {%s} sfac=%g", i, k, rpspmc_source_signals[i].label,rpspmc_source_signals[i].scale_factor);
                 }
-                if (rpspmc_source_signals[i].mask == 0xc000){ // Time-Mon
-                        c=23; r=y+7+1;
-                }
-                else if (rpspmc_source_signals[i].mask == 0x10000){ // HS-Ch-A
-                        c=23; r=y+7+2;
-                        hs_flag=1;
-                }
-                else if (rpspmc_source_signals[i].mask == 0x20000){ // HS-Ch-B
-                        c=23; r=y+7+3;
-                        hs_flag=1;
+
+                switch (rpspmc_source_signals[i].mask){
+                case 0x00004000: c=12; r=y+8+1; break;
+                case 0x00008000: c=12; r=y+9+1; break;
+                case 0x00010000: c=23; r=y+7+1; break; // Time-Mon (FPGA Time Stamp)
+                case 0x00020000: c=23; r=y+7+2; hs_flag=1; break; // HS-Ch-A
+                case 0x00040000: c=23; r=y+7+3; hs_flag=1; break; // HS-Ch-B
                 }
 
                 bp->set_xy (c, r);

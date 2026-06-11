@@ -132,6 +132,9 @@ sranger_mk2_hwi_dev::sranger_mk2_hwi_dev(){
 	bz_statistics[3]=0;
 	bz_statistics[4]=0;
 	PI_DEBUG_GM (DBG_L1, "Checking on xsmres.DSPDev = %s", xsmres.DSPDev);
+
+        hwi_init_overrides(); // setup source channels for SR-A810 class
+        
 	gint srdev_index_start = 0;
 	if (strrchr (xsmres.DSPDev, '_') != NULL)
 		srdev_index_start = atoi ( strrchr (xsmres.DSPDev, '_')+1); // start at given device, keep looking for higher numbers
@@ -414,37 +417,6 @@ sranger_mk2_hwi_dev::sranger_mk2_hwi_dev(){
 		break;
 	}
 
-// verify / autocorrect and notify about channel configurations needed for MK2-A810 in HR mode
-	{	
-		int f=0;
-		GString *details = g_string_new ("\n==> Auto Adjustments done:\n\n");
-		for (int i=0; i<PIDCHMAX; ++i)
-			if (strncmp (xsmres.pidsrcZtype[i], "FLOAT", 5)){
-				g_string_append_printf (details, "DataAq/PIDSrcA%d-ZType=%s -> FLOAT   [MK2-%s]\n", i+1, xsmres.pidsrcZtype[i], i==0?"Z_HR":"N/A");
-				strcpy (xsmres.pidsrcZtype[i], "FLOAT");
-				f=1;
-			}
-		for (int i=0; i<8; ++i)
-			if (strncmp (xsmres.daqZtype[i], "FLOAT", 5)){
-				g_string_append_printf (details, "DataAq/DataSrc%s%d-ZType=%s -> FLOAT  [A810-ADC%d]\n", i<4?"A":"B", i%4+1, xsmres.daqZtype[i], i);
-				strcpy (xsmres.daqZtype[i], "FLOAT");
-				f=1;
-			}
-		for (int i=8; i<DAQCHMAX; ++i)
-			if (strncmp (xsmres.daqZtype[i], "FLOAT", 4)){
-				g_string_append_printf (details, "DataAq/DataSrc%c1-ZType=%s -> FLOAT   [MK2-Data%d]\n", 'C'+i-8, xsmres.daqZtype[i], i);
-				strcpy (xsmres.daqZtype[i], "LONG");
-				f=1;
-			}
-
-		if (f){
-			g_string_append_printf (details, "\n\nPLEASE VERIFY YOUR PREFERENCES!");
-			main_get_gapp()->alert (N_("Warning"), N_("MK2-A810 DataAq Preferences Setup Verification"), details->str, 1);
-			PI_DEBUG_GM (DBG_L1, "HWI-DEV-MK2-WW00A-- configuration/preferences mismatch with current hardware setup -- please adjust.");
-		}
-		g_string_free(details, TRUE); 
-		details=NULL;
-	}
 }
 
 /* Destructor

@@ -175,22 +175,23 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_GVP_VECTOR__N", &spmc_parameters.v[1], false, "1" }, // INT # points
         { "SPMC_GVP_VECTOR__O", &spmc_parameters.v[2], false, "1" }, // INT options [Z-Servo Hold, ... , SRCS bits]
         { "SPMC_GVP_VECTORSRC", &spmc_parameters.v[3], false, "1" }, // INT options [Z-Servo Hold, ... , SRCS bits]
-        { "SPMC_GVP_VECTORNRP", &spmc_parameters.v[4], false, "1" }, // INT # repetitions (0=none, i.e. execute and proceed with to next vector)
-        { "SPMC_GVP_VECTORNXT", &spmc_parameters.v[5], false, "1" }, // INT # loop jump rel to PC to next vector
-        { "SPMC_GVP_VECTOR_DX", &spmc_parameters.v[6], false, "V" }, // Float: DX in Volts total length of vector component
-        { "SPMC_GVP_VECTOR_DY", &spmc_parameters.v[7], false, "V" }, // Float: DY in Volts total length of vector component
-        { "SPMC_GVP_VECTOR_DZ", &spmc_parameters.v[8], false, "V" }, // Float: DZ in Volts total length of vector component
-        { "SPMC_GVP_VECTOR_DU", &spmc_parameters.v[9], false, "V" }, // Float: DU (Bias) adjust rel to Bias ref in Volts total length of vector component
-        { "SPMC_GVP_VECTOR_AA", &spmc_parameters.v[10], false, "V" }, // Float: AA (Aux Channel ADC #5) -- reserved
-        { "SPMC_GVP_VECTOR_BB", &spmc_parameters.v[11], false, "V" }, // Float: BB (Aux Channel ADC #6) -- reserved
-        { "SPMC_GVP_VECTOR_AM", &spmc_parameters.v[12], false, "V" }, // Float: AM RF=AM control
-        { "SPMC_GVP_VECTOR_FM", &spmc_parameters.v[13], false, "V" }, // Float: FM RF=FM control
-        { "SPMC_GVP_VECTORSLW", &spmc_parameters.v[14], false, "ptsps" }, // Float: slew rate in #points / sec
+        { "SPMC_GVP_VECTORSRCB", &spmc_parameters.v[4], false, "1" }, // INT options [Z-Servo Hold, ... , SRCS bits]
+        { "SPMC_GVP_VECTORNRP", &spmc_parameters.v[5], false, "1" }, // INT # repetitions (0=none, i.e. execute and proceed with to next vector)
+        { "SPMC_GVP_VECTORNXT", &spmc_parameters.v[6], false, "1" }, // INT # loop jump rel to PC to next vector
+        { "SPMC_GVP_VECTOR_DX", &spmc_parameters.v[7], false, "V" }, // Float: DX in Volts total length of vector component
+        { "SPMC_GVP_VECTOR_DY", &spmc_parameters.v[8], false, "V" }, // Float: DY in Volts total length of vector component
+        { "SPMC_GVP_VECTOR_DZ", &spmc_parameters.v[9], false, "V" }, // Float: DZ in Volts total length of vector component
+        { "SPMC_GVP_VECTOR_DU", &spmc_parameters.v[10], false, "V" }, // Float: DU (Bias) adjust rel to Bias ref in Volts total length of vector component
+        { "SPMC_GVP_VECTOR_AA", &spmc_parameters.v[11], false, "V" }, // Float: AA (Aux Channel ADC #5) -- reserved
+        { "SPMC_GVP_VECTOR_BB", &spmc_parameters.v[12], false, "V" }, // Float: BB (Aux Channel ADC #6) -- reserved
+        { "SPMC_GVP_VECTOR_AM", &spmc_parameters.v[13], false, "V" }, // Float: AM RF=AM control
+        { "SPMC_GVP_VECTOR_FM", &spmc_parameters.v[14], false, "V" }, // Float: FM RF=FM control
+        { "SPMC_GVP_VECTORSLW", &spmc_parameters.v[15], false, "ptsps" }, // Float: slew rate in #points / sec
 
-        { "SPMC_GVP_XVECTOR_OPCD", &spmc_parameters.v[15], false, "1" }, // INT: VECX OPCODE
-        { "SPMC_GVP_XVECTOR_RCHI", &spmc_parameters.v[16], false, "1" }, // INT: VECX Ref CH Index
-        { "SPMC_GVP_XVECTOR_JMPR", &spmc_parameters.v[17], false, "1" }, // INT: VECX JumpRel Dist
-        { "SPMC_GVP_XVECTOR_CMPV", &spmc_parameters.v[18], false, "V" }, // INT: VECX Compare Value
+        { "SPMC_GVP_XVECTOR_OPCD", &spmc_parameters.v[16], false, "1" }, // INT: VECX OPCODE
+        { "SPMC_GVP_XVECTOR_RCHI", &spmc_parameters.v[17], false, "1" }, // INT: VECX Ref CH Index
+        { "SPMC_GVP_XVECTOR_JMPR", &spmc_parameters.v[18], false, "1" }, // INT: VECX JumpRel Dist
+        { "SPMC_GVP_XVECTOR_CMPV", &spmc_parameters.v[19], false, "V" }, // INT: VECX Compare Value
 
         
         { "SPMC_ALPHA", &spmc_parameters.alpha, false, "deg" },

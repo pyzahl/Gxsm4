@@ -248,6 +248,7 @@ GtkWidget* GnomeAppService::progress_info_new (const gchar *title, gint levels, 
 	static gint last_levels=0;
 	static GCallback last_cancel_cb=NULL;
 	static gpointer last_data=NULL;
+        static GtkWidget* ptitle=NULL;
         gboolean new_dialog=false;
         
 	progress_dialog_schedule_close = 0;
@@ -259,23 +260,56 @@ GtkWidget* GnomeAppService::progress_info_new (const gchar *title, gint levels, 
 	last_cancel_cb = cancel_cb;
 	last_data = data;
 
+        g_message ("PROGRESS: %s", title);
+        
 	if (!progress_dialog){
+                progress_dialog_box=NULL;
                 new_dialog=true;
+
+#if 1
+                // CREATE POPOVER
+                GtkWidget *popover = gtk_popover_new ();
+                gtk_widget_set_parent (popover, gapp->get_main_reference ()); // Attaches to ...
+                gtk_popover_set_position (GTK_POPOVER (popover), GTK_POS_BOTTOM); // Appear below the button
+
+                GtkWidget *popover_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 10);
+                gtk_widget_set_margin_start (popover_box, 10);
+                gtk_widget_set_margin_end (popover_box, 10);
+                gtk_widget_set_margin_top (popover_box, 10);
+                gtk_widget_set_margin_bottom (popover_box, 10);
+                gtk_popover_set_child (GTK_POPOVER (popover), popover_box);
+                progress_dialog_box = popover_box;
+                ptitle=gtk_label_new("Progress");
+                gtk_box_append (GTK_BOX (popover_box), ptitle);
+                
+                progress_dialog = popover;
+
+                gtk_popover_popup (GTK_POPOVER (popover));
+
+                progress_dialog_is_popup = true;
+
+#else
                 progress_dialog = gtk_dialog_new_with_buttons (N_(title?title:"Progress"),
                                                                gapp->get_main_window  (),
                                                                (GtkDialogFlags)((modal ? GTK_DIALOG_MODAL:0) | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                                NULL, NULL, NULL);
                 
+                progress_dialog_box = gtk_dialog_get_content_area (GTK_DIALOG (progress_dialog));
+                progress_dialog_is_popup = false;
+#endif           
 		for (int i=0; i<MAX_PROGRESS_LEVELS; ++i)
 			progress_bar[i]	= NULL;
 	} else {
-                gtk_window_set_title (GTK_WINDOW (progress_dialog), N_(title?title:"Progress"));
+                if (progress_dialog_is_popup)
+                        gtk_label_set_text (GTK_LABEL (ptitle), N_(title?title:"Progress"));
+                else
+                        gtk_window_set_title (GTK_WINDOW (progress_dialog), N_(title?title:"Progress"));
         }
 
 	//	Add GtkProgressBar
 
         GtkWidget *vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 5);
-        gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (progress_dialog))), vbox);
+        gtk_box_append (GTK_BOX (progress_dialog_box), vbox);
 	if (levels>0)
 		for (int i=0; i<levels && i<MAX_PROGRESS_LEVELS; ++i){
 
@@ -287,11 +321,16 @@ GtkWidget* GnomeAppService::progress_info_new (const gchar *title, gint levels, 
 		}
 
 	if (cancel_cb && new_dialog){
-                GtkWidget* button = gtk_dialog_add_button (GTK_DIALOG (progress_dialog), N_("Cancel"), 100);
-		g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (cancel_cb), data);
+                if (progress_dialog_is_popup){
+                        GtkWidget *cancel_button = gtk_button_new_with_label ("Cancel");
+                        gtk_box_append (GTK_BOX (progress_dialog_box), cancel_button);
+                        g_signal_connect_swapped (cancel_button, "clicked", G_CALLBACK (cancel_cb), data);
+                } else {
+                        GtkWidget* button = gtk_dialog_add_button (GTK_DIALOG (progress_dialog), N_("Cancel"), 100);
+                        g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (cancel_cb), data);
+                }
         }
 
-        gtk_widget_show (progress_dialog); // FIX-ME GTK4 SHOWALL
 	check_events_self();
 	return progress_dialog;
 }
@@ -344,7 +383,7 @@ int GnomeAppService::progress_info_add_info (const gchar* info){
 
 	GtkWidget *label = gtk_label_new (N_(info));
 	gtk_widget_show (label);
-	gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (progress_dialog))), label);
+	gtk_box_append (GTK_BOX (progress_dialog_box), label);
 
 	check_events_self();
 	return 0;
@@ -364,7 +403,11 @@ static guint gas_close_progress (GnomeAppService *gas){
 void GnomeAppService::progress_info_destroy_now(){
 	if (progress_dialog){
 		progress_dialog_schedule_close = 0;
-		gtk_window_destroy (GTK_WINDOW (progress_dialog));
+
+                if (progress_dialog_is_popup)
+                        gtk_popover_popdown (GTK_POPOVER (progress_dialog));
+                else
+                        gtk_window_destroy (GTK_WINDOW (progress_dialog));
 		progress_dialog=NULL;
 	}
 }
@@ -939,6 +982,7 @@ void AppBase::position_auto (){
                                                         g_error ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);
                                                         g_free (hyprctl_cmdline);
                                                         g_error_free (error);
+                                                        g_free (title);
                                                         return;
                                                 }
                                                 
@@ -958,6 +1002,7 @@ void AppBase::position_auto (){
                                                                                    (int)window_geometry[WGEO_YPOS],
                                                                                    title
                                                                                    );
+                                                g_free (title);
 #ifdef HYPR_VERBOSE
                                                 if (once) g_print("Attempting: %s\n", hyprctl_cmdline);
 #endif
@@ -975,19 +1020,86 @@ void AppBase::position_auto (){
                                                         g_print ("Exit Status: %d\n", exit_status);
                                                         once = false;
                                                 }
+
                                                 g_free (hyprctl_cmdline);
                                                 g_free (stdout_buf);
                                                 g_free (stderr_buf);
 
-                                                g_free (title);
                                                 
                                         } else if (wayland_display != NULL) {
-                                                if (once){
-                                                        g_message ("A Wayland compositor is running, but it might not be Hyprland.\n");
-                                                        g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
+                                                // WAYLAND hack via busctl and GXSM-WM Gnome Shell Extension 
+                                                /*
+{class=gxsm4 title=Gxsm4 geometry=[0, 34, 428, 583]},
+{class=org.gnome.gxsm4 title=RPSPMC PACPLL Control for RedPitaya geometry=[2542, 379, 1449, 903]},
+{class=org.gnome.gxsm4 title=Pan View and OSD geometry=[2102, 128, 241, 241]},
+{class=org.gnome.gxsm4 title=HUD Probe Indicator geometry=[1372, 32, 548, 657]},
+{class=org.gnome.gxsm4 title=RP-SPM Control Window geometry=[1953, 150, 1854, 791]},
+{class=org.gnome.gxsm4 title=GXSM Activity Monitor and Logbook geometry=[402, 606, 1193, 422]},
+{class=org.gnome.gxsm4 title=SPM Scan Control geometry=[1484, 718, 423, 331]},
+{class=org.gnome.gxsm4 title=Multi Dimensional Movie Control geometry=[555, 903, 488, 177]},
+{class=org.gnome.gxsm4 title=Channel Selector geometry=[8, 631, 334, 372]},
+{class=org.gnome.gxsm4 title=Ch5:0:1: X+ Time-Mon Q1/1 Float[4] geometry=[2464, 425, 391, 703]},
+{class=org.gnome.gxsm4 title=Ch6:0:1: X+ 05-IN1-RF-FBW Q1/1 Float[4] geometry=[2836, 425, 391, 703]},
+{class=org.gnome.gxsm4 title=Ch4:0:1: X+ Excitation Q1/1 Float[4] geometry=[2093, 425, 391, 703]},
+{class=org.gnome.gxsm4 title=Ch3:0:1: X+ dFrequency Q1/1 Float[4] geometry=[1721, 425, 391, 703]},
+{class=org.gnome.gxsm4 title=Ch2:0:1: X+ Current Q1/1 Float[4] geometry=[1350, 425, 391, 703]},
+{class=org.gnome.gxsm4 title=Ch1:0:1: M X+ ZS-Topo Q1/1 Float[4] geometry=[979, 425, 391, 399]},
+{class=org.gnome.gxsm4 title=Red Line Ch1 geometry=[979, 1005, 391, 311]},
+                                                */
+                                                
+                                                gchar *stdout_buf = NULL;
+                                                gchar *stderr_buf = NULL;
+                                                gint exit_status;
+                                                GError *error = NULL;
+
+                                                gchar *title = NULL;
+                                                if (strncmp(main_title_buffer, "Ch", 2) == 0){
+                                                        gchar *tmp = g_strndup (main_title_buffer,3);
+                                                        title = g_strdup_printf("^(%s.*)$", tmp); g_free (tmp);                                                      
+                                                } else  title = g_strdup (main_title_buffer);
+
+
+                                                // Execute shell command for busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiii "gxsm4" "Gxsm4" 100 100 500 600
+                                                gchar *wClass = !strcmp(title, "Gxsm4") ? "gxsm4" : "org.gnome.gxsm4";
+                                                gint  op = 0; // !strcmp(title, "Gxsm4") ? 1 : 0;
+                                                gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiiii -- '%s' '%s' %d %d %d %d %d",
+                                                                                         wClass, title,
+                                                                                         (int)window_geometry[WGEO_XPOS],
+                                                                                         (int)window_geometry[WGEO_YPOS],
+                                                                                         (int)window_geometry[WGEO_WIDTH],
+                                                                                         (int)window_geometry[WGEO_HEIGHT],
+                                                                                         op
+                                                                                         );
+                                                //g_print("Attempting Wayland Hack via Gxsm-WM Extension: %s\n", busctl_cmdline);
+                                                g_spawn_command_line_sync (busctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
+                                                
+                                                once = true; // test
+                                                if (error != NULL) {
+                                                        g_error ("Sorry I tried. Error executing command: %s E: %s -- make sure: busctl is installed and activate GxsmWM Extension for Gnome Shell!\n", busctl_cmdline, error->message);
+                                                        g_free (busctl_cmdline);
+                                                        g_error_free (error);
+                                                        return;
+                                                }
+                                                if (once || exit_status){
+                                                        g_print ("***\nAttempted: %s\n", busctl_cmdline);
+                                                        g_print ("Stdout: %s", stdout_buf);
+                                                        g_print ("Stderr: %s\n", stderr_buf);
+                                                        g_print ("Exit Status: %d\n", exit_status);
                                                         once = false;
                                                 }
-                                                g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
+
+                                                g_free (busctl_cmdline);
+                                                g_free (stdout_buf);
+                                                g_free (stderr_buf);
+
+                                                g_free (title);
+
+                                                
+                                                // busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiii "gxsm4" "Gxsm4" 100 100 500 600
+                                                // busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ss "gxsm4" "Gxsm4"                
+                                                // => s "[100, 100, 500, 600]"
+
+                                                //g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
                                         } else {
                                                 g_message ("Wayland some what, but No Wayland compositor detected.\n");
                                         }
@@ -1073,12 +1185,7 @@ void AppBase::resize_auto (){
                                                 g_free (stderr_buf);
                                                 g_free (title);
                                         } else if (wayland_display != NULL) {
-                                                if (once){
-                                                        g_message ("A Wayland compositor is running, but it might not be Hyprland.\n");
-                                                        g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
-                                                        once = false;
-                                                }
-                                                g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
+                                                // done with position_auto
                                         } else {
                                                 g_message ("Wayland some what, but No Wayland compositor detected.\n");
                                         }
@@ -1287,12 +1394,83 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                                 //g_free (stdout_buf); // static, caching
                                 
                         } else if (wayland_display != NULL) {
-                                if (once){
-                                        g_message ("A Wayland compositor is running, but it might not be Hyprland.\n");
-                                        g_message ("WAYLAND_DISPLAY: %s\n", wayland_display);
-                                        once = false;
+                                // WAYLAND hack via busctl and GXSM-WM Gnome Shell Extension 
+                                static gint64 tlast=0;
+                                static gchar *stdout_buf = NULL;
+                                gchar *stderr_buf = NULL;
+                                gint exit_status;
+                                GError *error = NULL;
+
+                                gchar *title = NULL;
+                                if (strncmp(main_title_buffer, "Ch", 2) == 0){
+                                        gchar *tmp = g_strndup (main_title_buffer,3);
+                                        title = g_strdup_printf("^(%s.*)$", tmp); g_free (tmp);
+                                } else  title = g_strdup (main_title_buffer);
+
+                                        
+                                // Execute shell command for busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ss "gxsm4" "Gxsm4"
+                                gchar *wClass = !strcmp(title, "Gxsm4") ? "gxsm4" : "org.gnome.gxsm4";
+                                gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ss '%s' '%s'",
+                                                                         wClass, title
+                                                                         );
+                                g_free (title);
+                                //g_print("Attempting Wayland Hack via Gxsm-WM Extension: %s\n", busctl_cmdline);
+                                g_spawn_command_line_sync (busctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
+
+                                once = true; // test
+
+                                if (error != NULL) {
+                                        g_error ("Sorry I tried. Error executing command: %s E: %s (make sure to have busctl and the Gxsm-WM Extension insatlled and actiavted)\n", busctl_cmdline, error->message);
+                                        g_free (busctl_cmdline);
+                                        g_error_free (error);
+                                        return;
                                 }
-                                g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
+                                
+                                if (once || exit_status){
+                                        g_print ("***\nAttempted: %s\n", busctl_cmdline);
+                                        g_print ("Stdout: %s", stdout_buf);
+                                        g_print ("Stderr: %s\n", stderr_buf);
+                                        g_print ("Exit Status: %d\n", exit_status);
+                                }
+                                g_free (stderr_buf);
+                                g_free (busctl_cmdline);
+                                // parse
+                                int count = 0;
+                                int lookup[] = { WGEO_XPOS, WGEO_YPOS, WGEO_WIDTH, WGEO_HEIGHT };
+
+                                if (strlen(stdout_buf) > 5){
+                                        if (stdout_buf[0] == 's'){
+                                                if (stdout_buf[3] == '['){
+                                                        int offset = 4;
+                                                        int temp;
+                                                        int matched;
+                                                        while (sscanf(stdout_buf + offset, "%d%n", &temp, &matched) == 1) {
+                                                                if (count < 4)
+                                                                        window_geometry[lookup[count++]] = temp;
+                                                                else
+                                                                        break;
+                                                                offset += matched;
+                                                
+                                                                while (stdout_buf[offset] == ',' || stdout_buf[offset] == ' ') {
+                                                                        offset++;
+                                                                }
+                                                        }
+                                                } else g_print ("Window not availabe.\n");
+                                        } else g_print ("Error parsing result: not a string\n");
+                                } else g_print ("Error parsing result: invalid string\n");
+                                
+                                g_print ("Window '%s' at %d %d, WH %d %d  [parsed: %d ** %s]\n",
+                                         main_title_buffer,
+                                         window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS],
+                                         window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT],
+                                         count, count==4 ? "OK":"EE"
+                                         );
+                                g_free (stdout_buf); 
+                                        
+
+                                once = false;
+                                
+                                //g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
                         } else {
                                 g_message ("Wayland some what, but No Wayland compositor detected.\n");
                         }
@@ -1578,7 +1756,7 @@ GtkWidget* BuildParam::grid_add_check_button_remote_enabled (const gchar* labelt
         }
         if (control_id){
                 const gchar *acidC=g_strdup_printf("CHECK-%s", control_id);
-                gchar *tooltip = g_strconcat ("Remote example: action ([UN|GET]", acidC, ")", NULL); 
+                gchar *ctooltip = g_strconcat ("Remote example: action ([UN|GET]", acidC, ")", NULL); 
                 remote_action_cb *raC = new remote_action_cb (acidC, remote_cb_check, button, cb_data);
                 g_free(acidC);
                 gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, raC ); 
@@ -1593,6 +1771,9 @@ GtkWidget* BuildParam::grid_add_check_button_remote_enabled (const gchar* labelt
                 g_free(acidGC);
                 raGC->point_return_data_to_cbdata ();
                 gapp->RemoteActionList = g_slist_prepend ( gapp->RemoteActionList, raGC ); 
+
+                gtk_widget_set_tooltip_text (button, ctooltip);
+                g_free (ctooltip);
         } else
                 if (tooltip)
                         gtk_widget_set_tooltip_text (button, tooltip);

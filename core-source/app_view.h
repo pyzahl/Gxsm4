@@ -249,6 +249,11 @@ public:
                 return FALSE;
         };
 
+        static gboolean update_view_wm_idle_callback (AppBase *self) {
+                g_message ("update_view_wm_idle_callback");
+                self->position_auto (); // delayed retry
+                return FALSE; // finally
+        };
 
         void update_XYpixshift() {
                 double pdx,pdy;
@@ -261,6 +266,8 @@ public:
         void update_view_panel (){
                 g_idle_add (GSourceFunc(update_view_panel_idle_callback), this);
         };
+
+
         
         void setup_side_pane (gboolean show);
         void tip_follow_control (gboolean follow);

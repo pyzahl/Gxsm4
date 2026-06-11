@@ -576,7 +576,7 @@ void ProbeIndicator::less_info_callback (GtkWidget *widget, gpointer user_data) 
 }
 
 
-ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app){ 
+ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app, "HUD Probe Indicator"){ 
         hud_size = 160;
 	timer_id = 0;
 	probe = NULL;

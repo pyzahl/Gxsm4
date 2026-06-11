@@ -244,7 +244,7 @@ void ViewControl::display_changed_sh_callback (Param_Control *pc, gpointer vc){
 ViewControl::ViewControl (Gxsm4app *app,
                           char *title, int nx, int ny, 
 			  int ChNo, Scan *sc, 
-			  int ZoomFac, int QuenchFac):AppBase(app){
+			  int ZoomFac, int QuenchFac):AppBase(app, title){
 	GtkWidget *statusbar;
 	GtkWidget *scrollarea;
 	GtkWidget *base_grid, *grid;
@@ -412,9 +412,9 @@ ViewControl::ViewControl (Gxsm4app *app,
 
         if (ChNo >= 0){
                 // DnD Files
-                GtkDropTarget *target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
+                GtkDropTarget *target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY | GDK_ACTION_MOVE);
                 // This widget accepts two types of drop types: GFile objects
-                GType types[] = { GDK_TYPE_FILE_LIST, G_TYPE_FILE}; // appect multiple file to add as movie
+                GType types[] = { GDK_TYPE_FILE_LIST }; //, G_TYPE_FILE}; // appect multiple file to add as movie
                 //GType types[1] = { G_TYPE_FILE }; //, GDK_TYPE_FILE_LIST }; // file type only
                 gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
                 g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), GINT_TO_POINTER (ChNo));
@@ -438,7 +438,7 @@ ViewControl::ViewControl (Gxsm4app *app,
         g_signal_connect (source, "drag-end", G_CALLBACK (drag_end), this);
         g_signal_connect (source, "drag-cancel", G_CALLBACK (drag_cancel), this);
         gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (source));
-        GtkDropTarget *dest = gtk_drop_target_new (GTK_TYPE_WIDGET, GDK_ACTION_MOVE);
+        GtkDropTarget *dest = gtk_drop_target_new (GTK_TYPE_WIDGET, GDK_ACTION_MOVE | GDK_ACTION_MOVE);
         g_signal_connect (dest, "drop", G_CALLBACK (drag_drop), this);
         gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (dest));
 #endif
@@ -1113,7 +1113,6 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         g_signal_connect (window, "close-request",  G_CALLBACK (ViewControl::view_window_close_callback), this);
 
         header_bar = gtk_header_bar_new ();
-        gtk_widget_show (header_bar);
         //gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (header_bar), true);
 
         // link view popup actions
@@ -1139,7 +1138,6 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         //        gtk_button_set_image (GTK_BUTTON (header_menu_button), gtk_image_new_from_icon_name ("emblem-system-symbolic", tmp_toolbar_icon_size));
         gtk_menu_button_set_popover (GTK_MENU_BUTTON (header_menu_button), v_popup_menu);
         gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
-        gtk_widget_show (header_menu_button);
 
         // attach display mode section from popup menu to tool button --------------------------------
         header_menu_button = gtk_menu_button_new ();
@@ -1148,7 +1146,6 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         if (section) {
                 gtk_menu_button_set_popover (GTK_MENU_BUTTON (header_menu_button), gtk_popover_menu_new_from_model (G_MENU_MODEL (section)));
                 gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
-                gtk_widget_show (header_menu_button);
         }
 
         // attach object section from popup menu to tool button --------------------------------
@@ -1158,7 +1155,6 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         if (section) {
                 gtk_menu_button_set_popover (GTK_MENU_BUTTON (header_menu_button), gtk_popover_menu_new_from_model (G_MENU_MODEL (section)));
                 gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
-                gtk_widget_show (header_menu_button);
         }
 
         // attach channel mode section from popup menu to tool button --------------------------------
@@ -1168,7 +1164,6 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         if (section) {
                 gtk_menu_button_set_popover (GTK_MENU_BUTTON (header_menu_button), gtk_popover_menu_new_from_model (G_MENU_MODEL (section)));
                 gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
-                gtk_widget_show (header_menu_button);
         }
 
         // attach file section from popup menu to tool button --------------------------------
@@ -1178,13 +1173,11 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         if (section) {
                 gtk_menu_button_set_popover (GTK_MENU_BUTTON (header_menu_button), gtk_popover_menu_new_from_model (G_MENU_MODEL (section)));
                 gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
-                gtk_widget_show (header_menu_button);
         }
 
         side_pane_control = gtk_toggle_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (side_pane_control), "view-dual-symbolic");
         gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), side_pane_control);
-        gtk_widget_show (side_pane_control);
 	gtk_widget_set_tooltip_text (side_pane_control, N_("Show Side Info/Control Pane"));
         //        g_settings_bind (view_settings, "sidepane-show",
         //                         G_OBJECT (side_pane_control), "active",
@@ -1195,7 +1188,6 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         header_menu_button = gtk_toggle_button_new ();
         gtk_button_set_icon_name (GTK_BUTTON (header_menu_button), "mark-location-symbolic");
         gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
-        gtk_widget_show (header_menu_button);
         gtk_widget_set_name (header_menu_button, "view-headerbar-tip-follow"); // name used by CSS to apply custom color scheme
 	gtk_widget_set_tooltip_text (header_menu_button, N_("Enable Tip (Scan Position) Follow Point Objects"));
         g_signal_connect (G_OBJECT (header_menu_button), "toggled",
@@ -1208,7 +1200,6 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         header_menu_button = gtk_toggle_button_new ();
         gtk_menu_button_set_icon_name (GTK_MENU_BUTTON (header_menu_button), "system-run-symbolic");
         gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
-        gtk_widget_show (header_menu_button);
         gtk_widget_set_name (header_menu_button, "view-start-stop-scan"); // name used by CSS to apply custom color scheme
 	gtk_widget_set_tooltip_text (header_menu_button, N_("Start/Stop Scan"));
         g_signal_connect (G_OBJECT (header_menu_button), "toggled",
@@ -1218,14 +1209,16 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         XSM_DEBUG (DBG_L2,  "VC::VC setup titlbar" );
 
         gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
-        SetTitle (title, sub_title);
                
 	v_grid = gtk_grid_new ();
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
-	gtk_widget_show (v_grid); // FIX-ME GTK4 SHOWALL
 	g_object_set_data (G_OBJECT (window), "v_grid", v_grid); // was "vbox"
 
-	gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
+        SetTitle (title, sub_title);       
+        gtk_window_present(GTK_WINDOW(window));
+ 
+        g_timeout_add (2500, GSourceFunc(update_view_wm_idle_callback), this); // try wm positioning later again, may fail early :(
+        
 }
 
 void ViewControl::canvas_draw_function (GtkDrawingArea *area,

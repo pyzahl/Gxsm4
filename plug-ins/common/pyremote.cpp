@@ -2110,7 +2110,7 @@ static PyObject* remote_getslice(PyObject *self, PyObject *args)
 		return Py_BuildValue("i", -1);
 
 	Scan *src =gapp->xsm->GetScanChannel (ch);
-        if (t >= 0) // select time element
+        if (src && t >= 0) // select time element
                 src->retrieve_time_element (t);
         if (src && (yi+yn) <= src->mem2d->GetNy()){
                 g_message ("remote_getslice from mem2d scan data in (dz scaled to unit) CH%d, Ys=%d Yf=%d", (int)ch, (int)yi, (int)(yi+yn));
@@ -2157,7 +2157,7 @@ static PyObject* remote_getslice_v(PyObject *self, PyObject *args)
         int x = (int)xl;
         
 	Scan *src =gapp->xsm->GetScanChannel (ch);
-        if (t >= 0) // select time element
+        if (src && t >= 0) // select time element
                 src->retrieve_time_element (t);
         if (src && (yi+yn) <= src->mem2d->GetNy()){
                 g_message ("remote_getslice_v from mem2d scan data in (dz scaled to unit) CH%d, Ys=%d Yf=%d", (int)ch, (int)yi, (int)(yi+yn));
@@ -4980,14 +4980,16 @@ gboolean py_gxsm_console::preset_panes (gpointer user_data)
         scwidth = gtk_widget_get_width (pygc->scec);
         scwidth += gtk_widget_get_width (pygc->sc_label[0]);
 
-        int hwidth = gtk_widget_get_width (pygc->hpaned_scpane);
-        gtk_paned_set_position (GTK_PANED(pygc->hpaned_scpane), hwidth-scwidth);
+        if (scwidth > 0){
+        
+                int hwidth = gtk_widget_get_width (pygc->hpaned_scpane);
+                gtk_paned_set_position (GTK_PANED(pygc->hpaned_scpane), hwidth-scwidth);
+                
+                int vheight = gtk_widget_get_height (pygc->vpaned);
+                gtk_paned_set_position (GTK_PANED(pygc->vpaned), (int)(vheight*0.67));
 
-        int vheight = gtk_widget_get_height (pygc->vpaned);
-        gtk_paned_set_position (GTK_PANED(pygc->vpaned), (int)(vheight*0.67));
-
-        //g_message ("PYRemote: hw: %d, scw: %d, vh: %d *****************", hwidth, scwidth, vheight);
-
+                g_message ("PYRemote: hw: %d, scw: %d, vh: %d *****************", hwidth, scwidth, vheight);
+        }
         return G_SOURCE_REMOVE; // finish IDLE task
 }
 
