@@ -420,6 +420,8 @@ public:
 
         Gxsm4app* get_app() { return gxsm4app; };
 
+        GtkWidget* get_main_reference() { return scan_button; };
+        
 protected:
         GList *PluginNotifyOnSPMRange;
         GList *PluginNotifyOnStartScan;

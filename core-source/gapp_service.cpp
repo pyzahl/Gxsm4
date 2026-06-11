@@ -248,6 +248,7 @@ GtkWidget* GnomeAppService::progress_info_new (const gchar *title, gint levels, 
 	static gint last_levels=0;
 	static GCallback last_cancel_cb=NULL;
 	static gpointer last_data=NULL;
+        static GtkWidget* ptitle=NULL;
         gboolean new_dialog=false;
         
 	progress_dialog_schedule_close = 0;
@@ -259,23 +260,56 @@ GtkWidget* GnomeAppService::progress_info_new (const gchar *title, gint levels, 
 	last_cancel_cb = cancel_cb;
 	last_data = data;
 
+        g_message ("PROGRESS: %s", title);
+        
 	if (!progress_dialog){
+                progress_dialog_box=NULL;
                 new_dialog=true;
+
+#if 1
+                // CREATE POPOVER
+                GtkWidget *popover = gtk_popover_new ();
+                gtk_widget_set_parent (popover, gapp->get_main_reference ()); // Attaches to ...
+                gtk_popover_set_position (GTK_POPOVER (popover), GTK_POS_BOTTOM); // Appear below the button
+
+                GtkWidget *popover_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 10);
+                gtk_widget_set_margin_start (popover_box, 10);
+                gtk_widget_set_margin_end (popover_box, 10);
+                gtk_widget_set_margin_top (popover_box, 10);
+                gtk_widget_set_margin_bottom (popover_box, 10);
+                gtk_popover_set_child (GTK_POPOVER (popover), popover_box);
+                progress_dialog_box = popover_box;
+                ptitle=gtk_label_new("Progress");
+                gtk_box_append (GTK_BOX (popover_box), ptitle);
+                
+                progress_dialog = popover;
+
+                gtk_popover_popup (GTK_POPOVER (popover));
+
+                progress_dialog_is_popup = true;
+
+#else
                 progress_dialog = gtk_dialog_new_with_buttons (N_(title?title:"Progress"),
                                                                gapp->get_main_window  (),
                                                                (GtkDialogFlags)((modal ? GTK_DIALOG_MODAL:0) | GTK_DIALOG_DESTROY_WITH_PARENT),
                                                                NULL, NULL, NULL);
                 
+                progress_dialog_box = gtk_dialog_get_content_area (GTK_DIALOG (progress_dialog));
+                progress_dialog_is_popup = false;
+#endif           
 		for (int i=0; i<MAX_PROGRESS_LEVELS; ++i)
 			progress_bar[i]	= NULL;
 	} else {
-                gtk_window_set_title (GTK_WINDOW (progress_dialog), N_(title?title:"Progress"));
+                if (progress_dialog_is_popup)
+                        gtk_label_set_text (GTK_LABEL (ptitle), N_(title?title:"Progress"));
+                else
+                        gtk_window_set_title (GTK_WINDOW (progress_dialog), N_(title?title:"Progress"));
         }
 
 	//	Add GtkProgressBar
 
         GtkWidget *vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 5);
-        gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (progress_dialog))), vbox);
+        gtk_box_append (GTK_BOX (progress_dialog_box), vbox);
 	if (levels>0)
 		for (int i=0; i<levels && i<MAX_PROGRESS_LEVELS; ++i){
 
@@ -287,11 +321,16 @@ GtkWidget* GnomeAppService::progress_info_new (const gchar *title, gint levels, 
 		}
 
 	if (cancel_cb && new_dialog){
-                GtkWidget* button = gtk_dialog_add_button (GTK_DIALOG (progress_dialog), N_("Cancel"), 100);
-		g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (cancel_cb), data);
+                if (progress_dialog_is_popup){
+                        GtkWidget *cancel_button = gtk_button_new_with_label ("Cancel");
+                        gtk_box_append (GTK_BOX (progress_dialog_box), cancel_button);
+                        g_signal_connect_swapped (cancel_button, "clicked", G_CALLBACK (cancel_cb), data);
+                } else {
+                        GtkWidget* button = gtk_dialog_add_button (GTK_DIALOG (progress_dialog), N_("Cancel"), 100);
+                        g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (cancel_cb), data);
+                }
         }
 
-        gtk_widget_show (progress_dialog); // FIX-ME GTK4 SHOWALL
 	check_events_self();
 	return progress_dialog;
 }
@@ -344,7 +383,7 @@ int GnomeAppService::progress_info_add_info (const gchar* info){
 
 	GtkWidget *label = gtk_label_new (N_(info));
 	gtk_widget_show (label);
-	gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (progress_dialog))), label);
+	gtk_box_append (GTK_BOX (progress_dialog_box), label);
 
 	check_events_self();
 	return 0;
@@ -364,7 +403,11 @@ static guint gas_close_progress (GnomeAppService *gas){
 void GnomeAppService::progress_info_destroy_now(){
 	if (progress_dialog){
 		progress_dialog_schedule_close = 0;
-		gtk_window_destroy (GTK_WINDOW (progress_dialog));
+
+                if (progress_dialog_is_popup)
+                        gtk_popover_popdown (GTK_POPOVER (progress_dialog));
+                else
+                        gtk_window_destroy (GTK_WINDOW (progress_dialog));
 		progress_dialog=NULL;
 	}
 }
@@ -977,6 +1020,7 @@ void AppBase::position_auto (){
                                                         g_print ("Exit Status: %d\n", exit_status);
                                                         once = false;
                                                 }
+
                                                 g_free (hyprctl_cmdline);
                                                 g_free (stdout_buf);
                                                 g_free (stderr_buf);
@@ -1011,7 +1055,7 @@ void AppBase::position_auto (){
                                                 gchar *title = NULL;
                                                 if (strncmp(main_title_buffer, "Ch", 2) == 0){
                                                         gchar *tmp = g_strndup (main_title_buffer,3);
-                                                        title = g_strdup_printf("^(%s.*)$", tmp); g_free (tmp);
+                                                        title = g_strdup_printf("^(%s.*)$", tmp); g_free (tmp);                                                      
                                                 } else  title = g_strdup (main_title_buffer);
 
 
@@ -1043,6 +1087,7 @@ void AppBase::position_auto (){
                                                         g_print ("Exit Status: %d\n", exit_status);
                                                         once = false;
                                                 }
+
                                                 g_free (busctl_cmdline);
                                                 g_free (stdout_buf);
                                                 g_free (stderr_buf);

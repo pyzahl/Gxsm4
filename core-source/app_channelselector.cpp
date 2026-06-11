@@ -109,7 +109,6 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "Channe
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollarea),
 					GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
         gtk_grid_attach (GTK_GRID (v_grid), scrollarea, 0,1, 20,1);
-        gtk_widget_show (scrollarea); // FIX-ME GTK4 SHOWALL
 
 	// add store/restore buttons and entry
 	static  const char* presets[] = {"A","B","C","Default"};
@@ -120,11 +119,9 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "Channe
                 g_signal_connect (G_OBJECT (wid), "clicked",
                                   G_CALLBACK (ChannelSelector::store_callback),
                                   this);
-                gtk_widget_show(wid);
                 
                 dropDownMenu = gtk_combo_box_text_new ();
                 RestoreWidget[0] = dropDownMenu;
-                gtk_widget_show (dropDownMenu);
                 for (k = 0; k<4;k++)
                         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (dropDownMenu), g_strdup_printf ("%d",k), presets[k]);
                 
@@ -133,36 +130,26 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "Channe
                 
                 wid = gtk_button_new_with_label("Restore");
                 gtk_grid_attach (GTK_GRID (v_grid), wid, 5,100, 5,1);
-                gtk_widget_show(wid);
                 g_signal_connect (G_OBJECT (wid), "clicked",
                                   G_CALLBACK (ChannelSelector::restore_callback),
                                   this);    
         }
 
-        gtk_widget_show (v_grid); // FIX-ME GTK4 SHOWALL
-
         // new grid in scrolled container
         v_grid = gtk_grid_new ();
-        gtk_widget_show (v_grid); // FIX-ME GTK4 SHOWALL
 
 	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scrollarea), v_grid);
         gtk_grid_attach (GTK_GRID (v_grid), wid=gtk_label_new ("Ch"),   0, 0, 1, 1);
-        gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
 	gtk_widget_set_tooltip_text (wid, N_("Channel Number"));
         gtk_grid_attach (GTK_GRID (v_grid), wid=gtk_label_new ("View"), 1, 0, 1, 1);
-        gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
 	gtk_widget_set_tooltip_text (wid, N_("Scan View Mode"));
         gtk_grid_attach (GTK_GRID (v_grid), wid=gtk_label_new ("Mode"), 2, 0, 1, 1);
-        gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
 	gtk_widget_set_tooltip_text (wid, N_("Scan Mode/Data Source"));
         gtk_grid_attach (GTK_GRID (v_grid), wid=gtk_label_new ("Dir"),  3, 0, 1, 1);
-        gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
 	gtk_widget_set_tooltip_text (wid, N_("Scan Direction"));
         gtk_grid_attach (GTK_GRID (v_grid), wid=gtk_label_new ("AS"),  4, 0, 1, 1);
-        gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
 	gtk_widget_set_tooltip_text (wid, N_("Auto save enable\nfor scan data sources only."));
         gtk_grid_attach (GTK_GRID (v_grid), wid=gtk_label_new ("Info"),  5, 0, 1, 1);
-        gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
 
         // create channels and add to grid
         // GType types[1] = { G_TYPE_FILE };
@@ -175,7 +162,6 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "Channe
 		wid = gtk_label_new (txt);
 		g_object_set_data  (G_OBJECT (wid), "ChNo", GINT_TO_POINTER (i));
 		gtk_grid_attach (GTK_GRID (v_grid), wid, 0, i, 1, 1);
-                gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
                 target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY | GDK_ACTION_MOVE);
                 gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
                 g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), GINT_TO_POINTER (i-1));
@@ -186,7 +172,6 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "Channe
 		ChViewWidget[i-1] = wid;
 		g_object_set_data  (G_OBJECT (wid), "ChNo", GINT_TO_POINTER (i));
 		gtk_grid_attach (GTK_GRID (v_grid), wid, 1, i, 1, 1);
-                gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
                 target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY | GDK_ACTION_MOVE);
                 gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
                 g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), GINT_TO_POINTER (i-1));
@@ -207,7 +192,6 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "Channe
 		ChModeWidget[i-1] = wid;
 		g_object_set_data  (G_OBJECT (wid), "ChNo", GINT_TO_POINTER (i));
 		gtk_grid_attach (GTK_GRID (v_grid), wid, 2, i, 1, 1);
-                gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
                 target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY | GDK_ACTION_MOVE); // Hyprland only sends MOVE
                 gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
                 g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), GINT_TO_POINTER (i-1));
@@ -278,7 +262,6 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "Channe
 		ChSDirWidget[i-1] = wid;
 		g_object_set_data  (G_OBJECT (wid), "ChNo", GINT_TO_POINTER (i));
 		gtk_grid_attach (GTK_GRID (v_grid), wid, 3, i, 1, 1);
-                gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
 
 		for(int j=0; choice_ChSDir[j]; j++)
                         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (wid), NULL, choice_ChSDir[j]);
@@ -297,17 +280,14 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "Channe
                 g_signal_connect (G_OBJECT (wid), "toggled",
                                   G_CALLBACK (ChannelSelector::choice_ChAS_callback),
                                   NULL);        
-                gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
 
 		wid = gtk_label_new ("-");
                 ChInfoWidget[i-1] = wid;
 		gtk_grid_attach (GTK_GRID (v_grid), wid, 5, i, 1, 1);
-                gtk_widget_show (wid); // FIX-ME GTK4 SHOWALL
-
         }
-        gtk_widget_show (v_grid);  // FIX-ME GTK4 SHOWALL
-
         alife = 1;
+
+        gtk_window_present(GTK_WINDOW(window));
 
 	set_window_geometry ("channel-selector");
 }

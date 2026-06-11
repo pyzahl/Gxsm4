@@ -1135,6 +1135,8 @@ public:
 	gint progress_info_close_schedule_dec () { return --progress_dialog_schedule_close; };
 
 	GtkWidget* progress_dialog;
+	GtkWidget* progress_dialog_box;
+        gboolean progress_dialog_is_popup;
 	GtkWidget* progress_bar[MAX_PROGRESS_LEVELS];
 	gint progress_dialog_schedule_close;
 

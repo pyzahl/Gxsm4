@@ -1058,8 +1058,12 @@ int SPM_ScanControl::initialize_scan_lists (){
         
 	if (xp_scan_list || xm_scan_list 
 	    || xp_2nd_scan_list || xm_2nd_scan_list 
-	    || xp_prbscan_list || xm_prbscan_list) // stop if scan lists are existing!
+	    || xp_prbscan_list || xm_prbscan_list){ // stop if scan lists are existing!
+		XSM_SHOW_ALERT (ERR_SORRY, ERR_SCAN_CANCEL,
+				"Channel setup failed: Busy.",
+				1);
 		return -1;
+        }
   
 	do_probe = FALSE;
 	master_scan = NULL;
@@ -1165,8 +1169,12 @@ int SPM_ScanControl::initialize_scan_lists (){
                         }
                 }
 
-		master_scan = main_get_gapp()->xsm->GetMasterScan ();
+		if(! sok){
+                        XSM_SHOW_MESSAGES ("Please select at least one data source using the Channel Selector.");
+                        return -2;
+                }
 
+#if 0
 		// Automatic mode:
 		// if no Scansrc specified -- find free channel and use pid-default ("Topo")
 		if(! sok){
@@ -1179,7 +1187,7 @@ int SPM_ScanControl::initialize_scan_lists (){
 				else{
 					scan_flag = SCAN_FLAG_RUN;
 					XSM_SHOW_ALERT(ERR_SORRY, ERR_NOFREECHAN,"",1);
-					return FALSE;
+					return -3;
 				}
 			}
 			main_get_gapp()->channelselector->SetMode(ch, main_get_gapp()->channelselector->get_default_source_mode  ());
@@ -1188,8 +1196,12 @@ int SPM_ScanControl::initialize_scan_lists (){
                                 ? -main_get_gapp()->channelselector->get_default_source_mode  ()
                                 :  main_get_gapp()->channelselector->get_default_source_mode  ();
 		}
+#endif
+               
 	}while (! sok && --checks);
 
+        master_scan = main_get_gapp()->xsm->GetMasterScan ();
+ 
 	// if sth, went wrong... (should never happen)
 	if (!checks)
 		XSM_SHOW_ALERT (ERR_SORRY, ERR_NOSRCCHAN, "", 1);
@@ -1304,6 +1316,16 @@ int SPM_ScanControl::prepare_to_start_scan (SCAN_DT_TYPE st){
 
 	main_get_gapp()->SetStatus ("Starting Scan: Ch.Setup");
     
+        //***
+	// Init Scanobjects, do Channelsetup... some complex stuff...
+	// only once, for single layer scan or first layer
+	// check, free
+	free_scan_lists ();
+	int result = initialize_scan_lists ();
+	if (result)
+		return result; // Error, cancel
+        //***
+
 	// setup scan size
 	main_get_gapp()->xsm->hardware->SetDxDy (
 		main_get_gapp()->xsm->Inst->XA2Dig (main_get_gapp()->xsm->data.s.dx),
@@ -1314,21 +1336,7 @@ int SPM_ScanControl::prepare_to_start_scan (SCAN_DT_TYPE st){
 
 	main_get_gapp()->SignalStartScanEventToPlugins ();
 
-	// Init Scanobjects, do Channelsetup... some complex stuff...
-
-	// only once, for single layer scan or first layer
-
-	// check, free
-	free_scan_lists ();
-	
-	int result = initialize_scan_lists ();
-	
-	if (result){
-		XSM_SHOW_ALERT (ERR_SORRY, ERR_SCAN_CANCEL,
-				"Channel setup failed.",
-				1);
-		return result;
-	}
+        //***
 
 	// count channels and check if total data amount fits into hardware/transferbuffer/etc. hard limits
 	int ns_xp=0;
@@ -1634,18 +1642,19 @@ gboolean SPM_ScanControl::scanning_control_init (){
     
 	PI_DEBUG (DBG_L2, "do_scan SetOffsets.");
 
-	if (!IS_SPALEED_CTRL)
-		main_get_gapp()->xsm->hardware->SetOffset (R2INT (main_get_gapp()->xsm->Inst->X0A2Dig (master_scan->data.s.x0)),
-						R2INT (main_get_gapp()->xsm->Inst->Y0A2Dig (master_scan->data.s.y0)));
-	else
-		main_get_gapp()->xsm->hardware->SetOffset (R2INT(main_get_gapp()->xsm->Inst->X0A2Dig (master_scan->data.s.x0) 
-						      + master_scan->data.s.SPA_OrgX/main_get_gapp()->xsm->Inst->XResolution ()),
-						R2INT(main_get_gapp()->xsm->Inst->Y0A2Dig (master_scan->data.s.y0) 
-						      + master_scan->data.s.SPA_OrgY/main_get_gapp()->xsm->Inst->YResolution ()));
-	
+        if (master_scan){
+                if (!IS_SPALEED_CTRL)
+                        main_get_gapp()->xsm->hardware->SetOffset (R2INT (main_get_gapp()->xsm->Inst->X0A2Dig (master_scan->data.s.x0)),
+                                                                   R2INT (main_get_gapp()->xsm->Inst->Y0A2Dig (master_scan->data.s.y0)));
+                else
+                        main_get_gapp()->xsm->hardware->SetOffset (R2INT(main_get_gapp()->xsm->Inst->X0A2Dig (master_scan->data.s.x0) 
+                                                                         + master_scan->data.s.SPA_OrgX/main_get_gapp()->xsm->Inst->XResolution ()),
+                                                                   R2INT(main_get_gapp()->xsm->Inst->Y0A2Dig (master_scan->data.s.y0) 
+                                                                         + master_scan->data.s.SPA_OrgY/main_get_gapp()->xsm->Inst->YResolution ()));
 
-	// HwI needs to take care of no-jump
-	main_get_gapp()->xsm->hardware->SetAlpha(master_scan->data.s.alpha);
+                // HwI needs to take care of no-jump
+                main_get_gapp()->xsm->hardware->SetAlpha(master_scan->data.s.alpha);
+        }
 
 	// Set Start Time, notify scans about, initialisations...
 	MultiVoltEntry *mve =  MultiVoltMode () ? MultiVoltElement (scanning_task_multivolt_i) : NULL;
@@ -1661,8 +1670,10 @@ gboolean SPM_ScanControl::scanning_control_init (){
 	autosave_check (0., xsmres.AutosaveValue);
 	set_subscan ();
 
-        scanning_task_line=0;
-        line = last_scan_dir == SCAN_DIR_TOPDOWN ? 0 : master_scan->mem2d->GetNySub ()-1;
+        scanning_task_line=0; line=0;
+        if (master_scan){
+                line = last_scan_dir == SCAN_DIR_TOPDOWN ? 0 : master_scan->mem2d->GetNySub ()-1;
+        }
 	do_scanline (TRUE);
 
 #ifdef XSM_DEBUG_OPTION
@@ -1684,6 +1695,9 @@ gboolean SPM_ScanControl::scanning_control_init (){
 }
 
 gboolean SPM_ScanControl::scanning_control_run (){
+        if (!master_scan)
+                return FALSE;
+
         if ((last_scan_dir == SCAN_DIR_TOPDOWN
              ? line < master_scan->mem2d->GetNySub () : line >= 0)
             && scan_flag != SCAN_FLAG_STOP
@@ -1814,7 +1828,7 @@ double SPM_ScanControl::update_status_info (int reset){
 	static time_t tn, tnlog, t0;
 	time_t t;
 
-	if (reset){
+	if (reset || !master_scan){
 		time (&t0); 
 		tnlog=tn=t0;
 		return 0.;
@@ -1881,6 +1895,9 @@ double SPM_ScanControl::update_status_info (int reset){
 void SPM_ScanControl::autosave_check (double sec, int initvalue){
 	static int nextAutosaveEvent=0;
 
+        if (!master_scan) return;
+
+        
 	if (initvalue > 0){
 		nextAutosaveEvent = initvalue;	
 		return;
