@@ -11,24 +11,26 @@ import math
 
 import time
 
-# connect to gxsm4 process and start wrapper class
-import gxsm4process as gxsm4
-gxsm = gxsm4.gxsm_process()
-
-bias=gxsm.get ("dsp-fbs-bias") # save Bias
-ci=gxsm.get ("dsp-fbs-ci")
-cp=gxsm.get ("dsp-fbs-cp")
-#gxsm.set ("dsp-fbs-ci","{}".format(ci*1.2)) # slow
-#gxsm.set ("dsp-fbs-cp","{}".format(cp*1.2)) # slow
-#gxsm.set ("dsp-fbs-bias","-3") # Pulse
-time.sleep(0.05)
-#gxsm.set ("dsp-fbs-bias","{}".format(bias)) # restore Bias
-#gxsm.set ("dsp-fbs-ci","{}".format(ci)) # restore Bias
-#gxsm.set ("dsp-fbs-cp","{}".format(cp)) # restore Bias
-
-ZAV=1.
-
+loaddata=True
 wait=4000
+
+if not loaddata:
+        # connect to gxsm4 process and start wrapper class
+        import gxsm4process as gxsm4
+        gxsm = gxsm4.gxsm_process()
+
+        bias=gxsm.get ("dsp-fbs-bias") # save Bias
+        ci=gxsm.get ("dsp-fbs-ci")
+        cp=gxsm.get ("dsp-fbs-cp")
+        #gxsm.set ("dsp-fbs-ci","{}".format(ci*1.2)) # slow
+        #gxsm.set ("dsp-fbs-cp","{}".format(cp*1.2)) # slow
+        #gxsm.set ("dsp-fbs-bias","-3") # Pulse
+        time.sleep(0.05)
+        #gxsm.set ("dsp-fbs-bias","{}".format(bias)) # restore Bias
+        #gxsm.set ("dsp-fbs-ci","{}".format(ci)) # restore Bias
+        #gxsm.set ("dsp-fbs-cp","{}".format(cp)) # restore Bias
+
+
 
 N=40
 MM=5
@@ -67,25 +69,27 @@ z = np.zeros(N*MM)
 dz = np.zeros(N*MM)
 x = np.zeros(N*MM)
 
-print ('Setup:')
-for k in range(0, N):
-        for m in range (0,MM):
-                i=k*MM + m
-                mv = k*0.25
-                if i%2 == 0:
-                        x[i]=0.0
-                else:
-                        x[i]=mv
-                #dz[i], z[i], z0 = measure_dz (mv)
-                #print ('#{} of {}:  {} mV, dz: {} pm @ z={}, z0={} Ang'.format(i, N*MM, mv, dz[i], z[i], z0))
-                print ('#{} of {}:  {} mV'.format(i, N*MM, mv))
+if loaddata:
+        wait=10
+        [x, dz, z] = np.load('dz-of-ampl.npy')
+        print ([x,dz,z])
+else:
+        print ('Setup:')
+        for k in range(0, N):
+                for m in range (0,MM):
+                        i=k*MM + m
+                        mv = k*0.25
+                        if i%2 == 0:
+                                x[i]=0.0
+                        else:
+                                x[i]=mv
+                                #dz[i], z[i], z0 = measure_dz (mv)
+                                #print ('#{} of {}:  {} mV, dz: {} pm @ z={}, z0={} Ang'.format(i, N*MM, mv, dz[i], z[i], z0))
+                        print ('#{} of {}:  {} mV'.format(i, N*MM, mv))
 
-np.save('dz-of-ampl.npy', [x, z, dz])
-
-
-gxsm.set ("rp-pacpll-AMPLITUDE-FB-SETPOINT","{}".format(0.0))
-time.sleep(2)
-z[0]=measure_z (M)
+        gxsm.set ("rp-pacpll-AMPLITUDE-FB-SETPOINT","{}".format(0.0))
+        time.sleep(2)
+        z[0]=measure_z (M)
 
 # Create VPDATA plot
 
@@ -106,7 +110,6 @@ def animate(i):
                         x[i]  = x[i-1]
                 print ('#{} of {}:  {} mV, dz: {} pm @ z={} Ang'.format(i, N*MM, x[i], dz[i], z[i]))
 
-
                 np.save('dz-of-ampl.npy', [x, dz, z])
         
                 ax1.clear()
@@ -117,15 +120,39 @@ def animate(i):
                         ff2 = ff1 *dz[i]/(100*dz_func(x[i]*ff1,k))
                         ff  = ff2 *dz[i]/(100*dz_func(x[i]*ff2,k))
                         ax1.plot (x[0:i], 100*dz_func (x[0:i]*ff,k))
+                        ax1.plot (x[0:i], dz[0:i], 'x') #, label='{.2}'.format(dz))
+                        ax1.set_title('Amplitude Calibration Plot dz (mV) k={}, ff={:.3f} mV/pm'.format(k,ff))
+                        ax1.set_xlabel('{} in {}'.format("Exec", "mV"))
+                        ax1.set_ylabel('{} in {}'.format("dz", "pm"))
 
-                ax1.plot (x[0:i], dz[0:i], 'x') #, label='{.2}'.format(dz))
-                ax1.set_title('Amplitude Calibration Plot dz (mV)', k={}, ff={}'.format(k,ff)))
-                ax1.set_xlabel('{} in {}'.format("Exec", "mV"))
-                ax1.set_ylabel('{} in {}'.format("dz", "pm"))
 
+                        
+if loaddata:
+        i=199
+        k=1.0
+        ff1 =      dz[i]/(100*dz_func(x[i],k))
+        ff2 = ff1 *dz[i]/(100*dz_func(x[i]*ff1,k))
+        ff  = ff2 *dz[i]/(100*dz_func(x[i]*ff2,k))
+        ax1.plot (x, 100*dz_func (x*ff,k))
+        ax1.plot (x, dz, 'x') #, label='{.2}'.format(dz))
+        ax1.set_title('Amplitude Calibration Plot dz (mV) k={}, ff={:.3f} mV/pm'.format(k,ff))
+        ax1.set_xlabel('{} in {}'.format("Signal", "mV"))
+        ax1.set_ylabel('{} in {}'.format("dz", "pm"))
 
-ani = animation.FuncAnimation(fig, animate, interval=wait) # interval in milliseconds (1000ms = 1 second)
+        def mv_to_pm(mv):
+                return 100*mv*ff
 
+        def pm_to_mv(pm):
+                return pm/ff/100
+
+        #ax1.plot (x, 100*dz_func (mv_to_pm(x)/100), '.') # Verify
+        
+        ax2 = ax1.secondary_xaxis('top', functions=(mv_to_pm, pm_to_mv))
+        ax2.set_xlabel('Amplitude in pm', color='tab:blue')
+        ax2.tick_params(axis='x', labelcolor='tab:blue') 
+else:
+        ani = animation.FuncAnimation(fig, animate, interval=wait) # interval in milliseconds (1000ms = 1 second)
+        
 #plt.ylim (-1, 1)
 #plt.xlim (-0.1, 0.2)
 #plt.legend()

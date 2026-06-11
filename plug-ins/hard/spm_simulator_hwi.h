@@ -29,6 +29,18 @@
 #ifndef __SPM_SIMLATOR_HWI_H
 #define __SPM_SIMLATOR_HWI_H
 
+typedef struct {
+        guint32     mask;   // signal source mask, or signal id for swappable
+        //const gchar *name;  // signal name
+        const gchar *label;  // label for signal | NULL for flex signal life swappable
+        const gchar *description; // signal description
+        const gchar *unit;  // gxsm signal unit symbolic id
+        const gchar *unit_sym;  // gxsm signal unit symbol
+        double scale_factor; // multiplier for raw value to unit conversion
+        int garr_index; // expanded garray index lookup to store data
+        int scan_source_pos; // position (1-16) in scan data source list, 0: not mapped
+} SOURCE_SIGNAL_DEF;
+
 
 // GUI builder helper
 class GUI_Builder : public BuildParam{
@@ -146,6 +158,41 @@ public:
 	spm_simulator_hwi_dev();
 	virtual ~spm_simulator_hwi_dev();
 
+	virtual void hwi_init_overrides(){
+
+                // define and add hardware data sources
+                SOURCE_SIGNAL_DEF Sim_source_signals[] = {
+                        { 0x00000001, "ZS-Topo", " ", "AA", UTF8_ANGSTROEM, 1.0, 1,  1 },
+                        { 0x00000002, "I-Tunnel"," ", "nA",           "nA", 1.0, 2,  2 },
+                        { 0x00000004, "dFreq",   " ", "Hz",           "Hz", 1.0, 3,  3 },
+                        { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
+                };
+
+
+                //EXTCHMAX <-DATAMAP->
+                //                      Name           Unit  Type      Label     Scale
+                //setup_scan (ch, "X+", "Map-PrbSrc#", "Xu", "DOUBLE", "EXTMAP", -1.0); // needs further setup!
+               
+                for (int i=0; Sim_source_signals[i].label; ++i){ // name
+                        g_message ("Reading SOURCE_SIGNALS[%d]",i);
+                        g_message ("Reading SOURCE_SIGNALS[%d].mask %x",i,Sim_source_signals[i].mask);
+                        g_message ("Reading SOURCE_SIGNALS[%d].label >%s<",i,Sim_source_signals[i].label);
+                        if (Sim_source_signals[i].scan_source_pos > 0){
+                                main_get_gapp()->channelselector->ConfigureHardwareMapping (Sim_source_signals[i].scan_source_pos-1,
+                                                                                            Sim_source_signals[i].label, Sim_source_signals[i].mask, // name
+                                                                                            Sim_source_signals[i].label,
+                                                                                            Sim_source_signals[i].unit,
+                                                                                            Sim_source_signals[i].scale_factor);
+                                
+                                g_message ("SOURCE_SIGNAL_DEF %02d for %s mask: 0x%08x L: %s U: %s  x %g [to V] x %g [to %s]",
+                                           Sim_source_signals[i].scan_source_pos-1,
+                                           Sim_source_signals[i].label, Sim_source_signals[i].mask, // name
+                                           Sim_source_signals[i].label, Sim_source_signals[i].unit, Sim_source_signals[i].scale_factor,  Sim_source_signals[i].scale_factor, Sim_source_signals[i].unit);
+                        }
+                }
+        };
+
+        
 	/* Parameter  */
 	virtual long GetMaxLines(){ return 32000; };
 

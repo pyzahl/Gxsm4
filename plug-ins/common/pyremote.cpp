@@ -1368,7 +1368,7 @@ static PyObject* remote_action(PyObject *self, PyObject *args)
         idle_data.wait_join = true;
         g_idle_add (main_context_action_from_thread, (gpointer)&idle_data);
         WAIT_JOIN_MAIN;
-        if ( idle_data.ra_info )
+        if ( idle_data.ra_info ){
                 if ( idle_data.ra_info->data_length > 0){
                         g_message ("remote_action: returned with data_length=%d ", idle_data.ra_info->data_length);
                         npy_intp dims[2];
@@ -1378,6 +1378,11 @@ static PyObject* remote_action(PyObject *self, PyObject *args)
                         PyArray_ENABLEFLAGS((PyArrayObject*) pyarr, NPY_ARRAY_OWNDATA);
                         return Py_BuildValue("Os", pyarr, idle_data.ra_info->return_data); // Python code will receive the array as numpy array.
                 }
+                if ( idle_data.ra_info->return_data){
+                        g_message ("remote_action: returned with return_data string: %s ", idle_data.ra_info->return_data);
+                        return Py_BuildValue("s", idle_data.ra_info->return_data); // Python code will receive the string
+                }
+        }
         g_message ("remote_action: completed with ret=%d ", idle_data.ret);
         return Py_BuildValue("i", idle_data.ret);
 }
@@ -2105,7 +2110,7 @@ static PyObject* remote_getslice(PyObject *self, PyObject *args)
 		return Py_BuildValue("i", -1);
 
 	Scan *src =gapp->xsm->GetScanChannel (ch);
-        if (t >= 0) // select time element
+        if (src && t >= 0) // select time element
                 src->retrieve_time_element (t);
         if (src && (yi+yn) <= src->mem2d->GetNy()){
                 g_message ("remote_getslice from mem2d scan data in (dz scaled to unit) CH%d, Ys=%d Yf=%d", (int)ch, (int)yi, (int)(yi+yn));
@@ -2128,7 +2133,8 @@ static PyObject* remote_getslice(PyObject *self, PyObject *args)
                         for (int y=yi; y<yf; ++y)
                                 for (int x=0; x<dims[1]; ++x)
                                         *dp++ = src->mem2d->data->Z(x,y)*src->data.s.dz;
-                
+
+                g_message ("TEST POINT: if a segfault happens past this point, there is a clash between python+numpy running vs. gxsm4 is been compiled/linked with. A custom Python Venv can cause that. Please align versions.");
                 PyObject* pyarr = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, (void*)darr2);
                 PyArray_ENABLEFLAGS((PyArrayObject*) pyarr, NPY_ARRAY_OWNDATA);
                 return Py_BuildValue("O", pyarr); // Python code will receive the array as numpy array.
@@ -2151,7 +2157,7 @@ static PyObject* remote_getslice_v(PyObject *self, PyObject *args)
         int x = (int)xl;
         
 	Scan *src =gapp->xsm->GetScanChannel (ch);
-        if (t >= 0) // select time element
+        if (src && t >= 0) // select time element
                 src->retrieve_time_element (t);
         if (src && (yi+yn) <= src->mem2d->GetNy()){
                 g_message ("remote_getslice_v from mem2d scan data in (dz scaled to unit) CH%d, Ys=%d Yf=%d", (int)ch, (int)yi, (int)(yi+yn));
@@ -2170,6 +2176,7 @@ static PyObject* remote_getslice_v(PyObject *self, PyObject *args)
                         for (int v=0; v<dims[1]; ++v)
                                 *dp++ = src->mem2d->data->Z(x,y,v)*src->data.s.dz;
                 
+                g_message ("TEST POINT: if a segfault happens past this point, there is a clash between python+numpy running vs. gxsm4 is been compiled/linked with. A custom Python Venv can cause that. Please align versions.");
                 PyObject* pyarr = PyArray_SimpleNewFromData(2, dims, NPY_DOUBLE, (void*)darr2);
                 PyArray_ENABLEFLAGS((PyArrayObject*) pyarr, NPY_ARRAY_OWNDATA);
                 return Py_BuildValue("O", pyarr); // Python code will receive the array as numpy array.
@@ -4973,14 +4980,16 @@ gboolean py_gxsm_console::preset_panes (gpointer user_data)
         scwidth = gtk_widget_get_width (pygc->scec);
         scwidth += gtk_widget_get_width (pygc->sc_label[0]);
 
-        int hwidth = gtk_widget_get_width (pygc->hpaned_scpane);
-        gtk_paned_set_position (GTK_PANED(pygc->hpaned_scpane), hwidth-scwidth);
+        if (scwidth > 0){
+        
+                int hwidth = gtk_widget_get_width (pygc->hpaned_scpane);
+                gtk_paned_set_position (GTK_PANED(pygc->hpaned_scpane), hwidth-scwidth);
+                
+                int vheight = gtk_widget_get_height (pygc->vpaned);
+                gtk_paned_set_position (GTK_PANED(pygc->vpaned), (int)(vheight*0.67));
 
-        int vheight = gtk_widget_get_height (pygc->vpaned);
-        gtk_paned_set_position (GTK_PANED(pygc->vpaned), (int)(vheight*0.67));
-
-        //g_message ("PYRemote: hw: %d, scw: %d, vh: %d *****************", hwidth, scwidth, vheight);
-
+                g_message ("PYRemote: hw: %d, scw: %d, vh: %d *****************", hwidth, scwidth, vheight);
+        }
         return G_SOURCE_REMOVE; // finish IDLE task
 }
 
@@ -5209,7 +5218,7 @@ gpointer PySHMServer_Run(gpointer data){
         const char *gxsm_shm_data = "/gxsm4_py_shm_data_block";
         static int shm_data_fd = -1;
         static void *shm_data_ptr = NULL;
-        static size_t shm_data_size = 1048576+128; // make it a PyObject! -- fixed 1MB block + header for methode name and actual data size, fixed for a start.
+        static size_t shm_data_size = 16*1048576+128; // make it a PyObject! -- fixed 16MB block + header for methode name and actual data size, fixed for a start.
 
         PI_DEBUG_GM(DBG_L0, "PySHM: Init PySHM Server startup.");
 

@@ -790,8 +790,8 @@ gboolean App::finish_system_startup (){
                 /* Enable DND to accept file Drops */
                 XSM_DEBUG_GM (DBG_L2, "App::build_gxsm - DnD setup" );
                 {
-                        GType types[] = { G_TYPE_FILE, G_TYPE_STRING, GDK_TYPE_FILE_LIST }; // file type only
-                        GtkDropTarget *target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
+                        GType types[] = { G_TYPE_FILE }; //, G_TYPE_STRING, GDK_TYPE_FILE_LIST }; // file type only
+                        GtkDropTarget *target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY | GDK_ACTION_MOVE);
                         gtk_drop_target_set_gtypes (target, types, G_N_ELEMENTS (types));
                         g_signal_connect (target, "drop", G_CALLBACK (AppBase::gapp_load_on_drop_files), GINT_TO_POINTER (999)); // <= auto open in free channel
                         gtk_widget_add_controller (GTK_WIDGET (app_window), GTK_EVENT_CONTROLLER (target));

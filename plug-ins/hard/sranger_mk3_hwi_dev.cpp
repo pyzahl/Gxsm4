@@ -147,6 +147,8 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 	probe_thread_dsp=0;
 	dsp_alternative=0;
 
+        hwi_init_overrides(); // setup source channels for SR-A810 class
+        
 	bz_statistics[0]=0;
 	bz_statistics[1]=0;
 	bz_statistics[2]=0;
@@ -383,56 +385,6 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 		break;
 	}
 
-// verify / autocorrect and notify about channel configurations needed for MK2-A810 in HR mode
-	{	
-		int f=0;
-		GString *details = g_string_new ("\n==> Auto Adjustments done:\n\n");
-		for (int i=0; i<PIDCHMAX; ++i)
-			if (strncmp (xsmres.pidsrcZtype[i], "FLOAT", 5)){
-				g_string_append_printf (details, "DataAq/PIDSrcA%d-ZType=%s -> FLOAT   [MK2-%s]\n", i+1, xsmres.pidsrcZtype[i], i==0?"Z_HR":"N/A");
-				strcpy (xsmres.pidsrcZtype[i], "FLOAT");
-				f=1;
-			}
-		for (int i=0; i<8; ++i)
-			if (strncmp (xsmres.daqZtype[i], "FLOAT", 5)){
-				g_string_append_printf (details, "DataAq/DataSrc%s%d-ZType=%s -> FLOAT  [A810-ADC%d]\n", i<4?"A":"B", i%4+1, xsmres.daqZtype[i], i);
-				strcpy (xsmres.daqZtype[i], "FLOAT");
-				f=1;
-			}
-		for (int i=8; i<DAQCHMAX; ++i)
-			if (strncmp (xsmres.daqZtype[i], "FLOAT", 4)){
-				g_string_append_printf (details, "DataAq/DataSrc%c1-ZType=%s -> FLOAT   [MK2-Data%d]\n", 'C'+i-8, xsmres.daqZtype[i], i);
-				strcpy (xsmres.daqZtype[i], "LONG");
-				f=1;
-			}
-
-		// -- have to do this here for now as HwI not yet loaded --
-		// MUST HAVE ALL CHANNELS ENABLED
-		for(int k=1; k<PIDCHMAX; k++)
-			if(!strcmp(xsmres.pidsrc[k], "-")){
-				strcpy (xsmres.pidsrc[k],"MIX"), xsmres.pidsrc[k][3]='0'+k;
-				g_string_append_printf (details, "DataAq/DataPIDSrc[%d]=%s -> [must be enabled, auto mapped with MK3 Signals]\n", k ,xsmres.pidsrc[k]);
-				f=1;
-			}
-		
-		for(int k=0; k<DAQCHMAX; k++)
-			if(!strcmp(xsmres.daqsrc[k], "-")){
-				if (k<8)
-					strcpy (xsmres.daqsrc[k],"AIC"), xsmres.daqsrc[k][3] = '0'+k;
-				else
-					strcpy (xsmres.daqsrc[k],"SIG"), xsmres.daqsrc[k][3] = 'a'+k-8;
-				g_string_append_printf (details, "DataAq/DataAqSrc[%d]=%s -> [must be enabled, auto mapped with MK3 Signals]\n", k ,xsmres.daqsrc[k]);
-				f=1;
-			}
-
-		if (f){
-			g_string_append_printf (details, "\n\nPLEASE VERIFY YOUR PREFERENCES!");
-			main_get_gapp()->alert (N_("Warning"), N_("MK3-A810/PLL DataAq Preferences Setup Verification"), details->str, 1);
-			PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-WW00A-- configuration/preferences mismatch with current hardware setup -- please adjust.");
-		}
-		g_string_free(details, TRUE); 
-		details=NULL;
-	}
 }
 
 /* Destructor
