@@ -1876,7 +1876,7 @@ int rpspmc_hwi_dev::read_GVP_data_block_to_position_vector (int offset, gboolean
 
         GVP_vp_header_current.srcs      = GVP_stream_buffer[offset+GVP_STREAM_HDR_SRCS_MASK] & 0x0000ffff;
         GVP_vp_header_current.i         = GVP_stream_buffer[offset+GVP_STREAM_HDR_SAMPLE_INDEX];           // data point index within GVP section (N points)
-        GVP_vp_header_current.gvp_time  = ((guint64)(((guint32)GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_47_32]) & 0x0000ffff)<<32) | (guint64)GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_31_0];
+        GVP_vp_header_current.gvp_time  = ((guint64)(((guint32)GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_47_32]) & 0x0000ffff)<<32) | (guint64)((guint32)GVP_stream_buffer[offset+GVP_STREAM_HDR_TIME_CODE_31_0]);
         GVP_vp_header_current.dataexpanded[PROBEDATA_ARRAY_MS_TIME-PROBEDATA_ARRAY_S1] = GVP_vp_header_current.gvp_time_ms = (double)GVP_vp_header_current.gvp_time/125e3; // time in ms
         //GVP_vp_header_current.dataexpanded[14] = (double)GVP_vp_header_current.gvp_time/125e3; // time in ms
 
