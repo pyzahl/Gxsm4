@@ -33,6 +33,8 @@
 import Gio from 'gi://Gio';
 import Meta from 'gi://Meta';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+const GLib = imports.gi.GLib;
+
 
 // busctl --user tree org.gnome.Shell 
 // busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction s "'Gxsm4'"
@@ -136,11 +138,43 @@ export default class GxsmWm extends Extension {
 	    const regex = new RegExp(targetTitle, "g"); 
 	    
             if (wmClass === targetClass && title.match(regex)) {
+
+		let wactor = win.get_compositor_private();
+		if (wactor) {
+		    // Force an immediate un-grab before positioning
+		    global.display.ungrab_keyboard();
+		    
+		    let signalId = actor.connect('first-frame', () => {
+			win.move_resize_frame(true, x, y, width, height);
+			
+			// Release the handler immediately
+			actor.disconnect(signalId);
+		    });
+		} else {
+		    // Fallback if the actor isn't fully drawn yet
+		    win.move_resize_frame(true, x, y, width, height);
+		}
+
+		/*
+
+		// 1. Force clear any lingering compositor operations
+		global.display.ungrab_keyboard();
+		global.display.ungrab_pointer();
+		
+		// 2. Perform the native movement (using true for user_op)
+		win.move_resize_frame(true, x, y, width, height);
+		
+		// 3. Re-assert strict window focus focus downward to the client app
+		win.activate(global.get_current_time());
+		win.focus(global.get_current_time());
+
 		// true = move/resize frame, false = move/resize client area only
 		if (op)
 		    win.move_resize_frame(true, x, y, width, height);
 		else
 		    win.move_resize_frame(false, x, y, width, height);
+		*/
+		
 		return 'OK';
             }
 	}
