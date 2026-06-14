@@ -142,6 +142,9 @@ export default class GxsmWm extends Extension {
 	    
             if (wmClass === targetClass && title.match(regex)) {
 
+		this.Gnome50Layout(win, x, y, width, height);
+
+		/*
 		win.move_resize_frame(false, x, y, width, height);
 
 		if (uop){
@@ -155,13 +158,40 @@ export default class GxsmWm extends Extension {
 		    win.move_resize_frame('false', x, y, width, height);
 		    //log(`win.move_resize completed OK.`);
 		    return GLib.SOURCE_REMOVE; // Always return remove to prevent looping
-		});
+		    });
+		*/
 		return 'OK';
 
             }
 	}
 	return 'WNA'; // window not available
     }
+
+    Gnome50Layout(window, x, y, width, height) {
+	if (!window) return;
+
+	window.move_resize_frame(false, x, y, width, height);
+
+	GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+            // Fetch the window actor layer safely
+            const actor = window.get_compositor_private();
+            
+            // THE FIX: If actor is gone or explicitly destroyed, drop out safely
+            if (!actor || actor.is_destroyed?.()) {
+		return GLib.SOURCE_REMOVE; 
+            }
+
+            // Safe to execute structural commands now
+            window.move_frame(false, x, y);
+
+            if (global.stage?.update_pointer_focus) {
+		global.stage.update_pointer_focus();
+            }
+
+            return GLib.SOURCE_REMOVE;
+	});
+    }
+
     
     // This is the function you want to execute from the shell
     GetGeoAction(wClass, wTitle) {
@@ -174,3 +204,113 @@ export default class GxsmWm extends Extension {
 	return this.moveResizeByTitleAndClass(wClass, wTitle, x, y, width, height, uop);
     }
 }
+
+/*
+import GLib from 'gi://GLib';
+
+let mutterLock = false;
+let queuedLayout = null;
+
+function forceMutterCompliance(window, x, y, w, h) {
+    if (!window || window.is_destroyed()) return;
+
+    // 1. If Mutter is already busy processing a layout change, just cache the newest target
+    if (mutterLock) {
+        queuedLayout = { x, y, w, h };
+        return;
+    }
+
+    mutterLock = true;
+
+    // 2. Push the first pass layout to Mutter's event queue
+    window.move_resize_frame(false, x, y, w, h);
+
+    // 3. Give Mutter a generous 16ms (1 full frame tick at 60Hz) to process the round-trip
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT_IDLE, 16, () => {
+        if (!window || window.is_destroyed()) {
+            mutterLock = false;
+            return GLib.SOURCE_REMOVE;
+        }
+
+        // Force absolute placement alignment 
+        window.move_frame(false, x, y);
+        
+        // Lift the lock
+        mutterLock = false;
+
+        // 4. If a new request came in while Mutter was processing, run it now
+        if (queuedLayout) {
+            let next = queuedLayout;
+            queuedLayout = null;
+            forceMutterCompliance(window, next.x, next.y, next.w, next.h);
+        }
+
+        return GLib.SOURCE_REMOVE;
+    });
+    }
+
+
+
+import GLib from 'gi://GLib';
+
+function bulletproofWaylandInputMove(window, x, y, width, height) {
+    if (!window || window.is_destroyed()) return;
+
+    // 1. Core Layout Change
+    window.move_resize_frame(false, x, y, width, height);
+
+    // 2. Yield to let the app draw, then manually force Mutter's seat to re-evaluate input focus
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT_IDLE, 25, () => {
+        if (!window || window.is_destroyed()) return GLib.SOURCE_REMOVE;
+
+        // Force secondary positioning alignment
+        window.move_frame(false, x, y);
+
+        // 3. THE FIX: Force Clutter / Mutter to re-calculate the pointer focus area.
+        // This instantly snaps the invisible input mask to the current mouse coordinates.
+        if (global.stage && typeof global.stage.update_pointer_focus === 'function') {
+            global.stage.update_pointer_focus();
+        }
+
+        // 4. Force a surface commit notice back to the window actor
+        let actor = window.get_compositor_private();
+        if (actor && typeof actor.queue_redraw === 'function') {
+            actor.queue_redraw();
+        }
+
+        return GLib.SOURCE_REMOVE;
+    });
+}
+
+
+
+import GLib from 'gi://GLib';
+
+function gnome50WaylandLayout(window, targetX, targetY, targetW, targetH) {
+    if (!window || window.is_destroyed()) return;
+
+    // 1. In GNOME 50, clearing states is lighter but must still happen first
+    if (window.get_maximized()) {
+        window.unmaximize(3); // Clear both axes
+    }
+
+    // 2. Dispatch layout request to the Wayland/XWayland surface
+    window.move_resize_frame(false, targetX, targetY, targetW, targetH);
+
+    // 3. Native Wayland tracking: wait for the frame buffer to commit 
+    // to prevent the input-mask desync (dead buttons) on high refresh rate displays.
+    GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+        if (!window || window.is_destroyed()) return GLib.SOURCE_REMOVE;
+
+        // Force pointer focus areas to snap to the newly rendered textures
+        if (global.stage && typeof global.stage.update_pointer_focus === 'function') {
+            global.stage.update_pointer_focus();
+        }
+        
+        return GLib.SOURCE_REMOVE;
+    });
+}
+
+
+    
+*/
