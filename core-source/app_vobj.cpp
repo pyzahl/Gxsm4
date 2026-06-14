@@ -1110,10 +1110,10 @@ void VObject::properties(){
         build_properties_view (false);
         gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), properties_bp->grid);
                 
-        gtk_widget_show (dialog);
         g_signal_connect (dialog, "response",
                           G_CALLBACK (VObject::properties_callback),
                           this);
+	gtk_widget_show (dialog);
 }
 
 void  VObject::destroy_properties_bp (){

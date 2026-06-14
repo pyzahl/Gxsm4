@@ -196,8 +196,6 @@ V3dControl::V3dControl (Gxsm4app *app,
 	g_object_set_data (G_OBJECT (glarea), "Ch", GINT_TO_POINTER (ChNo));
 	g_object_set_data (G_OBJECT (glarea), "V3dControl", this);
 
-	gtk_widget_show (v_grid); // FIX-ME GTK4 SHOWALL
-
 	XSM_DEBUG(DBG_L2, "V3dControl::V3dControl done." );
 
         if (vdata)
@@ -230,7 +228,6 @@ void V3dControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         window = GTK_WINDOW (app_window);
 
         header_bar = gtk_header_bar_new ();
-        gtk_widget_show (header_bar);
         // hide close, min, max window decorations
         //gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (header_bar), false);
 
@@ -247,17 +244,13 @@ void V3dControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         gtk_menu_button_set_icon_name (GTK_MENU_BUTTON (header_menu_button), "emblem-system-symbolic");
         gtk_menu_button_set_popover (GTK_MENU_BUTTON (header_menu_button), file_menu);
         gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
-        gtk_widget_show (header_menu_button);
 
         gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
         SetTitle (title, sub_title);
 
 	v_grid = gtk_grid_new ();
-        gtk_widget_show (v_grid);
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
 	g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
-
-	gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
 
 	XSM_DEBUG(DBG_L2, "V3dControl::WidgetInit done." );
 }

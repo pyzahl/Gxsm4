@@ -78,7 +78,6 @@ using namespace std;
 #define ADD_CHECK(CHK, LABEL, DEFAULT)			\
         do {\
                    CHK = gtk_check_button_new_with_label(N_(LABEL)); \
-		   gtk_widget_show (CHK);				\
                    gtk_grid_attach (GTK_GRID (grid), CHK, x++, y, 1,1); \
                    gtk_check_button_set_active (GTK_CHECK_BUTTON (CHK), (DEFAULT)?1:0); \
         }while(0)
@@ -86,7 +85,6 @@ using namespace std;
 #define ADD_TOGGLE(TOG, LABEL, DEFAULT)			\
         do {\
                    TOG = gtk_toggle_button_new_with_label(N_(LABEL)); \
-		   gtk_widget_show (TOG);				\
                    gtk_grid_attach (GTK_GRID (grid), TOG, x++, y, 1,1); \
                    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (TOG), (DEFAULT)?1:0); \
         }while(0)
@@ -96,14 +94,12 @@ using namespace std;
                 gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (VAR))), TXT, -1); \
 		gtk_editable_set_editable (GTK_EDITABLE (VAR), FALSE); \
 		gtk_widget_set_sensitive (VAR, TRUE); \
-		gtk_widget_show (VAR); \
 	}while(0)
 
 
 #define SETUP_LABEL(LAB) \
 	do {\
                 gtk_label_set_xalign (GTK_LABEL (LAB), 1.0); \
-		gtk_widget_show (LAB); \
 	}while(0)
 
 
@@ -347,21 +343,18 @@ ViewControl::ViewControl (Gxsm4app *app,
         //gtk_paned_set_position (GTK_PANED (hpaned), 20+(int)(scan->mem2d->GetNx ()/vinfo->GetQfac()));
 
 	gtk_grid_attach (GTK_GRID (v_grid), hpaned, 1,1, 3,3);
-        gtk_widget_show (hpaned);
 
 	// New Statusbar 2nd and last element, bottom
 	XSM_DEBUG (DBG_L2,  "VC::VC statusbar" );
 	statusbar = gtk_statusbar_new ();
 	g_object_set_data (G_OBJECT (window), "statusbar", statusbar);
 	gtk_grid_attach (GTK_GRID (v_grid), statusbar, 1,10, 3,1);
-        gtk_widget_show (statusbar);
 
         // Setup Scrollarea for 2D SCAN CANVAS
 	XSM_DEBUG (DBG_L2,  "VC::VC scrollarea" );
 	scrollarea = gtk_scrolled_window_new ();
         gtk_widget_set_hexpand (scrollarea, TRUE);
         gtk_widget_set_vexpand (scrollarea, TRUE);
-        gtk_widget_show (scrollarea);
 	
 	/* the policy is one of GTK_POLICY AUTOMATIC, or GTK_POLICY_ALWAYS.
 	 * GTK_POLICY_AUTOMATIC will automatically decide whether you need
@@ -408,7 +401,6 @@ ViewControl::ViewControl (Gxsm4app *app,
         // place canvas into scrollarea
 	XSM_DEBUG (DBG_L2,  "VC::VC container_add canvas to scrollarea" );
 	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scrollarea), canvas);
-        gtk_widget_show (canvas);
 
         if (ChNo >= 0){
                 // DnD Files
@@ -455,7 +447,6 @@ ViewControl::ViewControl (Gxsm4app *app,
 	// -- Side-Info-Pane Notebook --
         // ==================================================
 	notebook = gtk_notebook_new ();
-	gtk_widget_show (notebook);
 	gtk_notebook_set_tab_pos (GTK_NOTEBOOK (notebook), GTK_POS_RIGHT);
 	gtk_notebook_set_scrollable (GTK_NOTEBOOK (notebook), TRUE);
 	gtk_notebook_popup_enable (GTK_NOTEBOOK (notebook));
@@ -463,10 +454,6 @@ ViewControl::ViewControl (Gxsm4app *app,
 	gtk_paned_set_end_child (GTK_PANED (hpaned), notebook);   // place scrollarea for Scan Image Gnome-Canvas
 
 	sidepane = notebook;
-
-	//if (show_side_pane)
-        //  gtk_widget_show (sidepane);
-
 
 	// -- View / Display Scaling Parameter Tab
         // ==================================================
@@ -783,7 +770,6 @@ ViewControl::ViewControl (Gxsm4app *app,
 					GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	base_grid = gtk_grid_new ();
 	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scrollarea_sp), base_grid);
-        gtk_widget_show (base_grid);
 
 	label = gtk_label_new (N_("OSD"));
 	gtk_notebook_append_page (GTK_NOTEBOOK (notebook), scrollarea_sp, label);
@@ -830,7 +816,6 @@ ViewControl::ViewControl (Gxsm4app *app,
         Resize (NULL, -1, -1, 0, NULL, ZoomFac, QuenchFac);
 
 	XSM_DEBUG (DBG_L2,  "VC::VC show" );
-	gtk_widget_show ( v_grid ); // FIX-ME GTK4 SHOWALL
 }
 
 ViewControl::~ViewControl (){
@@ -1216,9 +1201,6 @@ void ViewControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 
         SetTitle (title, sub_title);       
         gtk_window_present(GTK_WINDOW(window));
- 
-        g_timeout_add (2500, GSourceFunc(update_view_wm_idle_callback), this); // try wm positioning later again, may fail early :(
-        
 }
 
 void ViewControl::canvas_draw_function (GtkDrawingArea *area,
@@ -3078,10 +3060,10 @@ void ViewControl::view_file_saveimage_callback (GSimpleAction *simple, GVariant 
         gtk_file_filter_add_pattern (fpdf, "*.pdf");
         gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (chooser), fpdf);
 
-        gtk_widget_show (chooser);
         g_signal_connect (chooser, "response",
                           G_CALLBACK (ViewControl::view_file_save_drawing_exec),
                           vc);
+	gtk_widget_show (chooser);
 }
 
 void ViewControl::view_file_getinfo_callback (GSimpleAction *simple, GVariant *parameter, 
@@ -4186,10 +4168,10 @@ void ViewControl::obj_event_save_callback (GSimpleAction *simple, GVariant *para
         // FIX-ME-GTK4 ??
         // gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (chooser), TRUE);
 
-        gtk_widget_show (chooser);
         g_signal_connect (chooser, "response",
                           G_CALLBACK (ViewControl::obj_event_save_callback_exec),
                           vo);
+	gtk_widget_show (chooser);
 }
 
 void ViewControl::update_trace (double *xy, int len){

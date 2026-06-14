@@ -958,7 +958,7 @@ static void gnome_res_show_info_callback (GtkWidget *widget, gpointer message){
         g_signal_connect_swapped (G_OBJECT (dialog), "response",
                                   G_CALLBACK (gtk_window_destroy),
                                   G_OBJECT (dialog));
-        gtk_widget_show (dialog);
+	gtk_widget_show (dialog);
 }
 
 static void gnome_res_apply_info_callback (GtkDialog *dialog, 
@@ -977,6 +977,7 @@ static void gnome_res_apply_info_callback (GtkDialog *dialog,
                                                                     "%s", self->pref_ok_message);
                         g_signal_connect (dialog, "response", G_CALLBACK (gtk_window_destroy), NULL);
                         gtk_widget_show (dialog);
+
                 }
                 self->running = FALSE;
                 if (self->destroy_on_close)
@@ -994,6 +995,7 @@ static void gnome_res_apply_info_callback (GtkDialog *dialog,
                                                                     "%s", self->pref_apply_message);
                         g_signal_connect (dialog, "response", G_CALLBACK (gtk_window_destroy), NULL);
                         gtk_widget_show (dialog);
+
                 }
                 if (self->pref_apply_callback)
                         (*self->pref_apply_callback)(self->pref_apply_callback_data);
@@ -1139,7 +1141,6 @@ void gnome_res_make_resource_variable_edit_field (GnomeResPreferences *self, Gno
         // Variable Name
         VarName = gtk_label_new (res->path);
         gtk_widget_set_size_request (VarName, PREF_VAR_USIZE, -1);
-        gtk_widget_show (VarName);
         gtk_label_set_xalign (GTK_LABEL (VarName), 1.0);
         gtk_widget_set_margin_start (GTK_WIDGET (VarName), 2);
         gtk_widget_set_margin_end (GTK_WIDGET (VarName), 5);
@@ -1372,9 +1373,9 @@ void gnome_res_run_change_user_config (GnomeResPreferences *self, const gchar *d
         g_signal_connect (G_OBJECT (self->dialog), "response",
                           G_CALLBACK (gnome_res_apply_info_callback),
                           (gpointer*) self);
+	gtk_widget_show (self->dialog);
 
         g_object_set_data (G_OBJECT (self->dialog), "self", (gpointer) self);
-        gtk_widget_show (self->dialog); // FIX-ME GTK4 SHOWALL
 }
 
 /*
@@ -1634,9 +1635,6 @@ GnomeResDruidFinishType gnome_res_new_user_druid_run_druids (GnomeResNewUserDrui
         DEBUG_VERBOSE ("gnome_res_new_user_druid_run_druids\n");
 	
         self->finishmode = GNOME_RES_DRUID_RUNNING;
-        gtk_widget_show (GTK_WIDGET (self->window)); // FIX-ME GTK4 SHOWALL
-
-        //gtk_main ();
 	
         return self->finishmode;
 }
@@ -1693,7 +1691,6 @@ static void gnome_res_new_user_druid_next (GtkWidget *w, gpointer druid, gpointe
                         g_signal_connect (G_OBJECT (self->page), "back",
                                           G_CALLBACK (gnome_res_new_user_druid_back),
                                           (gpointer) self);
-                        gtk_widget_show_all (GTK_WIDGET (self->page));
 
                         DEBUG_VERBOSE ("NEXT: setting new page\n");
                         gnome_druid_set_page (GNOME_DRUID (self->druid), GNOME_DRUID_PAGE (self->page));

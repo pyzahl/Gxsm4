@@ -929,9 +929,25 @@ public:
 	void hide ();
 	void show ();
 	void show_auto ();
-	void position_auto ();
-	void resize_auto ();
-	void freeze(){  gtk_widget_set_focusable (GTK_WIDGET(window), FALSE); /* gtk_widget_set_sensitive (window, FALSE); */ };
+	int position_auto ();
+	int resize_auto ();
+
+        static gboolean position_retry_idle_callback (AppBase *self) {
+                if (self->wm_attempt_count++ > 10){
+                        g_message ("EE position_retry_idle_callback: giving up, permanent fail for %s", self->window_key);
+                        self->wm_attempt_count=0;
+                        return G_SOURCE_REMOVE;
+                }
+                if (self->position_auto ())
+                        return G_SOURCE_CONTINUE; // delayed retry
+                if (self->resize_auto ())
+                        return G_SOURCE_CONTINUE; // delayed retry
+                
+                return G_SOURCE_REMOVE; // finally
+        };
+
+
+        void freeze(){  gtk_widget_set_focusable (GTK_WIDGET(window), FALSE); /* gtk_widget_set_sensitive (window, FALSE); */ };
 	void thaw(){  gtk_widget_set_focusable (GTK_WIDGET(window), TRUE); /* gtk_widget_set_sensitive (window, TRUE); */ };
 
 	/* sorry, but I need this for external access form main only... */  
@@ -960,6 +976,8 @@ public:
         void set_nodestroy(){ nodestroy=TRUE; };
         void unset_nodestroy(){ nodestroy=FALSE; };
 
+        const gchar *get_window_key() { return window_key; };
+        
 protected:
         void destroy(){ if (window) { gtk_window_destroy (GTK_WINDOW (window)); window=NULL; } nodestroy=TRUE; };
 	int nodestroy;
@@ -979,6 +997,7 @@ private:
 
         gint32 *window_geometry;
         gint32 showstate;
+        gint32 wm_attempt_count;
 };
 
 

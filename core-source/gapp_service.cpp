@@ -93,8 +93,8 @@ gint GnomeAppService::setup_multidimensional_data_copy (const gchar *title, Scan
                 bp.grid_add_ec ("Y-bottom",Pixel, &crop_window_xy[3], 0, src->mem2d->GetNx ()-1, ".0f"); bp.new_line ();
 	}
         bp.show_all ();
-
 	gtk_widget_show (dialog);
+
         int response = GTK_RESPONSE_NONE;
         g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
         // FIX-ME GTK4 ?? -- wait here on response
@@ -115,7 +115,7 @@ void GnomeAppService::warning(const char *mld, GtkWindow *parent){
                  GTK_MESSAGE_WARNING,
                  GTK_BUTTONS_CLOSE,
                  "<span foreground='red' size='large' weight='bold'>%s</span>\n%s", N_("Warning!"),mld);
-        gtk_widget_show (dialog);
+	gtk_widget_show (dialog);
         main_get_gapp () -> monitorcontrol->LogEvent ("Warning", mld);
 
         int response = GTK_RESPONSE_NONE;
@@ -133,8 +133,8 @@ void GnomeAppService::errormsg(const char *mld, GtkWindow *parent){
                  GTK_MESSAGE_ERROR,
                  GTK_BUTTONS_CLOSE,
                  "<span foreground='red' size='large' weight='bold'>%s</span>\n%s", N_("Error!"), mld);
+	gtk_widget_show (dialog);
 
-        gtk_widget_show (dialog);
         int response = GTK_RESPONSE_NONE;
         g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
         // FIX-ME GTK4 ?? -- wait here on response
@@ -150,10 +150,10 @@ void GnomeAppService::message(const char *mld, GtkWindow *parent){
                  GTK_MESSAGE_INFO,
                  GTK_BUTTONS_CLOSE,
                  "<span foreground='blue' size='large' weight='bold'>%s</span>\n%s", N_("Info"), mld);
+	gtk_widget_show (dialog);
 
         main_get_gapp ()->monitorcontrol->LogEvent ("Message", mld);
 
-        gtk_widget_show (dialog);
         int response = GTK_RESPONSE_NONE;
         g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
         // FIX-ME GTK4 -- wait here on response
@@ -170,10 +170,10 @@ gboolean GnomeAppService::question_yes_no (const gchar *question, GtkWindow *par
                  GTK_MESSAGE_QUESTION,
                  GTK_BUTTONS_YES_NO,
                  format ? format : "<span foreground='blue' size='large' weight='bold'>%s</span>", question);
+	gtk_widget_show (dialog);
 
         gtk_dialog_set_default_response (GTK_DIALOG (dialog), GTK_RESPONSE_OK);
 
-        gtk_widget_show (dialog);
         int response = GTK_RESPONSE_NONE;
         g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
         // FIX-ME GTK4 -- wait here on response
@@ -193,11 +193,12 @@ gint GnomeAppService::question_yes_no_with_action (const gchar *question, const 
                  GTK_MESSAGE_QUESTION,
                  GTK_BUTTONS_YES_NO,
                  "<span foreground='blue' size='large' weight='bold'>%s</span>\n", question);
+	gtk_widget_show (dialog);
+
         dialog_action = gtk_check_button_new_with_label( N_(action_label));
         gtk_check_button_set_active (GTK_CHECK_BUTTON (dialog_action), var? true:false);
         gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), dialog_action);
         gtk_dialog_set_default_response (GTK_DIALOG (dialog), GTK_RESPONSE_OK);
-        gtk_widget_show (dialog);
 
         int response = GTK_RESPONSE_NONE;
         g_signal_connect (G_OBJECT (dialog), "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data_no_destroy), &response);                // FIX-ME GTK4 -- wait here on response
@@ -223,7 +224,6 @@ int GnomeAppService::dialog(const char *title, const char *content,
 			    const char *b1, const char *b2, const char *b3, 
 			    int wait){
 	GtkWidget *label = gtk_label_new (N_(content));
-	gtk_widget_show (label);
 	
 	GtkWidget *dialog = gtk_dialog_new_with_buttons (N_(title),
                                                          gapp->get_main_window  (),
@@ -232,6 +232,7 @@ int GnomeAppService::dialog(const char *title, const char *content,
 							 N_(b2), 2,
 							 N_(b3), 3,
 							 NULL);
+	gtk_widget_show (dialog);
 
 	gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), label);
 
@@ -382,7 +383,6 @@ int GnomeAppService::progress_info_add_info (const gchar* info){
 		return -1;
 
 	GtkWidget *label = gtk_label_new (N_(info));
-	gtk_widget_show (label);
 	gtk_box_append (GTK_BOX (progress_dialog_box), label);
 
 	check_events_self();
@@ -442,6 +442,7 @@ gchar *GnomeAppService::file_dialog_save (const gchar *title,
                                                           N_("_Save"), GTK_RESPONSE_ACCEPT,
                                                           NULL);
         
+	gtk_widget_show (chooser);
         // FIX-ME GTK4 anything a like??
         //gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (dialog), TRUE);
 
@@ -480,6 +481,7 @@ gchar *GnomeAppService::file_dialog_load (const gchar *title,
                                                           N_("_Cancel"), GTK_RESPONSE_CANCEL,
                                                           N_("_Load"), GTK_RESPONSE_ACCEPT,
                                                           NULL);
+	gtk_widget_show (chooser);
         if (path){
                 GFile *default_file_for_saving = g_file_new_for_path (path);
                 gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (chooser), default_file_for_saving, NULL);
@@ -541,7 +543,7 @@ void GnomeAppService::ValueRequest(const gchar *title, const gchar *label, const
         bp.grid_add_ec (infotxt, uobj, value, minv, maxv, vfmt, 0.1, 1.0);
 	bp.show_all ();
         gtk_dialog_set_default_response (GTK_DIALOG (dialog), GTK_RESPONSE_OK);
-	gtk_widget_show(dialog);
+	gtk_widget_show (dialog);
         
         int response = GTK_RESPONSE_NONE;
         g_signal_connect (dialog, "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
@@ -576,9 +578,9 @@ void GnomeAppService::ValueRequestList (const gchar *title,
         }
 
         bp.show_all ();
+	gtk_widget_show (dialog);
 
         gtk_dialog_set_default_response (GTK_DIALOG (dialog), GTK_RESPONSE_OK);
-	gtk_widget_show(dialog);
         
         int response = GTK_RESPONSE_NONE;
         g_signal_connect (dialog, "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
@@ -618,10 +620,9 @@ void GnomeAppService::alert(const gchar *s1, const gchar *s2, const gchar *s3, i
                                                                 GTK_BUTTONS_CLOSE,
                                                                 "<span foreground='red' size='large' weight='bold'>%s</span>\n%s\n%s", s1, s2, s3);
 
-        gtk_widget_show (dialog);
-
         int response = GTK_RESPONSE_NONE;
         g_signal_connect (dialog, "response", G_CALLBACK (GnomeAppService::on_dialog_response_to_user_data), &response);
+	gtk_widget_show (dialog);
 
         if (c > 5){
                 g_message ("adding timeout for forced exit");
@@ -711,7 +712,6 @@ void AppBase::SetTitle(const gchar *title, const gchar *sub_title){
                         gtk_label_set_ellipsize (GTK_LABEL (title_label), PANGO_ELLIPSIZE_END);
                         if (header_bar)
                                 gtk_header_bar_set_title_widget( GTK_HEADER_BAR (header_bar), title_label);
-                        gtk_widget_show (title_label);
                 }
                 const char *format1 =
                         "<span size='large' weight='bold'>\%s</span>\n"
@@ -732,7 +732,6 @@ void AppBase::AppWindowInit(const gchar *title, const gchar *sub_title){
         window = GTK_WINDOW (app_window);
 
         header_bar = gtk_header_bar_new ();
-        gtk_widget_show (header_bar);
 
         gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
         SetTitle (title, sub_title);
@@ -741,7 +740,8 @@ void AppBase::AppWindowInit(const gchar *title, const gchar *sub_title){
 	g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
 
-        gtk_widget_show (GTK_WIDGET (window));
+        gtk_window_present(GTK_WINDOW(window));
+
 }
 
 gboolean AppBase::window_close_callback (GtkWidget *widget, AppBase *self){
@@ -892,11 +892,11 @@ int AppBase::set_window_geometry (const gchar *key, gint index, gboolean add_to_
         else
                 window_key = g_strdup (key);
 
-        XSM_DEBUG_GM (DBG_L5, "AppBase::set_window_geometry ... load geometry");
+        XSM_DEBUG_GM (DBG_L1, "AppBase::set_window_geometry ... load geometry");
 
 	LoadGeometry ();
 
-        XSM_DEBUG_GM (DBG_L5, "AppBase::set_window_geometry ... add to menu");
+        XSM_DEBUG_GM (DBG_L2, "AppBase::set_window_geometry ... add to menu");
 
         if (add_to_menu)
                 add_window_to_window_menu (window_key, window_key);
@@ -904,7 +904,7 @@ int AppBase::set_window_geometry (const gchar *key, gint index, gboolean add_to_
         if (g_object_get_data (G_OBJECT (gxsm4app), "APP-MAIN"))
                 ((App*)g_object_get_data (G_OBJECT (gxsm4app), "APP-MAIN")) -> add_appwindow_to_list (this); // add self to gapp globale list
 
-        XSM_DEBUG_GM (DBG_L5, "AppBase::set_window_geometry ... done. >%s<", key);
+        XSM_DEBUG_GM (DBG_L4, "AppBase::set_window_geometry ... done. >%s<", key);
 	return 0;
 }
 
@@ -916,8 +916,6 @@ void AppBase::hide (){
 void AppBase::show (){
         gtk_widget_show (GTK_WIDGET (window));
         showstate=TRUE;
-        position_auto ();
-        resize_auto ();
 }
 
 void AppBase::show_auto (){
@@ -932,13 +930,12 @@ void AppBase::show_auto (){
 
 //#define HYPR_VERBOSE
 
-void AppBase::position_auto (){
+// NOTE ** fow wayland / busctl we do both positioina and size here! Skip resize.
+int AppBase::position_auto (){
         static gboolean once=true;
 #ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
         if (window_geometry)
                 if (window_geometry[WGEO_FLAG]){
-                        // GTK3:
-                        // gtk_window_move (GTK_WINDOW (window), window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
                         // g_message ("SORRY GTK4 can't do it -- Requested Window Position [%s: %d, %d]   -- no gtk_window_move ().", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
                         XSM_DEBUG_GM (DBG_L1, "AppBase::position_auto ** Requested Window Position ** %s ** XY (%d, %d)", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
 # ifdef GDK_WINDOWING_X11
@@ -983,7 +980,7 @@ void AppBase::position_auto (){
                                                         g_free (hyprctl_cmdline);
                                                         g_error_free (error);
                                                         g_free (title);
-                                                        return;
+                                                        return -1;
                                                 }
                                                 
                                                 if (once || exit_status){
@@ -1061,37 +1058,55 @@ void AppBase::position_auto (){
 
                                                 // Execute shell command for busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiii "gxsm4" "Gxsm4" 100 100 500 600
                                                 gchar *wClass = !strcmp(title, "Gxsm4") ? "gxsm4" : "org.gnome.gxsm4";
-                                                gint  op = 0; // !strcmp(title, "Gxsm4") ? 1 : 0;
-                                                gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiiii -- '%s' '%s' %d %d %d %d %d",
+                                                gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiiib -- '%s' '%s' %d %d %d %d '%s'",
                                                                                          wClass, title,
                                                                                          (int)window_geometry[WGEO_XPOS],
                                                                                          (int)window_geometry[WGEO_YPOS],
                                                                                          (int)window_geometry[WGEO_WIDTH],
                                                                                          (int)window_geometry[WGEO_HEIGHT],
-                                                                                         op
+                                                                                         "FALSE" // ** Force: TRUE
                                                                                          );
                                                 //g_print("Attempting Wayland Hack via Gxsm-WM Extension: %s\n", busctl_cmdline);
                                                 g_spawn_command_line_sync (busctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
                                                 
                                                 once = true; // test
                                                 if (error != NULL) {
-                                                        g_error ("Sorry I tried. Error executing command: %s E: %s -- make sure: busctl is installed and activate GxsmWM Extension for Gnome Shell!\n", busctl_cmdline, error->message);
-                                                        g_free (busctl_cmdline);
+                                                        g_error ("EE *** Sorry I tried: %s E: %s -- make sure: busctl is installed and activate GxsmWM Extension for Gnome Shell!\n", busctl_cmdline, error->message);
                                                         g_error_free (error);
-                                                        return;
+                                                        g_free (busctl_cmdline);
+                                                        g_free (stdout_buf);
+                                                        g_free (stderr_buf);
+                                                        g_free (title);
+                                                        return -1;
                                                 }
-                                                if (once || exit_status){
-                                                        g_print ("***\nAttempted: %s\n", busctl_cmdline);
-                                                        g_print ("Stdout: %s", stdout_buf);
-                                                        g_print ("Stderr: %s\n", stderr_buf);
-                                                        g_print ("Exit Status: %d\n", exit_status);
-                                                        once = false;
+                                                if (!strncmp(stdout_buf, "s \"WNA\"", 7)){
+                                                        g_print ("EE *** Attempted: %s\nWindow %35s is not available.\n", busctl_cmdline, window_key);
+                                                        g_free (busctl_cmdline);
+                                                        g_free (stdout_buf);
+                                                        g_free (stderr_buf);
+                                                        g_free (title);
+                                                        return -1;
+                                                } else if (exit_status){
+                                                        g_print ("EE *** Attempted: %s\n", busctl_cmdline);
+                                                        g_print ("   Stdout: %s", stdout_buf);
+                                                        g_print ("   Stderr: %s\n", stderr_buf);
+                                                        g_print ("   Exit Status: %d\n", exit_status);
+                                                        g_free (busctl_cmdline);
+                                                        g_free (stdout_buf);
+                                                        g_free (stderr_buf);
+                                                        g_free (title);
+                                                        return -1;
+                                                } else if (1){
+                                                        g_print ("OK *** %s\n", busctl_cmdline);
+                                                        //g_print ("Stdout: %s", stdout_buf);
+                                                        //g_print ("Stderr: %s\n", stderr_buf);
+                                                        //g_print ("Exit Status: %d\n", exit_status);
+                                                        //once = false;
                                                 }
-
+                                                
                                                 g_free (busctl_cmdline);
                                                 g_free (stdout_buf);
                                                 g_free (stderr_buf);
-
                                                 g_free (title);
 
                                                 
@@ -1110,19 +1125,14 @@ void AppBase::position_auto (){
 #else
         XSM_DEBUG_GM (DBG_L2, "AppBase::position_auto ** ENABLE_GXSM_WINDOW_MANAGEMENT is disabled.");
 #endif
+        return 0;
 }
 
-void AppBase::resize_auto (){
+int AppBase::resize_auto (){
         static gboolean once=true;
 #ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
         if (window_geometry)
                 if (window_geometry[WGEO_FLAG]){
-                        // GTK3:
-                        // gtk_window_resize (GTK_WINDOW (window), (int)window_geometry[WGEO_WIDTH], (int)window_geometry[WGEO_HEIGHT]);
-
-                        // trying this... not working
-                        // gtk_window_set_default_size (GTK_WINDOW (window), (int)window_geometry[WGEO_WIDTH], (int)window_geometry[WGEO_HEIGHT]);
-
                         // g_message ("SORRY GTK4 can't do it -- Requested Window Resize [%s: %d, %d]   -- no gtk_window_resize ().", window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
                          XSM_DEBUG_GM (DBG_L1, "AppBase::resize_auto **** Requested Window Resize   ** %s ** WH (%d, %d)", window_key, window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT]);
 # ifdef GDK_WINDOWING_X11
@@ -1171,7 +1181,7 @@ void AppBase::resize_auto (){
                                                         g_error ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);
                                                         g_free (hyprctl_cmdline);
                                                         g_error_free (error);
-                                                        return;
+                                                        return -1;
                                                 }
 
                                                 if (once || exit_status){
@@ -1185,7 +1195,7 @@ void AppBase::resize_auto (){
                                                 g_free (stderr_buf);
                                                 g_free (title);
                                         } else if (wayland_display != NULL) {
-                                                // done with position_auto
+                                                // this was done with position_auto
                                         } else {
                                                 g_message ("Wayland some what, but No Wayland compositor detected.\n");
                                         }
@@ -1196,6 +1206,7 @@ void AppBase::resize_auto (){
 #else
         XSM_DEBUG_GM (DBG_L2, "AppBase::resize_auto ** ENABLE_GXSM_WINDOW_MANAGEMENT is disabled.");
 #endif
+        return 0;
 }
 
 void AppBase::SaveGeometryCallback(AppBase *apb){
@@ -1420,17 +1431,24 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                                 once = true; // test
 
                                 if (error != NULL) {
-                                        g_error ("Sorry I tried. Error executing command: %s E: %s (make sure to have busctl and the Gxsm-WM Extension insatlled and actiavted)\n", busctl_cmdline, error->message);
+                                        g_error ("EE *** Sorry I tried: %s E: %s (make sure to have busctl and the Gxsm-WM Extension insatlled and actiavted)\n", busctl_cmdline, error->message);
                                         g_free (busctl_cmdline);
                                         g_error_free (error);
                                         return;
                                 }
                                 
-                                if (once || exit_status){
-                                        g_print ("***\nAttempted: %s\n", busctl_cmdline);
-                                        g_print ("Stdout: %s", stdout_buf);
-                                        g_print ("Stderr: %s\n", stderr_buf);
-                                        g_print ("Exit Status: %d\n", exit_status);
+                                if (exit_status){
+                                        g_print ("*** Attempted: %s\n", busctl_cmdline);
+                                        g_print ("    Stdout: %s", stdout_buf);
+                                        g_print ("    Stderr: %s\n", stderr_buf);
+                                        g_print ("    Exit Status: %d\n", exit_status);
+                                }
+                                if (!strncmp(stdout_buf, "s \"WNA\"", 7)){
+                                        g_print ("EE *** Attempted: %20s\nWindow is not available.\n", busctl_cmdline);
+                                        g_free (busctl_cmdline);
+                                        g_free (stdout_buf);
+                                        g_free (stderr_buf);
+                                        return -1;
                                 }
                                 g_free (stderr_buf);
                                 g_free (busctl_cmdline);
@@ -1459,7 +1477,7 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                                         } else g_print ("Error parsing result: not a string\n");
                                 } else g_print ("Error parsing result: invalid string\n");
                                 
-                                g_print ("Window '%s' at %d %d, WH %d %d  [parsed: %d ** %s]\n",
+                                g_print ("Window '%35s' at %4d %4d, WH %4d %4d  [parsed: %d ** %s]\n",
                                          main_title_buffer,
                                          window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS],
                                          window_geometry[WGEO_WIDTH], window_geometry[WGEO_HEIGHT],
@@ -1558,7 +1576,7 @@ void AppBase::LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref
         position_auto ();
         resize_auto ();
 
-        if (strcmp (window_key, "main"))
+        if (strcmp (window_key, "Gxsm4") || strcmp (window_key, "gxsm4"))
                 show_auto ();
         else
                 XSM_DEBUG_GM (DBG_L2, "AppBase::AutoLoadGeometry ... MAIN window: show=always");
@@ -1619,7 +1637,7 @@ void AppBase::LoadGeometryWRefAutoPlaceABmode(const gchar *wref_key){
         position_auto ();
         resize_auto ();
 
-        if (strcmp (window_key, "main"))
+        if (strcmp (window_key, "Gxsm4") || strcmp (window_key, "gxsm4"))
                 show_auto ();
         else
                 XSM_DEBUG_GM (DBG_L2, "AppBase::AutoLoadGeometry ... MAIN window: show=always");
@@ -1630,7 +1648,7 @@ void AppBase::LoadGeometry(){
                 XSM_DEBUG_ERROR (DBG_L1, "AppBase::LoadGeometry ... error, no window_key set.");
                 return;
         }
-	XSM_DEBUG_GM (DBG_L2, "AppBase::LoadGeometry *** Load Geometry for window  ** %s **", window_key );
+	XSM_DEBUG_GM (DBG_L0, "AppBase::LoadGeometry *** Load Geometry for window  ** %s **", window_key );
 
         g_signal_connect (window, "close-request",  G_CALLBACK (AppBase::window_close_callback), this);
 
@@ -1648,15 +1666,19 @@ void AppBase::LoadGeometry(){
 
         g_assert_cmpint (n_stores, ==, WGEO_SIZE);
 
-        position_auto ();
-        resize_auto ();
 
-        if (strcmp (window_key, "main"))
+        if (window_geometry[WGEO_SHOW]){
+                g_message ("Scheduling: wm set geometry for %s", window_key);
+                wm_attempt_count = 0;
+                g_timeout_add (1500, GSourceFunc (position_retry_idle_callback), this); // try wm positioning later again, may fail early :(
+        }
+
+        if (strcmp (window_key, "Gxsm4") || strcmp (window_key, "gxsm4"))
                 show_auto ();
         else
                 XSM_DEBUG_GM (DBG_L2, "AppBase::LoadGeometry ... MAIN window: show=always");
 
-        LoadExtra();
+        LoadExtra ();
 }
 
 

@@ -8,13 +8,13 @@
 	select to safe and restore window state and positions
       </description>
     </key>
-    <key name="main" type="ai">
-      <default>[0,1, 0,0,0,0]</default>
+    <key name="gxsm4" type="ai">
+      <default>[1,1, 0,0,0,0]</default>
       <summary>show/hide state, option, X,Y, H,W</summary>
       <description>geometry</description>
     </key>
     <key name="channel-selector" type="ai">
-      <default>[0,0, 0,0,0,0]</default>
+      <default>[1,0, 0,0,0,0]</default>
       <summary>show/hide state, option, X,Y, H,W</summary>
       <description>geometry</description>
     </key>

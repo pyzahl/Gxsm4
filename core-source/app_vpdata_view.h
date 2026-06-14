@@ -56,7 +56,6 @@ public:
                 window = GTK_WINDOW (app_window);
 
                 header_bar = gtk_header_bar_new ();
-                gtk_widget_show (header_bar);
 
                 SetTitle (title, sub_title);
                 gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
@@ -65,8 +64,7 @@ public:
                 gtk_window_set_child (GTK_WINDOW (window), v_grid);
                 g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
 
-                gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
-
+                gtk_window_present(GTK_WINDOW(window));
         };
 
 

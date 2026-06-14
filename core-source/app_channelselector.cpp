@@ -493,7 +493,7 @@ void ChannelSelector::SetModeChannelSignal(int mode_id, const gchar* signal_name
 // position is a running nummer of data sources from 0 ..
 
 void ChannelSelector::ConfigureHardwareMapping(int position, const gchar* signal_name, guint64 msk, const gchar* signal_label, const gchar *signal_unit, double d2unit = 1.0){
-        g_message ("ChannelSelector::ConfigureHardwareMapping for %32s, 0x%08x at scale %g for %s", signal_name, msk, d2unit, signal_unit);
+        XSM_DEBUG_GP (DBG_L2, "ChannelSelector::ConfigureHardwareMapping for %32s, 0x%08x at scale %g for %s", signal_name, msk, d2unit, signal_unit);
 
         Data_Source *ch_data_src=find_data_source_by_name (signal_name);
         

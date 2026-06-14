@@ -32,7 +32,10 @@
 
 import Gio from 'gi://Gio';
 import Meta from 'gi://Meta';
+import Clutter from 'gi://Clutter'
+import GObject from 'gi://GObject'
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+
 const GLib = imports.gi.GLib;
 
 
@@ -68,7 +71,7 @@ const GXSMWMXML = `
       <arg type="i" direction="in" name="y"/>
       <arg type="i" direction="in" name="width"/>
       <arg type="i" direction="in" name="height"/>
-      <arg type="i" direction="in" name="op"/>
+      <arg type="b" direction="in" name="uop"/>
       <arg type="s" direction="out" name="res"/>
     </method>
   </interface>
@@ -125,7 +128,7 @@ export default class GxsmWm extends Extension {
     }
 
     
-    moveResizeByTitleAndClass(targetClass, targetTitle, x, y, width, height, op) {
+    moveResizeByTitleAndClass(targetClass, targetTitle, x, y, width, height, uop) {
 	let windowActors = global.get_window_actors();
 	
 	for (let actor of windowActors) {
@@ -139,43 +142,22 @@ export default class GxsmWm extends Extension {
 	    
             if (wmClass === targetClass && title.match(regex)) {
 
-		let wactor = win.get_compositor_private();
-		if (wactor) {
-		    // Force an immediate un-grab before positioning
-		    global.display.ungrab_keyboard();
-		    
-		    let signalId = actor.connect('first-frame', () => {
-			win.move_resize_frame(true, x, y, width, height);
-			
-			// Release the handler immediately
-			actor.disconnect(signalId);
-		    });
-		} else {
-		    // Fallback if the actor isn't fully drawn yet
-		    win.move_resize_frame(true, x, y, width, height);
+		win.move_resize_frame(false, x, y, width, height);
+
+		if (uop){
+		    win.move_resize_frame(false, x, y, width, height);
+		    //log(`win.move_resize forced.`);
+		    //return 'OK*';
 		}
 
-		/*
-
-		// 1. Force clear any lingering compositor operations
-		global.display.ungrab_keyboard();
-		global.display.ungrab_pointer();
-		
-		// 2. Perform the native movement (using true for user_op)
-		win.move_resize_frame(true, x, y, width, height);
-		
-		// 3. Re-assert strict window focus focus downward to the client app
-		win.activate(global.get_current_time());
-		win.focus(global.get_current_time());
-
-		// true = move/resize frame, false = move/resize client area only
-		if (op)
-		    win.move_resize_frame(true, x, y, width, height);
-		else
-		    win.move_resize_frame(false, x, y, width, height);
-		*/
-		
+		GLib.timeout_add(GLib.PRIORITY_DEFAULT_IDLE, 30, () => {
+		//GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+		    win.move_resize_frame('false', x, y, width, height);
+		    //log(`win.move_resize completed OK.`);
+		    return GLib.SOURCE_REMOVE; // Always return remove to prevent looping
+		});
 		return 'OK';
+
             }
 	}
 	return 'WNA'; // window not available
@@ -187,8 +169,8 @@ export default class GxsmWm extends Extension {
 	return this.getWindowGeometryByClassAndTitle(wClass, wTitle);
     }
     
-    SetGeoAction(wClass, wTitle, x, y, width, height, op) {
-        //log(`GXSM-WM SHELL EXT SetGeo: ${wClass} >${wTitle}< [${x} ${y} ${width} ${height}]`);
-	return this.moveResizeByTitleAndClass(wClass, wTitle, x, y, width, height, op);
+    SetGeoAction(wClass, wTitle, x, y, width, height, uop) {
+        //log(`GXSM-WM SHELL EXT SetGeo: ${wClass} >${wTitle}< [${x} ${y} ${width} ${height} ${uop}]`);
+	return this.moveResizeByTitleAndClass(wClass, wTitle, x, y, width, height, uop);
     }
 }

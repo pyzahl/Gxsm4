@@ -160,7 +160,6 @@ gxsm4_app_startup (GApplication *app)
 {
         GtkBuilder *builder;
         XSM_DEBUG(DBG_L2, "gxsm4_app_startup ====================================================" );
-        
 
         G_APPLICATION_CLASS (gxsm4_app_parent_class)->startup (app);
 
@@ -171,18 +170,7 @@ gxsm4_app_startup (GApplication *app)
         //gtk_css_provider_load_from_resource (GTK_CSS_PROVIDER(provider), "/" GXSM_RES_BASE_PATH "/gxsm4-styles.css");
         gtk_css_provider_load_from_resource (GTK_CSS_PROVIDER(provider), "/" GXSM_RES_BASE_PATH "/css/styles.css");
         gtk_style_context_add_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
-        
-        // https://developer.gnome.org/gtk3/stable/chap-css-overview.html
-        /*
-        gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
-                                        "#view-headerbar-tip-follow:checked{\n"
-                                        "    color: #dd0000;\n"
-                                        "}\n"
-                                        "\n",
-                                        -1, NULL);
-        */
-        //g_object_unref(provider);
-        
+               
         // GXSM core application -- NOT the G APPLCIATION/WINDOW MANAGEMENT
         XSM_DEBUG(DBG_L2, "gxsm4 core startup" );
        
@@ -669,18 +657,15 @@ void App::MAINAppWindowInit(Gxsm4appWindow* win, const gchar *title, const gchar
         /* main window content is a grid to place main control elements */
         grid = gtk_grid_new ();
         gtk_window_set_child (GTK_WINDOW (window), grid);
-        gtk_widget_show (grid); // FIX-ME GTK4 SHOWALL
 
         /* Make Statusbar and attach to grid at bottom now */
 	appbar = gtk_statusbar_new ();
 	appbar_ctx_id = gtk_statusbar_get_context_id (GTK_STATUSBAR (appbar), "GXSM MAIN STATUS");
         gtk_grid_attach (GTK_GRID (grid), appbar, 0, 10, 1, 1);
-        gtk_widget_show (appbar); // FIX-ME GTK4 SHOWALL
 
         XSM_DEBUG (DBG_L2,  "App GXSM main window status: " << (GTK_IS_WIDGET (window) ? "OK":"NOT A WIDGET"));
 
-        // What is this about??? (gxsm4:1156915): Gtk-WARNING **: 16:26:15.840: A window is shown after it has been destroyed. This will leave the window in an inconsistent state.
-       	gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
+        gtk_window_present (GTK_WINDOW (window));
 }
 
 void App::build_gxsm (Gxsm4appWindow *win){
@@ -738,7 +723,8 @@ void App::build_gxsm (Gxsm4appWindow *win){
         XSM_DEBUG(DBG_L2, "App::build_gxsm - destroy preferences object" );
 	gnome_res_destroy (pref);
 
-        set_window_geometry    ("main");
+        XSM_DEBUG(DBG_L1, "App::build_gxsm Set WIndow Key and Load Geometry for GXSM4 Main Window");
+        set_window_geometry    ("gxsm4"); // Set and Load Geometry for GXSM4 Main Window
         
         XSM_DEBUG (DBG_L3,
                    "App::build_gxsm - finished with main window.\n"
@@ -812,22 +798,18 @@ gboolean App::finish_system_startup (){
                         spm_control  = create_spm_control ();
 
                 gtk_grid_attach (GTK_GRID (grid), spm_control, 0, 1, 1, 1);
-                gtk_widget_show (spm_control);
                 return true;
         case 6:
                 XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - AS Controls");
                 // Auto Save Control
                 as_control   = create_as_control ();
                 gtk_grid_attach (GTK_GRID (grid), as_control, 0, 2, 1, 1);
-                gtk_widget_show (as_control); // FIX-ME GTK4 SHOWALL
                 return true;
         case 7:
                 XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - UI Controls");
                 // User Info Control
                 ui_control   = create_ui_control ();
                 gtk_grid_attach (GTK_GRID (grid), ui_control, 0, 3, 1, 1);
-                gtk_widget_show (ui_control);
-                gtk_widget_show (GTK_WIDGET (window));
                 return true;
         case 8:
                 XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - Building Channelselector");
@@ -868,6 +850,7 @@ gboolean App::finish_system_startup (){
                 return true;
         case 13:
                 XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - Reposition all window to stored Window Geometry (X11)");
+                LoadGeometry ();
                 if (!geometry_management_off)
                         load_app_geometry ();
                 else

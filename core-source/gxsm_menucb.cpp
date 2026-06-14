@@ -263,6 +263,8 @@ void App::file_close_callback (GSimpleAction *simple, GVariant *parameter, gpoin
 
 void App::file_quit_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
         gint r=true;
+        XSM_DEBUG(DBG_L1, "GXSM QUIT CALLED" );
+        
 	if(!gapp) return;
 
 	if (main_get_gapp ()->question_yes_no_with_action (Q_WANTQUIT, "Save Window Geometry", r) == GTK_RESPONSE_YES){

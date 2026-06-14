@@ -81,9 +81,6 @@ MonitorControl::MonitorControl (Gxsm4app *app, gint loglevel, gint maxlines):App
         gtk_widget_set_vexpand (scrolled_window, TRUE);
 	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scrolled_window), log_view);
         gtk_grid_attach (GTK_GRID (v_grid), scrolled_window, 1,1, 10,1);
-        gtk_widget_show (scrolled_window); // FIX-ME GTK4 SHOWALL
-        gtk_widget_show (log_view); // FIX-ME GTK4 SHOWALL
-        gtk_widget_show (v_grid); // FIX-ME GTK4 SHOWALL
 
         set_window_geometry ("monitor");
 
@@ -101,7 +98,6 @@ void MonitorControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         window = GTK_WINDOW (app_window);
 
         header_bar = gtk_header_bar_new ();
-        gtk_widget_show (header_bar);
         //gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (header_bar), true);
 
         // link view popup actions
@@ -118,7 +114,6 @@ void MonitorControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         // gtk_button_set_image (GTK_BUTTON (header_menu_button), gtk_image_new_from_icon_name ("emblem-system-symbolic", tmp_toolbar_icon_size));
         gtk_menu_button_set_popover (GTK_MENU_BUTTON (header_menu_button), monitor_menu);
         gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
-        gtk_widget_show (header_menu_button);
 
         SetTitle (title, sub_title);
         gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
@@ -127,8 +122,7 @@ void MonitorControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
 	g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
 
-	gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
-
+        gtk_window_present(GTK_WINDOW(window));
 }
 
 void MonitorControl::file_open_callback (GSimpleAction *action, GVariant *parameter, 

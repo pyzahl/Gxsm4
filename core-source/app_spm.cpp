@@ -50,8 +50,6 @@ void cbtext( GtkEditable *widget, App *ap ){
 }
 
 void cbbasename( GtkWidget *widget, App *ap ){
-        //g_print ("xxxxxxxxxxxxxxxxxxx cbbasename new  %s\n",gtk_entry_buffer_get_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (widget)))));
-        //g_print ("xxxxxxxxxxxxxxxxxxx cbbasename old %s\n",main_get_gapp ()->xsm->data.ui.basename );
         main_get_gapp ()->xsm->data.ui.SetBaseName (gtk_entry_buffer_get_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (widget)))));
         // ap->as_setdata();
 }
@@ -858,7 +856,6 @@ GtkWidget* App::create_spm_control (){
         g_object_set_data( G_OBJECT (grid), "SPM_OFFSETFIX_EC_list", EC_OffsetFix_list);
 
         RemoteEntryList = spm_bp->get_remote_list_head ();
-        gtk_widget_show (grid); // FIX-ME GTK4 SHOWALL
 
         return (grid);
 }
@@ -1114,7 +1111,6 @@ GtkWidget* App::create_spa_control (){
 
         input = gtk_label_new ("-.--#");
         gtk_label_set_width_chars (GTK_LABEL (input), 10);
-        gtk_widget_show (input);
         gtk_grid_attach (GTK_GRID (f_grid), input, x,y, 1,1);
         g_object_set_data( G_OBJECT (grid), "LayerSelectValue", input);
 
@@ -1142,7 +1138,6 @@ GtkWidget* App::create_spa_control (){
 
         input = gtk_label_new ("-.--#");
         gtk_label_set_width_chars (GTK_LABEL (input), 10);
-        gtk_widget_show (input);
         gtk_grid_attach (GTK_GRID (f_grid), input, x,y, 1,1);
         g_object_set_data( G_OBJECT (grid), "TimeSelectValue", input);
 	
@@ -1260,13 +1255,11 @@ GtkWidget* App::create_spa_control (){
         // Scan Mode: 2D / 1D
         radiobutton = gtk_radio_button_new_with_label (NULL, "2D Scan");
         gtk_box_pack_start (GTK_BOX (vbox_view), radiobutton, TRUE, TRUE, 0);
-        gtk_widget_show (radiobutton);
         g_signal_connect (G_OBJECT (radiobutton), "toggled",
         G_CALLBACK (cb_setmode), (void*)MODE_2DIMSCAN);
 	
         radiobutton = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (radiobutton), "1D Scan");
         gtk_box_pack_start (GTK_BOX (vbox_view), radiobutton, TRUE, TRUE, 0);
-        gtk_widget_show (radiobutton);
         g_signal_connect (G_OBJECT (radiobutton), "toggled",
         G_CALLBACK (cb_setmode), (void*)MODE_1DIMSCAN);
 	

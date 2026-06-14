@@ -896,7 +896,7 @@ public:
                         }
                 } else {
                         gchar *message = g_strdup_printf("Action script/library %s not yet defined.\nPlease define action script using the python console.", tmp_script_filename);
-                        g_message ("%s", message);
+                        PI_DEBUG_GP (DBG_L1, "%s", message);
                         if (strncmp (name, "auto-save-ch", 12)){ // do not pop up window for not defined aust-save-chNN.pu scripts, silently ignore
                                 append(message);
                                 main_get_gapp()->warning (message);
@@ -937,7 +937,7 @@ public:
                                 gchar* path = g_strconcat (g_get_home_dir (), "/.gxsm4/pyaction", NULL);
                                 // attempt to create folder if not exiting
                                 if (!g_file_test (path, G_FILE_TEST_IS_DIR)){
-                                        g_message ("creating action script folder %s", path);
+                                        PI_DEBUG_GP (DBG_L1, "creating action script folder %s", path);
                                         g_mkdir_with_parents (path, 0777);
                                 }
                                 script_filename = g_strconcat (path, "/", name, ".py", NULL);
@@ -1207,9 +1207,9 @@ static PyObject* remote_gets(PyObject *self, PyObject *args)
 	gchar *parameter;
 
         if (!PyTuple_Check(args))
-                g_message("gets PyTuple_Check failed");
+                g_warning ("gets: PyTuple_Check failed");
         else
-                g_message("gets PyTuple_Check OK");
+                PI_DEBUG_GP (DBG_L1, "gets: PyTuple_Check OK");
 
         
 	if (!PyArg_ParseTuple(args, "s", &parameter))
@@ -1249,21 +1249,21 @@ static PyObject* remote_get(PyObject *self, PyObject *args)
                 PyErr_Print();
 
                 if (!PyTuple_Check(args))
-                        g_message("get PyTuple_Check failed");
+                        g_warning ("get: PyTuple_Check failed");
                 else
-                        g_message("get PyTuple_Check OK");
+                        PI_DEBUG_GP (DBG_L1, "get: PyTuple_Check OK");
                 
                 PyObject *pstr = PyObject_Str(args);
                 if (pstr != NULL) {
                         const char *cstr = PyUnicode_AsUTF8(pstr);
                         if (cstr != NULL) {
-                                g_message("Object representation: %s", cstr);
+                                PI_DEBUG_GP (DBG_L1, "Object representation: %s", cstr);
                         }
                         Py_DECREF(pstr);
                 }
 
-                g_message ("Py_Type: %s", Py_TYPE(args)->tp_name);
-                g_message ("ObjRepr: %s", PyObject_Repr(args));
+                PI_DEBUG_GP (DBG_L1, "Py_Type: %s", Py_TYPE(args)->tp_name);
+                PI_DEBUG_GP (DBG_L1, "ObjRepr: %s", PyObject_Repr(args));
 
                 return Py_BuildValue("i", -1);
         }
@@ -1343,7 +1343,7 @@ static gboolean main_context_action_from_thread (gpointer user_data){
 	PI_DEBUG(DBG_L2, "pyremote Action ** idle cb: PyObjArgs: " << parameter << ", " << value );
 
 	gpointer *list[] = {(gpointer)"action", (gpointer)parameter, (gpointer)value, NULL, NULL};
-        g_message ("main_context_action_from_thread with [%s %s %s NULL]", (gchar*)list[0], (gchar*)list[1], (gchar*)list[2]);
+        PI_DEBUG_GP (DBG_L1, "main_context_action_from_thread with [%s %s %s NULL]", (gchar*)list[0], (gchar*)list[1], (gchar*)list[2]);
 	g_slist_foreach(gapp->RemoteActionList, (GFunc) CbAction_ra, list);
         idle_data->ra_info = (remote_action_cb*)(list[3]);
         idle_data->ret = 0;
@@ -1351,11 +1351,11 @@ static gboolean main_context_action_from_thread (gpointer user_data){
         UNSET_WAIT_JOIN_MAIN;
         if (list[3]){
                 if (((remote_action_cb*)list[3]) -> data_length > 0)
-                        g_message ("main_context_action_from_thread res [%s %s %s %d %s]", (gchar*)list[0], (gchar*)list[1], (gchar*)list[2], ((remote_action_cb*)list[3]) -> data_length, ((remote_action_cb*)list[3]) -> return_data);
+                        PI_DEBUG_GP (DBG_L1, "main_context_action_from_thread res [%s %s %s %d %s]", (gchar*)list[0], (gchar*)list[1], (gchar*)list[2], ((remote_action_cb*)list[3]) -> data_length, ((remote_action_cb*)list[3]) -> return_data);
                 else
-                        g_message ("main_context_action_from_thread res [%s %s %s %d N/A]", (gchar*)list[0], (gchar*)list[1], (gchar*)list[2], ((remote_action_cb*)list[3]) -> data_length);
+                        PI_DEBUG_GP (DBG_L1, "main_context_action_from_thread res [%s %s %s %d N/A]", (gchar*)list[0], (gchar*)list[1], (gchar*)list[2], ((remote_action_cb*)list[3]) -> data_length);
         }else
-                g_message ("main_context_action_from_thread res [%s %s %s NULL]", (gchar*)list[0], (gchar*)list[1], (gchar*)list[2]);
+                PI_DEBUG_GP (DBG_L1, "main_context_action_from_thread res [%s %s %s NULL]", (gchar*)list[0], (gchar*)list[1], (gchar*)list[2]);
         return G_SOURCE_REMOVE;
 }
 
@@ -1370,7 +1370,7 @@ static PyObject* remote_action(PyObject *self, PyObject *args)
         WAIT_JOIN_MAIN;
         if ( idle_data.ra_info ){
                 if ( idle_data.ra_info->data_length > 0){
-                        g_message ("remote_action: returned with data_length=%d ", idle_data.ra_info->data_length);
+                        PI_DEBUG_GP (DBG_L1, "remote_action: returned with data_length=%d ", idle_data.ra_info->data_length);
                         npy_intp dims[2];
                         dims[0] = 3; // max 5
                         dims[1] = idle_data.ra_info->data_length;
@@ -1379,11 +1379,11 @@ static PyObject* remote_action(PyObject *self, PyObject *args)
                         return Py_BuildValue("Os", pyarr, idle_data.ra_info->return_data); // Python code will receive the array as numpy array.
                 }
                 if ( idle_data.ra_info->return_data){
-                        g_message ("remote_action: returned with return_data string: %s ", idle_data.ra_info->return_data);
+                        PI_DEBUG_GP (DBG_L1, "remote_action: returned with return_data string: %s ", idle_data.ra_info->return_data);
                         return Py_BuildValue("s", idle_data.ra_info->return_data); // Python code will receive the string
                 }
         }
-        g_message ("remote_action: completed with ret=%d ", idle_data.ret);
+        PI_DEBUG_GP (DBG_L1, "remote_action: completed with ret=%d ", idle_data.ret);
         return Py_BuildValue("i", idle_data.ret);
 }
 
@@ -1457,7 +1457,7 @@ static gboolean main_context_rtquery_from_thread (gpointer user_data){
         if (strncmp(parameter, "X $", 3) == 0){
                 idle_data->n = (int)v;
                 if (idle_data->n > 0){
-                        g_message ("sketchy stuff: n=%d attempting to recreate *arr.", idle_data->n);
+                        PI_DEBUG_GP (DBG_L1, "sketchy stuff: n=%d attempting to recreate *arr.", idle_data->n);
                         memcpy (&idle_data->arr, &w, sizeof(idle_data->arr));
                 }
         }
@@ -1612,7 +1612,7 @@ static gboolean main_context_createscan_from_thread (gpointer user_data){
                 UNSET_WAIT_JOIN_MAIN;
                 return G_SOURCE_REMOVE;
         }
-        g_message ("Create Scan: %ld x %ld [x %ld], size %g x %g Ang from python array, append=%ld",sizex, sizey, sizev, rangex, rangey, append);
+        PI_DEBUG_GP (DBG_L1, "Create Scan: %ld x %ld [x %ld], size %g x %g Ang from python array, append=%ld",sizex, sizey, sizev, rangex, rangey, append);
 
         Py_buffer view;
         gboolean rf=false;
@@ -1624,11 +1624,11 @@ static gboolean main_context_createscan_from_thread (gpointer user_data){
                 rf=true;
         }
         if ( (long unsigned int)(view.len / sizeof(long)) != (long unsigned int)(sizex*sizey*sizev) ){
-                g_message ("Create Scan: ERROR array len=%ld does not match nx x ny=%ld", view.len / sizeof(long), sizex*sizey);
+                g_warning ("Create Scan: ERROR array len=%ld does not match nx x ny=%ld", view.len / sizeof(long), sizex*sizey);
                 UNSET_WAIT_JOIN_MAIN;
                 return G_SOURCE_REMOVE;
         }
-        g_message ("Create Scan: array len=%ld OK.", view.len / sizeof(long));
+        PI_DEBUG_GP (DBG_L1, "Create Scan: array len=%ld OK.", view.len / sizeof(long));
         
 
 	//Scan *dst;
@@ -1637,7 +1637,7 @@ static gboolean main_context_createscan_from_thread (gpointer user_data){
 	Scan *dst = main_get_gapp()->xsm->GetScanChannel (ch);
 
         if (dst){
-                g_message ("Resize");
+                PI_DEBUG_GP (DBG_L1, "Resize");
                 dst->mem2d->Resize (sizex, sizey, sizev, ZD_FLOAT);
 
                 dst->data.s.nx = sizex;
@@ -1662,7 +1662,7 @@ static gboolean main_context_createscan_from_thread (gpointer user_data){
                 dst->data.ui.SetComment (tmp);
                 g_free (tmp);
 
-                g_message ("Convert Data");
+                PI_DEBUG_GP (DBG_L1, "Convert Data");
                 /*Read*/
 
                 long *buf = (long*)view.buf;
@@ -1747,7 +1747,7 @@ static gboolean main_context_createscanf_from_thread (gpointer user_data){
                 UNSET_WAIT_JOIN_MAIN;
                 return G_SOURCE_REMOVE;
         }
-        g_message ("Create Scan Float: %ld x %ld [x %ld], size %g x %g Ang from python array, append=%ld",sizex, sizey, sizev, rangex, rangey, append);
+        PI_DEBUG_GP (DBG_L1, "Create Scan Float: %ld x %ld [x %ld], size %g x %g Ang from python array, append=%ld",sizex, sizey, sizev, rangex, rangey, append);
 
         Py_buffer view;
         gboolean rf=false;
@@ -1760,11 +1760,11 @@ static gboolean main_context_createscanf_from_thread (gpointer user_data){
                 rf=true;
         }
 	if ( (long unsigned int)(view.len / sizeof(float)) != (long unsigned int)(sizex*sizey*sizev) ) {
-                g_message ("Create Scan: ERROR array len=%ld does not match nx x ny x v = %ld", view.len / sizeof(float), sizex*sizey*sizev);
+                g_warning ("Create Scan: ERROR array len=%ld does not match nx x ny x v = %ld", view.len / sizeof(float), sizex*sizey*sizev);
                 UNSET_WAIT_JOIN_MAIN;
                 return G_SOURCE_REMOVE;
 	}
-        g_message ("Create Scan: array len=%ld OK.", view.len / sizeof(float));
+        PI_DEBUG_GP (DBG_L1, "Create Scan: array len=%ld OK.", view.len / sizeof(float));
         
 	//if (PyObject_AsWriteBuffer(the_array, (void **) &pbuf, (Py_ssize_t*)&blen))
 	//	return Py_BuildValue("i", -1);
@@ -4988,7 +4988,7 @@ gboolean py_gxsm_console::preset_panes (gpointer user_data)
                 int vheight = gtk_widget_get_height (pygc->vpaned);
                 gtk_paned_set_position (GTK_PANED(pygc->vpaned), (int)(vheight*0.67));
 
-                g_message ("PYRemote: hw: %d, scw: %d, vh: %d *****************", hwidth, scwidth, vheight);
+                PI_DEBUG_GP (DBG_L1, "PYRemote: hw: %d, scw: %d, vh: %d", hwidth, scwidth, vheight);
         }
         return G_SOURCE_REMOVE; // finish IDLE task
 }
@@ -5220,11 +5220,11 @@ gpointer PySHMServer_Run(gpointer data){
         static void *shm_data_ptr = NULL;
         static size_t shm_data_size = 16*1048576+128; // make it a PyObject! -- fixed 16MB block + header for methode name and actual data size, fixed for a start.
 
-        PI_DEBUG_GM(DBG_L0, "PySHM: Init PySHM Server startup.");
+        PI_DEBUG_GM (DBG_L1, "PySHM: Init PySHM Server startup.");
 
         // separate for huge return data blocks????
         if (shm_data_fd == -1){
-                PI_DEBUG_GM(DBG_L0, "PySHM: Init and open of %s.", gxsm_shm_data);
+                PI_DEBUG_GM (DBG_L1, "PySHM: Init and open of %s.", gxsm_shm_data);
                 shm_data_fd = shm_open(gxsm_shm_data, O_CREAT | O_RDWR, 0666);
                 if (shm_data_fd == -1) {
                         g_error ("PySHM: Error shm_open of %s.", gxsm_shm_data);
@@ -5269,9 +5269,9 @@ gpointer PySHMServer_Run(gpointer data){
                                 shm_data_size = 0;
                         }
 
-                        PI_DEBUG_GM(DBG_L0, "PySHM: Cleanup and exit PySHM Server only.");
+                        PI_DEBUG_GM(DBG_L1, "PySHM: Cleanup and exit PySHM Server only.");
                 } else {
-                        PI_DEBUG_GM(DBG_L0, "PySHM: Init PySHM Server only.");
+                        PI_DEBUG_GM(DBG_L1, "PySHM: Init PySHM Server only.");
                 }
                 return NULL;
         }

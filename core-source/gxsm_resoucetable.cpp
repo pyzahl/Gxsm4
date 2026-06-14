@@ -1158,6 +1158,7 @@ extern "C++" {
                                                                     "%s", message);
                         g_signal_connect (dialog, "response", G_CALLBACK (gtk_window_destroy), NULL);
                         gtk_widget_show (dialog);
+
                         g_free (message);
                 } else {
                         while(n--) {

@@ -123,7 +123,7 @@ rpspmc_hwi_dev::~rpspmc_hwi_dev(){
 }
 
 void rpspmc_hwi_dev::hwi_init_overrides(){ // auto adjust and override preferences
-        g_message ("Reconfiguring HwI ** rpspmc_hwi_dev : public XSM_Hardware :: hwi_init_overrides()");
+        PI_DEBUG_GP (DBG_L1, "Reconfiguring HwI ** rpspmc_hwi_dev : public XSM_Hardware :: hwi_init_overrides()");
         main_get_gapp()->xsm->Inst->override_dig_range (1<<20);    // gxsm does precision sanity checks and trys to round to best fit grid
         main_get_gapp()->xsm->Inst->override_volt_in_range (5.0);  // FOR AD4630-24 24bit
         main_get_gapp()->xsm->Inst->override_volt_out_range (5.0); // PMODs AD5791-20 20bit
@@ -135,9 +135,9 @@ void rpspmc_hwi_dev::hwi_init_overrides(){ // auto adjust and override preferenc
 void rpspmc_hwi_dev::update_hardware_mapping_to_rpspmc_source_signals (){
 
         for (int i=0; rpspmc_source_signals[i].label; ++i){ // name
-                g_message ("Reading SOURCE_SIGNALS[%d]",i);
-                g_message ("Reading SOURCE_SIGNALS[%d].mask %x",i,rpspmc_source_signals[i].mask);
-                g_message ("Reading SOURCE_SIGNALS[%d].label >%s<",i,rpspmc_source_signals[i].label);
+                PI_DEBUG_GP (DBG_L2, "Reading SOURCE_SIGNALS[%d]",i);
+                PI_DEBUG_GP (DBG_L2, "Reading SOURCE_SIGNALS[%d].mask %x",i,rpspmc_source_signals[i].mask);
+                PI_DEBUG_GP (DBG_L2, "Reading SOURCE_SIGNALS[%d].label >%s<",i,rpspmc_source_signals[i].label);
                 if (rpspmc_source_signals[i].scan_source_pos > 0){
                         double volt_to_unit = 1.0;
                         switch (rpspmc_source_signals[i].mask){
@@ -151,7 +151,7 @@ void rpspmc_hwi_dev::update_hardware_mapping_to_rpspmc_source_signals (){
                                                                                     rpspmc_source_signals[i].label, rpspmc_source_signals[i].mask, // name
                                                                                     rpspmc_source_signals[i].label,
                                                                                     rpspmc_source_signals[i].unit, volt_to_unit); // conversion to Base Units in Volts is in stream expansion applied
-                g_message ("SOURCE_SIGNAL_DEF %02d for %s mask: 0x%08x L: %s U: %s  x %g [to V] x %g [to %s]",
+                PI_DEBUG_GP (DBG_L1, "SOURCE_SIGNAL_DEF %02d for %s mask: 0x%08x L: %s U: %s  x %g [to V] x %g [to %s]",
                            rpspmc_source_signals[i].scan_source_pos-1,
                            rpspmc_source_signals[i].label, rpspmc_source_signals[i].mask, // name
                            rpspmc_source_signals[i].label, rpspmc_source_signals[i].unit, rpspmc_source_signals[i].scale_factor, volt_to_unit, rpspmc_source_signals[i].unit);
@@ -1625,7 +1625,7 @@ void rpspmc_hwi_dev::set_spmc_signal_mux (int source[6]){
                 rpspmc_source_signals[i].unit         = rpspmc_swappable_signals[k].unit;
                 rpspmc_source_signals[i].unit_sym     = rpspmc_swappable_signals[k].unit_sym;
                 rpspmc_source_signals[i].scale_factor = rpspmc_swappable_signals[k].scale_factor;
-                g_message ("GVP SOURCE MUX/SWPS INIT ** i=%d k=%d {%s} sfac=%g", i, k, rpspmc_source_signals[i].label, rpspmc_source_signals[i].scale_factor);
+                PI_DEBUG_GP (DBG_L1, "GVP SOURCE MUX/SWPS INIT ** i=%d k=%d {%20s} sfac=%g", i, k, rpspmc_source_signals[i].label, rpspmc_source_signals[i].scale_factor);
         }
 }
 

@@ -963,8 +963,6 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrollarea),
 					GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
         gtk_grid_attach (GTK_GRID (pc_grid), scrollarea, 1,1, 9,20);
-        gtk_widget_show (scrollarea);
-        gtk_widget_show (pc_grid);
 	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scrollarea), canvas);
 
 	XSM_DEBUG (DBG_L2, "ProfileControl::ProfileControl hbox");
@@ -974,7 +972,6 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
                 statusbar = gtk_statusbar_new ();
                 statusid  = gtk_statusbar_get_context_id (GTK_STATUSBAR(statusbar), "drag");
                 gtk_grid_attach (GTK_GRID (pc_grid), statusbar, 1,100, 11,1);
-                gtk_widget_show (statusbar);
         } else {
                 // Get Statusbar
                 statusbar = (GtkWidget*) g_object_get_data (G_OBJECT (window), "statusbar");
@@ -1007,7 +1004,6 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
 	XSM_DEBUG (DBG_L2, "ProfileControl::ProfileControl draw!");
 
 	XSM_DEBUG (DBG_L2, "ProfileControl::ProfileControl show!");
-	gtk_widget_show( canvas );
 
         // Tool Button simply attached to grid.
 
@@ -1017,70 +1013,57 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
                 gtk_actionable_set_action_name (GTK_ACTIONABLE (tb), "profile.opt-Y-linreg");
                 gtk_check_button_set_active (GTK_CHECK_BUTTON (tb), (mode & PROFILE_MODE_YLINREG) ? TRUE : FALSE);
                 gtk_grid_attach (GTK_GRID (pc_grid), tb, 10,k++, 1,1);
-                gtk_widget_show (tb);
 
                 tb = gtk_check_button_new_with_label ("LG");
                 gtk_actionable_set_action_name (GTK_ACTIONABLE (tb), "profile.skl-Y-log");
                 gtk_check_button_set_active (GTK_CHECK_BUTTON (tb), (mode & PROFILE_MODE_YLOG) ? TRUE : FALSE);
                 gtk_grid_attach (GTK_GRID (pc_grid), tb, 10,k++, 1,1);
-                gtk_widget_show (tb);
 
                 tb = gtk_check_button_new_with_label ("FT");
                 gtk_actionable_set_action_name (GTK_ACTIONABLE (tb), "profile.opt-Y-ft");
                 gtk_check_button_set_active (GTK_CHECK_BUTTON (tb), (mode & PROFILE_MODE_YPSD) ? TRUE : FALSE);
                 gtk_grid_attach (GTK_GRID (pc_grid), tb, 10,k++, 1,1);
-                gtk_widget_show (tb);
 
                 tb = gtk_check_button_new_with_label ("dY");
                 gtk_actionable_set_action_name (GTK_ACTIONABLE (tb), "profile.opt-Y-diff");
                 gtk_check_button_set_active (GTK_CHECK_BUTTON (tb), (mode & PROFILE_MODE_YDIFF) ? TRUE : FALSE);
                 gtk_grid_attach (GTK_GRID (pc_grid), tb, 10,k++, 1,1);
-                gtk_widget_show (tb);
         
                 tb = gtk_check_button_new_with_label ("LP");
                 gtk_actionable_set_action_name (GTK_ACTIONABLE (tb), "profile.opt-Y-lowpass-cycle");
                 gtk_check_button_set_active (GTK_CHECK_BUTTON (tb), (mode & PROFILE_MODE_YLOWPASS) ? TRUE : FALSE);
                 gtk_grid_attach (GTK_GRID (pc_grid), tb, 10,k++, 1,1);
-                gtk_widget_show (tb);
         
                 tb = gtk_check_button_new_with_label ("YH");
                 gtk_actionable_set_action_name (GTK_ACTIONABLE (tb), "profile.skl-Y-hold");
                 gtk_check_button_set_active (GTK_CHECK_BUTTON (tb), (scaleing & PROFILE_SCALE_YHOLD) ? TRUE : FALSE);
                 gtk_grid_attach (GTK_GRID (pc_grid), tb, 10,k++, 1,1);
-                gtk_widget_show (tb);
 
                 tb = gtk_check_button_new_with_label ("YE");
                 gtk_actionable_set_action_name (GTK_ACTIONABLE (tb), "profile.skl-Y-expand");
                 gtk_check_button_set_active (GTK_CHECK_BUTTON (tb), (scaleing & PROFILE_SCALE_YEXPAND) ? TRUE : FALSE);
                 gtk_grid_attach (GTK_GRID (pc_grid), tb, 10,k++, 1,1);
-                gtk_widget_show (tb);
 
                 tb = gtk_check_button_new_with_label ("CA");
                 gtk_actionable_set_action_name (GTK_ACTIONABLE (tb), "profile.cursor-A");
                 gtk_grid_attach (GTK_GRID (pc_grid), tb, 10,k++, 1,1);
-                gtk_widget_show (tb);
 
                 widget_cb = tb = gtk_check_button_new_with_label ("CB");
                 gtk_actionable_set_action_name (GTK_ACTIONABLE (tb), "profile.cursor-B");
                 gtk_grid_attach (GTK_GRID (pc_grid), tb, 10,k++, 1,1);
-                gtk_widget_show (tb);
         
                 widget_xr_ab = tb = gtk_check_button_new_with_label ("AB");
                 gtk_actionable_set_action_name (GTK_ACTIONABLE (tb), "profile.opt-XR-AB");
                 gtk_check_button_set_active (GTK_CHECK_BUTTON (tb), (mode & PROFILE_MODE_XR_AB) ? TRUE : FALSE);
                 gtk_grid_attach (GTK_GRID (pc_grid), tb, 10,k++, 1,1);
-                gtk_widget_show (tb);
         
                 tb = gtk_check_button_new_with_label ("BI");
                 gtk_actionable_set_action_name (GTK_ACTIONABLE (tb), "profile.opt-Y-binary");
                 gtk_grid_attach (GTK_GRID (pc_grid), tb, 10,k++, 1,1);
-                gtk_widget_show (tb);
 
-                gtk_widget_show (pc_grid); // FIX-ME GTK4 SHOWALL
                 gtk_widget_hide (widget_cb);
                 gtk_widget_hide (widget_xr_ab);
         } else {
-                gtk_widget_show (pc_grid); // FIX-ME GTK4 SHOWALL
                 widget_cb=NULL;
                 widget_xr_ab=NULL;
         }
@@ -1242,7 +1225,6 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
                 window = GTK_WINDOW (app_window);
 
                 header_bar = gtk_header_bar_new ();
-                gtk_widget_show (header_bar);
 
 #if 1
                 // attach full view popup menu to tool button ----------------------------------------------------
@@ -1250,7 +1232,6 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
                 //gtk_menu_button_set_icon_name (GTK_MENU_BUTTON (header_menu_button), "emblem-system-symbolic");
                 gtk_menu_button_set_popover (GTK_MENU_BUTTON (header_menu_button), p_popup_menu);
                 gtk_header_bar_pack_end (GTK_HEADER_BAR (header_bar), header_menu_button);
-                gtk_widget_show (header_menu_button);
 #endif
 
                 gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
@@ -1261,14 +1242,10 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
                 g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
                 pc_grid = v_grid;
 
-                gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
         }
-        gtk_widget_show (pc_grid);
 
         // FIX-ME-GTK4 ?!?!
         g_signal_connect (G_OBJECT (pc_grid), "destroy", G_CALLBACK (gtk_window_destroy), &pc_grid);
-
-        gtk_widget_show (GTK_WIDGET (pc_grid)); // FIX-ME GTK4 SHOWALL
 
         // create action map for canvas/grid to manage "this" profile
         GSimpleActionGroup *gsag = g_simple_action_group_new ();
@@ -2538,10 +2515,10 @@ void ProfileControl::file_open_callback (GSimpleAction *simple, GVariant *parame
                                                          _("_Open"),
                                                          GTK_RESPONSE_ACCEPT,
                                                          NULL);
-        gtk_widget_show (dialog);
         g_signal_connect (dialog, "response",
                           G_CALLBACK (ProfileControl::file_open_callback_exec),
                           NULL);
+	gtk_widget_show (dialog);
 	//gchar *ffname;
 	//ffname = main_get_gapp ()->file_dialog_load ("Profile to load", NULL, NULL);
 	//if (ffname)
@@ -2581,11 +2558,10 @@ void ProfileControl::file_save_callback (GSimpleAction *simple, GVariant *parame
         g_object_unref (default_file_for_saving);
         g_free (oname);
         
-        gtk_widget_show (chooser);
-
         g_signal_connect (chooser, "response",
                           G_CALLBACK (ProfileControl::file_save_callback_exec),
                           user_data);
+	gtk_widget_show (chooser);
 
         /*
 	oname = g_strconcat (pc->scan1d->data.ui.originalname, ".asc", NULL);
@@ -2636,11 +2612,10 @@ void ProfileControl::file_save_data_callback (GSimpleAction *simple, GVariant *p
         //gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), oname);
         g_free (oname);
         
-        gtk_widget_show (chooser);
-
         g_signal_connect (chooser, "response",
                           G_CALLBACK (ProfileControl::file_save_data_callback_exec),
                           user_data);
+	gtk_widget_show (chooser);
 
         /*		
 	oname = g_strconcat (pc->scan1d->data.ui.originalname, ".asc", NULL);
@@ -2690,11 +2665,11 @@ void ProfileControl::file_save_as_callback (GSimpleAction *simple, GVariant *par
         //gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (dialog), oname);
         //gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), oname);
         g_free (oname);
-        gtk_widget_show (chooser);
 
         g_signal_connect (chooser, "response",
                           G_CALLBACK (ProfileControl::file_save_as_callback_exec),
                           user_data);
+	gtk_widget_show (chooser);
 
         /*		
 	oname = g_strconcat (pc->scan1d->data.ui.originalname, ".asc", NULL);
@@ -2825,11 +2800,12 @@ void ProfileControl::file_save_image_callback (GSimpleAction *simple, GVariant *
         gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (chooser), suggested_name);
 	g_free (suggested_name);
         
-        gtk_widget_show (chooser);
-        
         g_signal_connect (chooser, "response",
                           G_CALLBACK (ProfileControl::file_save_image_callback_exec),
                           user_data);
+	gtk_widget_show (chooser);
+
+
 }
 
 void ProfileControl::file_close_callback (GSimpleAction *simple, GVariant *parameter, 

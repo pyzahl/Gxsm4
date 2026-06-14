@@ -102,7 +102,7 @@ void RPSPMC_Control::init_vp_signal_info_lookup_cache(){
                                unitlookup[i]  = rpspmc_source_signals[k].unit_sym;
                                expdi_lookup[i] = rpspmc_source_signals[k].garr_index;
                         }
-                g_print ("Mask[%02d] 0x%08x => %s in %s x %g\n",i,msklookup[i],lablookup[i],unitlookup[i], scalelookup[i]);
+                PI_DEBUG_GP (DBG_L1, "Mask[%02d] 0x%08x => %s in %s x %g\n",i,msklookup[i],lablookup[i],unitlookup[i], scalelookup[i]);
         }
         // END MARK:
         msklookup[NUM_PROBEDATA_ARRAYS] = -1;
@@ -174,7 +174,7 @@ double RPSPMC_Control::vp_scale_lookup(int i){
                         }
                 }
         }
-        g_warning ("vp_scale_lookup -- failed to find scale for garr index %d", i);
+        g_warning ("vp_scale_lookup -- failed to find scale for garr index %d (N/A)", i);
         return 1.;
 }
 
