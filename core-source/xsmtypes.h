@@ -310,7 +310,7 @@ class Display_Param{
 public:
 	Display_Param(){
                 vframe =  vlayer = 0;
-                contrast=1.; bright=0.; z_high=z_low=0.; vrange_z=10.; voffset_z=0.;
+                contrast=1.; bright=0.; z_high=1.; z_low=0.; vrange_z=1.; voffset_z=0.;
                 ViewFlg=1;
                 px_shift_xy[0]=px_shift_xy[1]=0.; px_shift_xy[2]=5e-5;
                 use_high_low = 0;

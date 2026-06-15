@@ -370,7 +370,7 @@ void VObject::show_profile_cb (GtkWidget *widget, VObject *vo){
 }
 
 void VObject::show_profile (gboolean pflg){
-        g_message ("VObject::show_profile: %s", pflg?"YES":"NO");
+        //g_message ("VObject::show_profile: %s", pflg?"YES":"NO");
 	if(pflg){
 		if (profile) // already exists, done
 			return;
@@ -389,7 +389,7 @@ void VObject::show_profile (gboolean pflg){
 						 get_profile_path_dimension (),
 						 get_profile_series_dimension ()
 						 );
-                g_message ("VObject::show_profile %s", proftit);
+                //g_message ("VObject::show_profile %s", proftit);
 		profile = new ProfileControl((Gxsm4app *) g_object_get_data (G_OBJECT (canvas), "MAIN_APP"), proftit);        
 		g_free(proftit);
 

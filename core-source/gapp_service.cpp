@@ -1670,7 +1670,7 @@ void AppBase::LoadGeometry(){
         if (window_geometry[WGEO_SHOW]){
                 g_message ("Scheduling: wm set geometry for %s", window_key);
                 wm_attempt_count = 0;
-                g_timeout_add (100, GSourceFunc (position_retry_idle_callback), this); // try wm positioning later again, may fail early :(
+                g_timeout_add (50, GSourceFunc (position_retry_idle_callback), this); // try wm positioning later again, may fail early :(
         }
 
         if (strcmp (window_key, "Gxsm4") || strcmp (window_key, "gxsm4"))

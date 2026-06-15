@@ -48,10 +48,16 @@
 // #include "plug-ins/control/spm_scancontrol.h" // ????
 
 double Contrast_to_VRangeZ (double contrast, double dz){
-	return 64.*dz/contrast;
+        if (fabs(contrast) > 0)
+                return 64.*dz/contrast;
+        else
+                return 64.*dz;
 }
 double VRangeZ_to_Contrast (double vrz, double dz){
-	return 64.*dz/vrz;
+        if (fabs(vrz) > 0)
+                return 64.*dz/vrz;
+        else
+                return 64.*dz;
 }
 
 /*! 

@@ -933,14 +933,26 @@ public:
 	int resize_auto ();
 
         static gboolean position_retry_idle_callback (AppBase *self) {
-                if (self->wm_attempt_count++ > 10){
+                if (self->wm_attempt_count++ > 40){
                         g_message ("EE position_retry_idle_callback: giving up, permanent fail for %s", self->window_key);
                         self->wm_attempt_count=0;
                         return G_SOURCE_REMOVE;
                 }
-                if (self->position_auto ())
-                        return G_SOURCE_CONTINUE; // delayed retry
-                if (self->resize_auto ())
+
+                // Check if the window has system resources (realized)
+                gboolean is_realized = gtk_widget_get_realized(GTK_WIDGET(self->window));
+
+                // Check if the surface is actually mapped to the desktop
+                GdkSurface *surface = gtk_native_get_surface(GTK_NATIVE(self->window));
+                gboolean is_mapped = gdk_surface_get_mapped(surface);
+
+                if (is_realized && is_mapped) {
+                        // Window is realized and displayed on the desktop
+                        if (self->position_auto ())
+                                return G_SOURCE_CONTINUE; // delayed retry
+                        if (self->resize_auto ())
+                                return G_SOURCE_CONTINUE; // delayed retry
+                } else
                         return G_SOURCE_CONTINUE; // delayed retry
                 
                 return G_SOURCE_REMOVE; // finally
