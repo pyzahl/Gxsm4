@@ -267,37 +267,38 @@ GtkWidget* GnomeAppService::progress_info_new (const gchar *title, gint levels, 
                 progress_dialog_box=NULL;
                 new_dialog=true;
 
-#if 1
-                // CREATE POPOVER
-                GtkWidget *popover = gtk_popover_new ();
-                gtk_widget_set_parent (popover, gapp->get_main_reference ()); // Attaches to ...
-                gtk_popover_set_position (GTK_POPOVER (popover), GTK_POS_BOTTOM); // Appear below the button
 
-                GtkWidget *popover_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 10);
-                gtk_widget_set_margin_start (popover_box, 10);
-                gtk_widget_set_margin_end (popover_box, 10);
-                gtk_widget_set_margin_top (popover_box, 10);
-                gtk_widget_set_margin_bottom (popover_box, 10);
-                gtk_popover_set_child (GTK_POPOVER (popover), popover_box);
-                progress_dialog_box = popover_box;
-                ptitle=gtk_label_new("Progress");
-                gtk_box_append (GTK_BOX (popover_box), ptitle);
+                if (g_variant_get_boolean (g_settings_get_value (gapp->get_app_settings(), "progress-info"))){
+                        // CREATE POPOVER
+                        GtkWidget *popover = gtk_popover_new ();
+                        gtk_widget_set_parent (popover, gapp->get_main_reference ()); // Attaches to ...
+                        gtk_popover_set_position (GTK_POPOVER (popover), GTK_POS_BOTTOM); // Appear below the button
+
+                        GtkWidget *popover_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 10);
+                        gtk_widget_set_margin_start (popover_box, 10);
+                        gtk_widget_set_margin_end (popover_box, 10);
+                        gtk_widget_set_margin_top (popover_box, 10);
+                        gtk_widget_set_margin_bottom (popover_box, 10);
+                        gtk_popover_set_child (GTK_POPOVER (popover), popover_box);
+                        progress_dialog_box = popover_box;
+                        ptitle=gtk_label_new("Progress");
+                        gtk_box_append (GTK_BOX (popover_box), ptitle);
                 
-                progress_dialog = popover;
+                        progress_dialog = popover;
 
-                gtk_popover_popup (GTK_POPOVER (popover));
+                        gtk_popover_popup (GTK_POPOVER (popover));
 
-                progress_dialog_is_popup = true;
+                        progress_dialog_is_popup = true;
 
-#else
-                progress_dialog = gtk_dialog_new_with_buttons (N_(title?title:"Progress"),
-                                                               gapp->get_main_window  (),
-                                                               (GtkDialogFlags)((modal ? GTK_DIALOG_MODAL:0) | GTK_DIALOG_DESTROY_WITH_PARENT),
-                                                               NULL, NULL, NULL);
+                }else{
+                        progress_dialog = gtk_dialog_new_with_buttons (N_(title?title:"Progress"),
+                                                                       gapp->get_main_window  (),
+                                                                       (GtkDialogFlags)((modal ? GTK_DIALOG_MODAL:0) | GTK_DIALOG_DESTROY_WITH_PARENT),
+                                                                       NULL, NULL, NULL);
                 
-                progress_dialog_box = gtk_dialog_get_content_area (GTK_DIALOG (progress_dialog));
-                progress_dialog_is_popup = false;
-#endif           
+                        progress_dialog_box = gtk_dialog_get_content_area (GTK_DIALOG (progress_dialog));
+                        progress_dialog_is_popup = false;
+                }
 		for (int i=0; i<MAX_PROGRESS_LEVELS; ++i)
 			progress_bar[i]	= NULL;
 	} else {
@@ -650,7 +651,7 @@ AppBase::AppBase (Gxsm4app *app, const gchar *title){
 	XSM_DEBUG_GM(DBG_L3, "AppBase::AppBase" ); 
 
         gxsm4app = GXSM4_APP(app);
-        main_title_buffer = g_strdup (title ? title : "AppBase: Main Window title is not set.");
+        main_title_buffer = g_strdup (title ? title : "AppBase: Window title is not set");
         sub_title_buffer = NULL;
 
         app_window = NULL;
@@ -877,10 +878,10 @@ void AppBase::add_window_to_window_menu(const gchar *menu_item_label, const gcha
 }
 
 int AppBase::set_window_geometry (const gchar *key, gint index, gboolean add_to_menu){
-        XSM_DEBUG_GM (DBG_L3, "AppBase::set_window_geometry ** setup and append '%s' to Windows Menu.", key?key:"!! window key N/A !!");
+        XSM_DEBUG_GM (DBG_L1, "AppBase::set_window_geometry ** setup and append window key '%s' to Windows Menu for %s.", key?key:"!! window key N/A !!", main_title_buffer);
 
         if (window_key){
-                XSM_DEBUG_GM (DBG_L2, "AppBase::set_window_geometry ... geometry already setup. DUPLICATE WARNING append '%s' to Windows Menu already done.", key);
+                XSM_DEBUG_GM (DBG_L2, "AppBase::set_window_geometry ... geometry already setup. DUPLICATE WARNING append '%s' to Windows Menu already done. Skipping.", key);
                 // remove from menu!
                 g_free (window_key);
         }

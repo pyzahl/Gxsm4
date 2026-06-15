@@ -1328,10 +1328,25 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
         // if (g_variant_get_boolean (splash_display) && (strncmp (getenv(“XDG_SESSION_TYPE”), 'x11', 3) == 0)){
         if (g_variant_get_boolean (splash_display)){
                 splash = gtk_popover_new ();
+
+                gtk_widget_set_parent (splash, GTK_WIDGET(app_window));
+                //gtk_widget_set_parent (splash, GTK_WIDGET(appbar));
+                //GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+                //gtk_widget_set_parent(splash, box);
+
+                gtk_popover_set_has_arrow (GTK_POPOVER (splash), FALSE);
+                gtk_widget_set_halign(splash, GTK_ALIGN_CENTER);
+                gtk_widget_set_valign(splash, GTK_ALIGN_CENTER);
+
+                // Point to the entire parent widget so the popover opens in the middle
+                GdkRectangle rect = {0, 0, 800, 400};
+                gtk_popover_set_pointing_to(GTK_POPOVER(splash), &rect);
+
+
                 GtkWidget *vb = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
 		gtk_widget_show (vb);
                 gtk_popover_set_child (GTK_POPOVER (splash), vb);
-               
+
                 splash_darea = gtk_drawing_area_new ();
                 gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (splash_darea), ImgW);
                 gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (splash_darea), ImgH);
@@ -1361,11 +1376,8 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
 		gtk_widget_show (splash_progress_bar);
 		gtk_box_append (GTK_BOX (vb), splash_progress_bar);
 
-                gtk_widget_set_parent (splash, GTK_WIDGET(app_window));
-                gtk_popover_set_has_arrow (GTK_POPOVER (splash), FALSE);
-                // FIX-ME GTK4 
-                gtk_popover_set_pointing_to (GTK_POPOVER (splash), &(GdkRectangle){ 1000-ImgW/2, 500-ImgH/2, 1, 1});
-
+                g_message ("Gxsm Splash Message: %s", g_variant_get_string (splash_message, NULL));
+                
                 gtk_popover_popup (GTK_POPOVER (splash));
         }
 }
