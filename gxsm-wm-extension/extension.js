@@ -35,9 +35,16 @@ import Meta from 'gi://Meta';
 import Clutter from 'gi://Clutter'
 import GObject from 'gi://GObject'
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 
+
+// Get the full version string (e.g., "46.1" or "47.alpha")
+const versionString = Config.PACKAGE_VERSION; 
+const [GSVmajor, GSVminor] = versionString.split('.').map(s => parseInt(s, 10));
+    
 const GLib = imports.gi.GLib;
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // busctl --user tree org.gnome.Shell 
 // busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction s "'Gxsm4'"
@@ -45,7 +52,7 @@ const GLib = imports.gi.GLib;
 // └─ /org/gnome/Shell/Extensions/GxsmWmExtension
 
 // Set Window Geometry: SetGeoAction (wClass, title, x,y,w,h,op); use op=0
-// busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiiii -- "gxsm4" "Gxsm4" 100 100 500 600 0
+// busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiiii -- "gxsm4" "Gxsm4" 100 100 500 600 'FALSE'
 
 // Query Window Geometry: GetGeoAction (wClass, title);
 // busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ss "gxsm4" "Gxsm4"                
@@ -142,24 +149,11 @@ export default class GxsmWm extends Extension {
 	    
             if (wmClass === targetClass && title.match(regex)) {
 
-		this.Gnome50Layout(win, x, y, width, height);
-
-		/*
-		win.move_resize_frame(false, x, y, width, height);
-
-		if (uop){
-		    win.move_resize_frame(false, x, y, width, height);
-		    //log(`win.move_resize forced.`);
-		    //return 'OK*';
-		}
-
-		GLib.timeout_add(GLib.PRIORITY_DEFAULT_IDLE, 30, () => {
-		//GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
-		    win.move_resize_frame('false', x, y, width, height);
-		    //log(`win.move_resize completed OK.`);
-		    return GLib.SOURCE_REMOVE; // Always return remove to prevent looping
-		    });
-		*/
+		if (GSVmajor >= 50)
+		    this.Gnome50Layout(win, x, y, width, height, uop);
+		else 
+		    this.Gnome49Layout(win, x, y, width, height, uop);
+		
 		return 'OK';
 
             }
@@ -167,7 +161,7 @@ export default class GxsmWm extends Extension {
 	return 'WNA'; // window not available
     }
 
-    Gnome50Layout(window, x, y, width, height) {
+    Gnome50Layout(window, x, y, width, height, uop) {
 	if (!window) return;
 
 	window.move_resize_frame(false, x, y, width, height);
@@ -192,6 +186,44 @@ export default class GxsmWm extends Extension {
 	});
     }
 
+
+    Gnome49Layout(window, x, y, width, height, uop) {
+	if (!window) return;
+	window.move_frame(false, x, y);
+	//win.move_resize_frame(false, x, y, width, height);
+	
+	sleep(200);
+	window.move_resize_frame(false, x, y, width, height);
+	
+	if (uop){
+	    window.move_resize_frame(false, x, y, width, height);
+	    //log(`win.move_resize forced.`);
+	    //return 'OK*';
+	}
+	
+	GLib.timeout_add(GLib.PRIORITY_DEFAULT_IDLE, 30, () => {
+	    //GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+	    window.move_resize_frame('false', x, y, width, height);
+	    //log(`win.move_resize completed OK.`);
+	    return GLib.SOURCE_REMOVE; // Always return remove to prevent looping
+	});
+
+	// Get the default seat
+	//const seat = Clutter.get_default_backend().get_default_seat();
+
+	// Get the core pointer device
+	//const pointer = seat.get_pointer();
+	//const [x, y] = pointer.get_coords();
+	// 2. Query the stage layout to find out what actor is physically under the coordinates
+	//const actorUnderMouse = global.stage.get_actor_at_pos(Clutter.PickMode.ALL, x, y);
+
+	// 3. Directly assign key focus to that actor
+	//if (actorUnderMouse)
+	//    global.stage.set_key_focus(actorUnderMouse);
+	//
+	// Forces the pointer to re-check the actor underneath it
+	//pointer.update_focus_actor(global.stage, Clutter.get_current_event_time());
+    }
     
     // This is the function you want to execute from the shell
     GetGeoAction(wClass, wTitle) {

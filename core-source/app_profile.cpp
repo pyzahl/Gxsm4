@@ -1242,9 +1242,9 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
                 g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
                 pc_grid = v_grid;
 
+                gtk_window_present (GTK_WINDOW (window));
         }
 
-        // FIX-ME-GTK4 ?!?!
         g_signal_connect (G_OBJECT (pc_grid), "destroy", G_CALLBACK (gtk_window_destroy), &pc_grid);
 
         // create action map for canvas/grid to manage "this" profile
@@ -2046,7 +2046,7 @@ gint ProfileControl::updateTics (gboolean force)
         //        g_message ("ProfileControl::updateTics %s (%s)", scan1d->data.Zunit->MakeLongLabel(), scan1d->data.Xunit->MakeLongLabel());
         //else {
         if (!scan1d){
-                g_message ("ProfileControl::updateTics scan1d=NULL!");
+                g_warning ("ProfileControl::updateTics scan1d=NULL (no data assigned)");
                 return -1;
         }
         
@@ -2515,10 +2515,10 @@ void ProfileControl::file_open_callback (GSimpleAction *simple, GVariant *parame
                                                          _("_Open"),
                                                          GTK_RESPONSE_ACCEPT,
                                                          NULL);
+        gtk_widget_show (dialog);
         g_signal_connect (dialog, "response",
                           G_CALLBACK (ProfileControl::file_open_callback_exec),
                           NULL);
-	gtk_widget_show (dialog);
 	//gchar *ffname;
 	//ffname = main_get_gapp ()->file_dialog_load ("Profile to load", NULL, NULL);
 	//if (ffname)
@@ -2558,10 +2558,11 @@ void ProfileControl::file_save_callback (GSimpleAction *simple, GVariant *parame
         g_object_unref (default_file_for_saving);
         g_free (oname);
         
+        gtk_widget_show (chooser);
+
         g_signal_connect (chooser, "response",
                           G_CALLBACK (ProfileControl::file_save_callback_exec),
                           user_data);
-	gtk_widget_show (chooser);
 
         /*
 	oname = g_strconcat (pc->scan1d->data.ui.originalname, ".asc", NULL);
@@ -2612,10 +2613,11 @@ void ProfileControl::file_save_data_callback (GSimpleAction *simple, GVariant *p
         //gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), oname);
         g_free (oname);
         
+        gtk_widget_show (chooser);
+
         g_signal_connect (chooser, "response",
                           G_CALLBACK (ProfileControl::file_save_data_callback_exec),
                           user_data);
-	gtk_widget_show (chooser);
 
         /*		
 	oname = g_strconcat (pc->scan1d->data.ui.originalname, ".asc", NULL);
@@ -2665,11 +2667,11 @@ void ProfileControl::file_save_as_callback (GSimpleAction *simple, GVariant *par
         //gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (dialog), oname);
         //gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), oname);
         g_free (oname);
+        gtk_widget_show (chooser);
 
         g_signal_connect (chooser, "response",
                           G_CALLBACK (ProfileControl::file_save_as_callback_exec),
                           user_data);
-	gtk_widget_show (chooser);
 
         /*		
 	oname = g_strconcat (pc->scan1d->data.ui.originalname, ".asc", NULL);
@@ -2800,12 +2802,11 @@ void ProfileControl::file_save_image_callback (GSimpleAction *simple, GVariant *
         gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (chooser), suggested_name);
 	g_free (suggested_name);
         
+        gtk_widget_show (chooser);
+        
         g_signal_connect (chooser, "response",
                           G_CALLBACK (ProfileControl::file_save_image_callback_exec),
                           user_data);
-	gtk_widget_show (chooser);
-
-
 }
 
 void ProfileControl::file_close_callback (GSimpleAction *simple, GVariant *parameter, 
