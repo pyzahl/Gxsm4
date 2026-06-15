@@ -77,12 +77,12 @@
     },
     "scan_leveling": {
       "channel": 0,
-      "recent_line_count": 64,
+      "recent_line_count": 4,
       "output_prefix": "gui_scan_leveling",
       "arm_correction": false,
       "correction_sign": -1.0,
       "correction_gain": 1.0,
-      "max_abs_delta": 0.005,
+      "max_abs_delta": 0.02,
       "verify_delay_s": 20.0,
       "verify_line_count": 16
     },

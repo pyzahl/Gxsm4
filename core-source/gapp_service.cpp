@@ -273,7 +273,8 @@ GtkWidget* GnomeAppService::progress_info_new (const gchar *title, gint levels, 
                         GtkWidget *popover = gtk_popover_new ();
                         gtk_widget_set_parent (popover, gapp->get_main_reference ()); // Attaches to ...
                         gtk_popover_set_position (GTK_POPOVER (popover), GTK_POS_BOTTOM); // Appear below the button
-
+                        gtk_popover_set_autohide(GTK_POPOVER(popover), FALSE);
+                        
                         GtkWidget *popover_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 10);
                         gtk_widget_set_margin_start (popover_box, 10);
                         gtk_widget_set_margin_end (popover_box, 10);

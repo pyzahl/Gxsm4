@@ -1337,6 +1337,7 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
                 gtk_popover_set_has_arrow (GTK_POPOVER (splash), FALSE);
                 gtk_widget_set_halign(splash, GTK_ALIGN_CENTER);
                 gtk_widget_set_valign(splash, GTK_ALIGN_CENTER);
+                gtk_popover_set_autohide(GTK_POPOVER(splash), FALSE);
 
                 // Point to the entire parent widget so the popover opens in the middle
                 GdkRectangle rect = {0, 0, 800, 400};
