@@ -933,7 +933,7 @@ public:
 	int resize_auto ();
 
         static gboolean position_retry_idle_callback (AppBase *self) {
-                if (self->wm_attempt_count++ > 40){
+                if (self->wm_attempt_count++ > 100){
                         g_message ("EE position_retry_idle_callback: giving up, permanent fail for %s", self->window_key);
                         self->wm_attempt_count=0;
                         return G_SOURCE_REMOVE;
@@ -952,9 +952,10 @@ public:
                                 return G_SOURCE_CONTINUE; // delayed retry
                         if (self->resize_auto ())
                                 return G_SOURCE_CONTINUE; // delayed retry
-                } else
+                } else {
+                        g_message ("EE position_retry_idle_callback: not mapped %s", self->window_key);
                         return G_SOURCE_CONTINUE; // delayed retry
-                
+                }
                 return G_SOURCE_REMOVE; // finally
         };
 

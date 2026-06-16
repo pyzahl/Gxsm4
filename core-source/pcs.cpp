@@ -311,7 +311,7 @@ void Param_Control::Put_Value(){
 
 double Param_Control::Get_dValue(){
 	if(Dval)
-		return *Dval;
+		return isnan(*Dval) ? 999999. : *Dval; // ** preven NAN errors for adjustements
 	else
 		if(Ival)
 			return (double)*Ival;

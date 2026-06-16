@@ -81,6 +81,12 @@ const GXSMWMXML = `
       <arg type="b" direction="in" name="uop"/>
       <arg type="s" direction="out" name="res"/>
     </method>
+    <method name="SetOnTopAction">
+      <arg type="s" direction="in" name="wClass"/>
+      <arg type="s" direction="in" name="wTitle"/>
+      <arg type="b" direction="in" name="uop"/>
+      <arg type="s" direction="out" name="res"/>
+    </method>
   </interface>
 </node>`;
 
@@ -97,6 +103,25 @@ export default class GxsmWm extends Extension {
         }
     }
 
+    setOnTopByTitleAndClass(wClass, wTitle, uop) {
+	let windowActors = global.get_window_actors();
+	
+	for (let actor of windowActors) {
+            let win = actor.meta_window;
+            if (!win) continue;
+            
+            // Wayland native apps use app_id for class; XWayland uses wm_class
+            let wmClass = win.get_wm_class();
+            let title = win.get_title();   
+	    const regex = new RegExp(targetTitle, "g"); 
+	    
+            if (wmClass === targetClass && title.match(regex)){
+		win.set_above(uop);
+		return 'OK';
+	    }
+	}
+	return 'WNA';
+    }
 
     getWindowGeometryByClassAndTitle(targetClass, targetTitle) {
 	// Get all window actors across all workspaces
@@ -234,6 +259,11 @@ export default class GxsmWm extends Extension {
     SetGeoAction(wClass, wTitle, x, y, width, height, uop) {
         //log(`GXSM-WM SHELL EXT SetGeo: ${wClass} >${wTitle}< [${x} ${y} ${width} ${height} ${uop}]`);
 	return this.moveResizeByTitleAndClass(wClass, wTitle, x, y, width, height, uop);
+    }
+
+    SetOnTopAction(wClass, wTitle, uop) {
+	return this.setOnTopByTitleAndClass(wClass, wTitle, uop);
+	metaWindow.set_above(uop);
     }
 }
 

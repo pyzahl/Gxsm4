@@ -685,7 +685,7 @@ void App::build_gxsm (Gxsm4appWindow *win){
 
         /* Now able to bring up Splash and Startup Info window */
         GxsmSplash (-1.0, "GXSM Startup.", "Initializing Windows and Modules."); // this will auto remove splash after timout!
-        
+    
         XSM_DEBUG(DBG_L2, "App::build_gxsm - starting up" );
         SetStatus(N_("Starting GXSM..."));
         
@@ -1189,7 +1189,8 @@ gint App::GxsmSplashRemove(gpointer data){
 
         splash_draw_function (NULL, NULL, 0,0, NULL); // clean up
 
-        gtk_popover_popdown (GTK_POPOVER (a->splash));
+        gtk_window_destroy (GTK_WINDOW (a->splash));
+        gtk_window_set_auto_startup_notification (TRUE);
         
 	return FALSE;
 }
@@ -1327,26 +1328,16 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
 
         // if (g_variant_get_boolean (splash_display) && (strncmp (getenv(“XDG_SESSION_TYPE”), 'x11', 3) == 0)){
         if (g_variant_get_boolean (splash_display)){
-                splash = gtk_popover_new ();
-
-                gtk_widget_set_parent (splash, GTK_WIDGET(app_window));
-                //gtk_widget_set_parent (splash, GTK_WIDGET(appbar));
-                //GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-                //gtk_widget_set_parent(splash, box);
-
-                gtk_popover_set_has_arrow (GTK_POPOVER (splash), FALSE);
-                gtk_widget_set_halign(splash, GTK_ALIGN_CENTER);
-                gtk_widget_set_valign(splash, GTK_ALIGN_CENTER);
-                gtk_popover_set_autohide(GTK_POPOVER(splash), FALSE);
-
-                // Point to the entire parent widget so the popover opens in the middle
-                GdkRectangle rect = {0, 0, 800, 400};
-                gtk_popover_set_pointing_to(GTK_POPOVER(splash), &rect);
-
+                gtk_window_set_auto_startup_notification(FALSE);
+                splash = gtk_window_new ();
+                gtk_window_set_title (GTK_WINDOW (splash), "Startup...");
+                gtk_window_set_default_size (GTK_WINDOW (splash), 300, 200);
+                gtk_window_set_decorated (GTK_WINDOW (splash), FALSE); // Remove borders
+                gtk_window_set_modal (GTK_WINDOW (splash), TRUE); // Modal
+                gtk_widget_show (splash);
 
                 GtkWidget *vb = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
-		gtk_widget_show (vb);
-                gtk_popover_set_child (GTK_POPOVER (splash), vb);
+                gtk_window_set_child (GTK_WINDOW (splash), vb);
 
                 splash_darea = gtk_drawing_area_new ();
                 gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (splash_darea), ImgW);
@@ -1378,8 +1369,20 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
 		gtk_box_append (GTK_BOX (vb), splash_progress_bar);
 
                 g_message ("Gxsm Splash Message: %s", g_variant_get_string (splash_message, NULL));
-                
-                gtk_popover_popup (GTK_POPOVER (splash));
+
+                gchar *stdout_buf = NULL;
+                gchar *stderr_buf = NULL;
+                gint exit_status;
+                GError *error = NULL;
+                gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetOnTopAction ssb -- 'org.gnome.gxsm4' 'Startup...' 'TRUE'");
+                g_spawn_command_line_sync (busctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
+                if (error != NULL) {
+                        g_error ("EE %s E:%s [OS:%s, ES:%s]\n", busctl_cmdline, error->message, stdout_buf, stderr_buf);
+                        g_error_free (error);
+                }
+                g_free (busctl_cmdline);
+                g_free (stdout_buf);
+                g_free (stderr_buf);
         }
 }
 

@@ -88,6 +88,46 @@
       <summary>show/hide state, option, X,Y, H,W</summary>
       <description>geometry</description>
     </key>
+    <key name="view-scan2d-13" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+    <key name="view-scan2d-14" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+    <key name="view-scan2d-15" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+    <key name="view-scan2d-16" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+    <key name="view-scan2d-17" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+    <key name="view-scan2d-18" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+    <key name="view-scan2d-19" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+    <key name="view-scan2d-20" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
     <key name="view-profile" type="ai">
       <default>[0,0, 0,0,0,0]</default>
       <summary>show/hide state, option, X,Y, H,W</summary>

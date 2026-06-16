@@ -938,8 +938,7 @@ int AppBase::position_auto (){
 #ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
         if (window_geometry)
                 if (window_geometry[WGEO_FLAG]){
-                        // g_message ("SORRY GTK4 can't do it -- Requested Window Position [%s: %d, %d]   -- no gtk_window_move ().", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
-                        XSM_DEBUG_GM (DBG_L1, "AppBase::position_auto ** Requested Window Position ** %s ** XY (%d, %d)", window_key, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
+                        XSM_DEBUG_GM (DBG_L1, "AppBase::position_auto ** Requested Window Position ** %s [%s] ** XY (%d, %d)", window_key, main_title_buffer, window_geometry[WGEO_XPOS], window_geometry[WGEO_YPOS]);
 # ifdef GDK_WINDOWING_X11
                         if (GDK_IS_X11_DISPLAY (gdk_display_get_default ())){
                                 Window   xw = GDK_SURFACE_XID (GDK_SURFACE (gtk_native_get_surface(GTK_NATIVE (window))));
@@ -966,9 +965,12 @@ int AppBase::position_auto (){
 
                                                 gchar *title = NULL;
                                                 if (strncmp(main_title_buffer, "Ch", 2) == 0){
-                                                        gchar *tmp = g_strndup (main_title_buffer,3);
-                                                        title = g_strdup_printf("^(%s.*)$", tmp); g_free (tmp);
-                                                } else  title = g_strdup (main_title_buffer);
+                                                        int chi, matched;
+                                                        if (sscanf(main_title_buffer+2, "%d%n", &chi, &matched) == 1) {
+                                                                title = g_strdup_printf("^(Ch%d:.*)$", chi);
+                                                        }
+                                                }
+                                                if (!title) title = g_strdup (main_title_buffer);
 
                                                 // Execute shell command
                                                 gchar *hyprctl_cmdline = g_strdup_printf ("hyprctl dispatch setfloating title:'%s'", title);
@@ -1053,10 +1055,17 @@ int AppBase::position_auto (){
 
                                                 gchar *title = NULL;
                                                 if (strncmp(main_title_buffer, "Ch", 2) == 0){
-                                                        gchar *tmp = g_strndup (main_title_buffer,3);
-                                                        title = g_strdup_printf("^(%s.*)$", tmp); g_free (tmp);                                                      
-                                                } else  title = g_strdup (main_title_buffer);
-
+                                                        int chi, matched;
+                                                        if (sscanf(main_title_buffer+2, "%d%n", &chi, &matched) == 1) {
+                                                                if (chi <= 20)
+                                                                        title = g_strdup_printf("^(Ch%d:.*)$", chi);
+                                                                else {
+                                                                        g_message ("Scan Channel %d Windows is unmanaged", chi);
+                                                                        return -1;
+                                                                }
+                                                        }
+                                                }
+                                                if (!title) title = g_strdup (main_title_buffer);
 
                                                 // Execute shell command for busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiii "gxsm4" "Gxsm4" 100 100 500 600
                                                 gchar *wClass = !strcmp(title, "Gxsm4") ? "gxsm4" : "org.gnome.gxsm4";
@@ -1073,7 +1082,7 @@ int AppBase::position_auto (){
                                                 
                                                 once = true; // test
                                                 if (error != NULL) {
-                                                        g_error ("EE *** Sorry I tried: %s E: %s -- make sure: busctl is installed and activate GxsmWM Extension for Gnome Shell!\n", busctl_cmdline, error->message);
+                                                        g_error ("EE [%s] *** Sorry I tried: %s E: %s -- make sure: busctl is installed and activate GxsmWM Extension for Gnome Shell!\n", window_key, busctl_cmdline, error->message);
                                                         g_error_free (error);
                                                         g_free (busctl_cmdline);
                                                         g_free (stdout_buf);
@@ -1082,7 +1091,7 @@ int AppBase::position_auto (){
                                                         return -1;
                                                 }
                                                 if (!strncmp(stdout_buf, "s \"WNA\"", 7)){
-                                                        g_print ("EE *** Attempted: %s\nWindow %35s is not available.\n", busctl_cmdline, window_key);
+                                                        g_print ("EE [%s] *** Attempted: %s\nWindow %35s is not available.\n", window_key, busctl_cmdline, window_key);
                                                         g_free (busctl_cmdline);
                                                         g_free (stdout_buf);
                                                         g_free (stderr_buf);
@@ -1296,7 +1305,7 @@ void json_filter_window (const char *json_string, const char *window_to_find, in
 
 void AppBase::SaveGeometry(gboolean store_to_settings){
         static gboolean once = true;
-	XSM_DEBUG_GM (DBG_L2, "AppBase::SaveGeometry *** for window ** %s **", window_key);
+        XSM_DEBUG_GM (DBG_L1, "AppBase::SaveGeometry ** Request Window Position ** %s [%s]", window_key, main_title_buffer);
 #ifdef ENABLE_GXSM_WINDOW_MANAGEMENT
 
         // g_message ("AutoSave Window Geometry: %s", window_key);
@@ -1310,6 +1319,7 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
         //g_message ("SORRY GTK4 can't do it -- no gtk_window_get_position (GTK_WINDOW (window), &window_geometry[WGEO_XPOS], &window_geometry[WGEO_YPOS]);");
         //g_message ("SORRY GTK4 can't do it -- no gtk_window_get_size (GTK_WINDOW (window), &window_geometry[WGEO_WIDTH], &window_geometry[WGEO_HEIGHT]);");
         //gtk_window_get_position (GTK_WINDOW (window), &window_geometry[WGEO_XPOS], &window_geometry[WGEO_YPOS]); 
+
 
 # ifdef GDK_WINDOWING_X11
         if (GDK_IS_X11_DISPLAY (gdk_display_get_default ())){
@@ -1433,7 +1443,7 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                                 once = true; // test
 
                                 if (error != NULL) {
-                                        g_error ("EE *** Sorry I tried: %s E: %s (make sure to have busctl and the Gxsm-WM Extension insatlled and actiavted)\n", busctl_cmdline, error->message);
+                                        g_error ("EE [%s] *** Sorry I tried: %s E: %s (make sure to have busctl and the Gxsm-WM Extension insatlled and actiavted)\n", window_key, busctl_cmdline, error->message);
                                         g_free (busctl_cmdline);
                                         g_error_free (error);
                                         return;
@@ -1446,7 +1456,7 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                                         g_print ("    Exit Status: %d\n", exit_status);
                                 }
                                 if (!strncmp(stdout_buf, "s \"WNA\"", 7)){
-                                        g_print ("EE *** Attempted: %20s\nWindow is not available.\n", busctl_cmdline);
+                                        g_print ("EE [%s] *** Attempted: %20s\nWindow is not available.\n", window_key, busctl_cmdline);
                                         g_free (busctl_cmdline);
                                         g_free (stdout_buf);
                                         g_free (stderr_buf);
@@ -1672,7 +1682,7 @@ void AppBase::LoadGeometry(){
         if (window_geometry[WGEO_SHOW]){
                 g_message ("Scheduling: wm set geometry for %s", window_key);
                 wm_attempt_count = 0;
-                g_timeout_add (50, GSourceFunc (position_retry_idle_callback), this); // try wm positioning later again, may fail early :(
+                g_timeout_add (20, GSourceFunc (position_retry_idle_callback), this); // try wm positioning later again, may fail early :(
         }
 
         if (strcmp (window_key, "Gxsm4") || strcmp (window_key, "gxsm4"))
