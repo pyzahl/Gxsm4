@@ -665,7 +665,7 @@ void App::MAINAppWindowInit(Gxsm4appWindow* win, const gchar *title, const gchar
 
         XSM_DEBUG (DBG_L2,  "App GXSM main window status: " << (GTK_IS_WIDGET (window) ? "OK":"NOT A WIDGET"));
 
-        gtk_window_present (GTK_WINDOW (window));
+        //gtk_window_present (GTK_WINDOW (window));
 }
 
 void App::build_gxsm (Gxsm4appWindow *win){
@@ -1280,9 +1280,31 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
         static gboolean run=true;
         static gchar* priv_info = NULL;
         static gchar* priv_text = NULL;
+        static gboolean ontop = false;
         GVariant *splash_timeout = g_settings_get_value (gxsm_app_settings, "splash-timeout");
 
 	if (splash_progress_bar && splash && progress > -0.2){
+
+                if (!ontop){ // PUT ME ON TOP
+                        gchar *stdout_buf = NULL;
+                        gchar *stderr_buf = NULL;
+                        gint exit_status;
+                        GError *error = NULL;
+
+                        gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetOnTopAction ssb -- 'gxsm4' '^(Startup.*)$' 'TRUE'");
+                        g_spawn_command_line_sync (busctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
+                        if (error != NULL) {
+                                g_error ("EE %s E:%s [OS:%s, ES:%s]\n", busctl_cmdline, error->message, stdout_buf?stdout_buf:"-", stderr_buf?stderr_buf:"-");
+                                g_error_free (error);
+                        } else {
+                                ontop = true;
+                                XSM_DEBUG_GM (DBG_L2, "II %s\n   OS:%s\n   ES:%s\n   R: %d", busctl_cmdline, stdout_buf, stderr_buf, exit_status);
+                        }
+                        g_free (busctl_cmdline);
+                        g_free (stdout_buf);
+                        g_free (stderr_buf);
+                }
+                
                 XSM_DEBUG_GM (DBG_L3, "App::GxsmSplash Update: %.1f%%, %s, %s", 100*progress, info, text);
 		if (progress >= 0. && progress <= 1.0)
 			gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (splash_progress_bar), progress);
@@ -1328,7 +1350,9 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
 
         // if (g_variant_get_boolean (splash_display) && (strncmp (getenv(“XDG_SESSION_TYPE”), 'x11', 3) == 0)){
         if (g_variant_get_boolean (splash_display)){
-                gtk_window_set_auto_startup_notification(FALSE);
+                ontop = false;
+
+                gtk_window_set_auto_startup_notification (FALSE);
                 splash = gtk_window_new ();
                 gtk_window_set_title (GTK_WINDOW (splash), "Startup...");
                 gtk_window_set_default_size (GTK_WINDOW (splash), 300, 200);
@@ -1360,29 +1384,14 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
                                                 this, NULL);
                 
                 gtk_box_append (GTK_BOX (vb), splash_darea);
-                gtk_widget_show (splash_darea);
 
 		splash_progress_bar = gtk_progress_bar_new ();
                 gtk_progress_bar_set_show_text (GTK_PROGRESS_BAR (splash_progress_bar), true);
 		gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR (splash_progress_bar), PANGO_ELLIPSIZE_START);
-		gtk_widget_show (splash_progress_bar);
 		gtk_box_append (GTK_BOX (vb), splash_progress_bar);
 
                 g_message ("Gxsm Splash Message: %s", g_variant_get_string (splash_message, NULL));
 
-                gchar *stdout_buf = NULL;
-                gchar *stderr_buf = NULL;
-                gint exit_status;
-                GError *error = NULL;
-                gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetOnTopAction ssb -- 'org.gnome.gxsm4' 'Startup...' 'TRUE'");
-                g_spawn_command_line_sync (busctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
-                if (error != NULL) {
-                        g_error ("EE %s E:%s [OS:%s, ES:%s]\n", busctl_cmdline, error->message, stdout_buf, stderr_buf);
-                        g_error_free (error);
-                }
-                g_free (busctl_cmdline);
-                g_free (stdout_buf);
-                g_free (stderr_buf);
         }
 }
 

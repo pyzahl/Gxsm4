@@ -103,7 +103,7 @@ export default class GxsmWm extends Extension {
         }
     }
 
-    setOnTopByTitleAndClass(wClass, wTitle, uop) {
+    setOnTopByTitleAndClass(targetClass, targetTitle, uop) {
 	let windowActors = global.get_window_actors();
 	
 	for (let actor of windowActors) {
@@ -116,7 +116,10 @@ export default class GxsmWm extends Extension {
 	    const regex = new RegExp(targetTitle, "g"); 
 	    
             if (wmClass === targetClass && title.match(regex)){
-		win.set_above(uop);
+		if (uop)
+		    win.make_above();
+		else
+		    win.unmake_above();
 		return 'OK';
 	    }
 	}
@@ -232,22 +235,6 @@ export default class GxsmWm extends Extension {
 	    //log(`win.move_resize completed OK.`);
 	    return GLib.SOURCE_REMOVE; // Always return remove to prevent looping
 	});
-
-	// Get the default seat
-	//const seat = Clutter.get_default_backend().get_default_seat();
-
-	// Get the core pointer device
-	//const pointer = seat.get_pointer();
-	//const [x, y] = pointer.get_coords();
-	// 2. Query the stage layout to find out what actor is physically under the coordinates
-	//const actorUnderMouse = global.stage.get_actor_at_pos(Clutter.PickMode.ALL, x, y);
-
-	// 3. Directly assign key focus to that actor
-	//if (actorUnderMouse)
-	//    global.stage.set_key_focus(actorUnderMouse);
-	//
-	// Forces the pointer to re-check the actor underneath it
-	//pointer.update_focus_actor(global.stage, Clutter.get_current_event_time());
     }
     
     // This is the function you want to execute from the shell
@@ -266,113 +253,3 @@ export default class GxsmWm extends Extension {
 	metaWindow.set_above(uop);
     }
 }
-
-/*
-import GLib from 'gi://GLib';
-
-let mutterLock = false;
-let queuedLayout = null;
-
-function forceMutterCompliance(window, x, y, w, h) {
-    if (!window || window.is_destroyed()) return;
-
-    // 1. If Mutter is already busy processing a layout change, just cache the newest target
-    if (mutterLock) {
-        queuedLayout = { x, y, w, h };
-        return;
-    }
-
-    mutterLock = true;
-
-    // 2. Push the first pass layout to Mutter's event queue
-    window.move_resize_frame(false, x, y, w, h);
-
-    // 3. Give Mutter a generous 16ms (1 full frame tick at 60Hz) to process the round-trip
-    GLib.timeout_add(GLib.PRIORITY_DEFAULT_IDLE, 16, () => {
-        if (!window || window.is_destroyed()) {
-            mutterLock = false;
-            return GLib.SOURCE_REMOVE;
-        }
-
-        // Force absolute placement alignment 
-        window.move_frame(false, x, y);
-        
-        // Lift the lock
-        mutterLock = false;
-
-        // 4. If a new request came in while Mutter was processing, run it now
-        if (queuedLayout) {
-            let next = queuedLayout;
-            queuedLayout = null;
-            forceMutterCompliance(window, next.x, next.y, next.w, next.h);
-        }
-
-        return GLib.SOURCE_REMOVE;
-    });
-    }
-
-
-
-import GLib from 'gi://GLib';
-
-function bulletproofWaylandInputMove(window, x, y, width, height) {
-    if (!window || window.is_destroyed()) return;
-
-    // 1. Core Layout Change
-    window.move_resize_frame(false, x, y, width, height);
-
-    // 2. Yield to let the app draw, then manually force Mutter's seat to re-evaluate input focus
-    GLib.timeout_add(GLib.PRIORITY_DEFAULT_IDLE, 25, () => {
-        if (!window || window.is_destroyed()) return GLib.SOURCE_REMOVE;
-
-        // Force secondary positioning alignment
-        window.move_frame(false, x, y);
-
-        // 3. THE FIX: Force Clutter / Mutter to re-calculate the pointer focus area.
-        // This instantly snaps the invisible input mask to the current mouse coordinates.
-        if (global.stage && typeof global.stage.update_pointer_focus === 'function') {
-            global.stage.update_pointer_focus();
-        }
-
-        // 4. Force a surface commit notice back to the window actor
-        let actor = window.get_compositor_private();
-        if (actor && typeof actor.queue_redraw === 'function') {
-            actor.queue_redraw();
-        }
-
-        return GLib.SOURCE_REMOVE;
-    });
-}
-
-
-
-import GLib from 'gi://GLib';
-
-function gnome50WaylandLayout(window, targetX, targetY, targetW, targetH) {
-    if (!window || window.is_destroyed()) return;
-
-    // 1. In GNOME 50, clearing states is lighter but must still happen first
-    if (window.get_maximized()) {
-        window.unmaximize(3); // Clear both axes
-    }
-
-    // 2. Dispatch layout request to the Wayland/XWayland surface
-    window.move_resize_frame(false, targetX, targetY, targetW, targetH);
-
-    // 3. Native Wayland tracking: wait for the frame buffer to commit 
-    // to prevent the input-mask desync (dead buttons) on high refresh rate displays.
-    GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
-        if (!window || window.is_destroyed()) return GLib.SOURCE_REMOVE;
-
-        // Force pointer focus areas to snap to the newly rendered textures
-        if (global.stage && typeof global.stage.update_pointer_focus === 'function') {
-            global.stage.update_pointer_focus();
-        }
-        
-        return GLib.SOURCE_REMOVE;
-    });
-}
-
-
-    
-*/

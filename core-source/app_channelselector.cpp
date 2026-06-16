@@ -287,7 +287,7 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "Channe
         }
         alife = 1;
 
-        gtk_window_present(GTK_WINDOW(window));
+        //gtk_window_present(GTK_WINDOW(window));
 
 	set_window_geometry ("channel-selector");
 }

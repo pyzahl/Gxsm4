@@ -122,7 +122,7 @@ void MonitorControl::AppWindowInit(const gchar *title, const gchar *sub_title){
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
 	g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
 
-        gtk_window_present(GTK_WINDOW(window));
+        //gtk_window_present(GTK_WINDOW(window));
 }
 
 void MonitorControl::file_open_callback (GSimpleAction *action, GVariant *parameter, 
