@@ -8,6 +8,22 @@
 	select to safe and restore window state and positions
       </description>
     </key>
+    <key name="auto-push-to-first-screen" type="b">
+      <default>false</default>
+      <summary>automatically restore windows to first screen / left of xpos</summary>
+      <description>
+	FIX FOR BROKEN WAYLAND RDP.
+	Automatically restore windows to (first screen) if X is beyond 3800 or as set in xpos below.
+      </description>
+    </key>
+    <key name="auto-push-to-left-of-xpos" type="i">
+      <default>3800</default>
+      <summary>automatically restore windows to first screen aka X left of this x-position (=screen res / scaling), if enabled via auto-push-to-first-screen</summary>
+      <description>
+	FIX FOR BROKEN WAYLAND RDP.
+	Automatically restore windows to first screen aka X left of this x-position (=screen res / scaling), if enabled via auto-push-to-first-screen.
+      </description>
+    </key>
     <key name="gxsm4" type="ai">
       <default>[1,1, 0,0,0,0]</default>
       <summary>show/hide state, option, X,Y, H,W</summary>

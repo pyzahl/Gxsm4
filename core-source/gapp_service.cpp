@@ -274,6 +274,7 @@ GtkWidget* GnomeAppService::progress_info_new (const gchar *title, gint levels, 
                         gtk_widget_set_parent (popover, gapp->get_main_reference ()); // Attaches to ...
                         gtk_popover_set_position (GTK_POPOVER (popover), GTK_POS_BOTTOM); // Appear below the button
                         gtk_popover_set_autohide(GTK_POPOVER(popover), FALSE);
+                        gtk_popover_set_has_arrow(GTK_POPOVER(popover), FALSE);
                         
                         GtkWidget *popover_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 10);
                         gtk_widget_set_margin_start (popover_box, 10);
@@ -1067,6 +1068,18 @@ int AppBase::position_auto (){
                                                 }
                                                 if (!title) title = g_strdup (main_title_buffer);
 
+                                                // WAYLAND RDP BUG WORKAROUND HACK: TMP MOVE TO FIRST SCREEN?
+                                                XSM_DEBUG_GM (DBG_L2, "WAYLAND RDP BUG WORKAROUND HACK: %s push to X < %d",
+                                                              g_variant_get_boolean (g_settings_get_value (geometry_settings, "auto-push-to-first-screen"))?"YES":"NO",
+                                                              g_variant_get_int32 (g_settings_get_value (geometry_settings, "auto-push-to-left-of-xpos"))
+                                                              );
+                                                if (g_variant_get_boolean (g_settings_get_value (geometry_settings, "auto-push-to-first-screen"))){
+                                                        gint32 tmp_xl = g_variant_get_int32 (g_settings_get_value (geometry_settings, "auto-push-to-left-of-xpos"));
+                                                        if (tmp_xl > 800)
+                                                                while (window_geometry[WGEO_XPOS] > tmp_xl)
+                                                                        window_geometry[WGEO_XPOS] -= tmp_xl;
+                                                }
+                                                
                                                 // Execute shell command for busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiii "gxsm4" "Gxsm4" 100 100 500 600
                                                 gchar *wClass = !strcmp(title, "Gxsm4") ? "gxsm4" : "org.gnome.gxsm4";
                                                 gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiiib -- '%s' '%s' %d %d %d %d '%s'",
