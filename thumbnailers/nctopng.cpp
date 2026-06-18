@@ -212,9 +212,9 @@ public:
                         return;
                 }
                 
-		dnum = zrange/3; // +/-1 dz (3dz) in ein bin per default
+		//dnum = zrange/3; // +/-1 dz (3dz) in ein bin per default
 	
-		bin_num   = (int)dnum;
+		bin_num   = 256;
 		bin_width = zrange / bin_num;
 		dz_norm   = 1./bin_width;
 		
