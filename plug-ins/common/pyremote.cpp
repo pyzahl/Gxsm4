@@ -5380,6 +5380,15 @@ static void pyremote_init(void)
         }
         
 
+
+        if (gxsm_new_instance){
+                PI_DEBUG_GM(DBG_L1,
+                            "Skipping pyremote PySHM Init -- gxsm4 started a alternate instance (-s).\n"
+                            "No external python SHM connetion to this gxsm4 process.\n"
+                            "Beware of potential porcess signal ID mixups from extern!");
+                return;
+        }
+        
         // Init PySHM external interface
 	PI_DEBUG_GM(DBG_L2, "pyremote PySHM Init");
 
@@ -5415,6 +5424,12 @@ static void pyremote_cleanup(void)
 		delete py_gxsm_remote_console;
         }
         py_gxsm_remote_console = NULL;
+
+
+        if (gxsm_new_instance){
+                PI_DEBUG_GM(DBG_L1, "Skipping pyremote PySHM cleanup -- gxsm4 started a alternate instance (-s).\n");
+                return;
+        }
 
         // Cleanup PySHM external interface
         PySHMServer_Run (NULL); // cleanup and exit PySHM server (close SHM)

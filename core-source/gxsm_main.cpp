@@ -123,7 +123,7 @@ static const GOptionEntry gxsm_options[] =
 
 	/* New instance */
 	{ "new-instance", 's', G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, &gxsm_new_instance,
-          N_("Start a new instance of gxsm4 -- not yet functional, use different user account via ssh -X... for now."), NULL
+          N_("Start a new instance of gxsm4. This will not connect SHM for external python control to prevent conflicts. Howvere, external python may signal to the wrong PID as a warning as it cannot differentiate process names!"), NULL
 	},
 
 	/* Build self test python script */
