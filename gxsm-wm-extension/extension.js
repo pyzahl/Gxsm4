@@ -63,6 +63,10 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // list: '{class=...},...'
 
 // Define the XML interface for your custom D-Bus object
+
+//      <arg type="i" direction="in" name="wDesk"/>
+
+
 const GXSMWMXML = `
 <node>
   <interface name="org.gnome.Shell.Extensions.GxsmWm">
@@ -103,7 +107,7 @@ export default class GxsmWm extends Extension {
         }
     }
 
-    setOnTopByTitleAndClass(targetClass, targetTitle, uop) {
+    setOnTopByTitleAndClass(targetClass, targetTitle, targetDesk, uop) {
 	let windowActors = global.get_window_actors();
 	
 	for (let actor of windowActors) {
@@ -111,8 +115,9 @@ export default class GxsmWm extends Extension {
             if (!win) continue;
             
             // Wayland native apps use app_id for class; XWayland uses wm_class
-            let wmClass = win.get_wm_class();
-            let title = win.get_title();   
+            let wmClass   = win.get_wm_class();
+            let title     = win.get_title();   
+	    let workspace = win.get_workspace();
 	    const regex = new RegExp(targetTitle, "g"); 
 	    
             if (wmClass === targetClass && title.match(regex)){
@@ -126,7 +131,7 @@ export default class GxsmWm extends Extension {
 	return 'WNA';
     }
 
-    getWindowGeometryByClassAndTitle(targetClass, targetTitle) {
+    getWindowGeometryByClassAndTitle(targetClass, targetTitle, targetDesk, targetWS) {
 	// Get all window actors across all workspaces
 	let list='';
 	let windowActors = global.get_window_actors();
@@ -136,12 +141,13 @@ export default class GxsmWm extends Extension {
             if (!win) continue;
 
             // Retrieve properties to inspect
-            let wmClass = win.get_wm_class(); // returns e.g., "firefox" or "org.gnome.Nautilus"
-            let title = win.get_title();      // returns the current visible window title string
+            let wmClass   = win.get_wm_class(); // returns e.g., "firefox" or "org.gnome.Nautilus"
+            let title     = win.get_title();      // returns the current visible window title string
+	    let workspace = win.get_workspace();
 
 	    if (targetClass === '*'){
-		let rect = win.get_frame_rect(); 
-		let winfo = `{class=${wmClass} title=${title} geometry=[${rect.x}, ${rect.y}, ${rect.width}, ${rect.height}]},`;
+		let rect = win.get_frame_rect();
+		let winfo = `{class=${wmClass.padEnd(20)} title=${title.padEnd(25)} geometry=[${rect.x}, ${rect.y}, ${rect.width}, ${rect.height}] on Desktop ${workspace}},\n`;
 		list = list + winfo;
 		log (winfo);
 		continue;
@@ -163,7 +169,7 @@ export default class GxsmWm extends Extension {
     }
 
     
-    moveResizeByTitleAndClass(targetClass, targetTitle, x, y, width, height, uop) {
+    moveResizeByTitleAndClass(targetClass, targetTitle, targetDesk, x, y, width, height, uop) {
 	let windowActors = global.get_window_actors();
 	
 	for (let actor of windowActors) {
@@ -171,8 +177,9 @@ export default class GxsmWm extends Extension {
             if (!win) continue;
             
             // Wayland native apps use app_id for class; XWayland uses wm_class
-            let wmClass = win.get_wm_class();
-            let title = win.get_title();   
+            let wmClass   = win.get_wm_class();
+            let title     = win.get_title();   
+	    let workspace = win.get_workspace();
 	    const regex = new RegExp(targetTitle, "g"); 
 	    
             if (wmClass === targetClass && title.match(regex)) {
@@ -238,18 +245,24 @@ export default class GxsmWm extends Extension {
     }
     
     // This is the function you want to execute from the shell
+    //GetGeoAction(wClass, wTitle, wDesk) {
     GetGeoAction(wClass, wTitle) {
         //log(`GXSM-WM SHELL EXT GetGeo: ${wClass} >${wTitle}<`);
-	return this.getWindowGeometryByClassAndTitle(wClass, wTitle);
+	let wDesk=-1;
+	return this.getWindowGeometryByClassAndTitle(wClass, wTitle, wDesk);
     }
     
+    //SetGeoAction(wClass, wTitle, wDesk, x, y, width, height, uop) {
     SetGeoAction(wClass, wTitle, x, y, width, height, uop) {
         //log(`GXSM-WM SHELL EXT SetGeo: ${wClass} >${wTitle}< [${x} ${y} ${width} ${height} ${uop}]`);
-	return this.moveResizeByTitleAndClass(wClass, wTitle, x, y, width, height, uop);
+	let wDesk=-1;
+	return this.moveResizeByTitleAndClass(wClass, wTitle, wDesk, x, y, width, height, uop);
     }
 
+    //SetOnTopAction(wClass, wTitle, wDesk, uop) {
     SetOnTopAction(wClass, wTitle, uop) {
-	return this.setOnTopByTitleAndClass(wClass, wTitle, uop);
+	let wDesk=-1;
+	return this.setOnTopByTitleAndClass(wClass, wTitle, wDesk, uop);
 	metaWindow.set_above(uop);
     }
 }
