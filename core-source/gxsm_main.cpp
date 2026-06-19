@@ -197,6 +197,8 @@ int main (int argc, char **argv)
 
         XSM_DEBUG(DBG_L2, "gxsm4_main g_application_run =========================================" );
         GXSM_STARTUP_MESSAGE_VERBOSE ("GXSM4: starting application module -- arguments left argc=%d", argc);
+        for (int i=argc-1; i>=0; i--)
+                GXSM_STARTUP_MESSAGE_VERBOSE ("  [%d]: %s", i, argv[i]);
         
         int ret = g_application_run (G_APPLICATION (gxsm4_app_new ()), argc, argv);
 

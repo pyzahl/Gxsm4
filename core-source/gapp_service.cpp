@@ -110,7 +110,7 @@ gint GnomeAppService::setup_multidimensional_data_copy (const gchar *title, Scan
 void GnomeAppService::warning(const char *mld, GtkWindow *parent){
         if (is_thread_safe_no_gui_mode()) return;
         GtkWidget *dialog = gtk_message_dialog_new_with_markup
-                (parent,
+                (parent ? parent : get_app_window (),
                  GTK_DIALOG_DESTROY_WITH_PARENT,
                  GTK_MESSAGE_WARNING,
                  GTK_BUTTONS_CLOSE,
@@ -128,7 +128,7 @@ void GnomeAppService::warning(const char *mld, GtkWindow *parent){
 void GnomeAppService::errormsg(const char *mld, GtkWindow *parent){
         if (is_thread_safe_no_gui_mode()) return;
         GtkWidget *dialog = gtk_message_dialog_new_with_markup
-                (parent,
+                (parent ? parent : get_app_window (),
                  GTK_DIALOG_DESTROY_WITH_PARENT,
                  GTK_MESSAGE_ERROR,
                  GTK_BUTTONS_CLOSE,
@@ -145,7 +145,7 @@ void GnomeAppService::errormsg(const char *mld, GtkWindow *parent){
 void GnomeAppService::message(const char *mld, GtkWindow *parent){
         if (is_thread_safe_no_gui_mode()) return;
         GtkWidget *dialog = gtk_message_dialog_new_with_markup
-                (parent,
+                (parent ? parent : get_app_window (),
                  GTK_DIALOG_DESTROY_WITH_PARENT,
                  GTK_MESSAGE_INFO,
                  GTK_BUTTONS_CLOSE,
@@ -165,7 +165,7 @@ gboolean GnomeAppService::question_yes_no (const gchar *question, GtkWindow *par
         // Yes / No ?
         if (is_thread_safe_no_gui_mode()) return TRUE;
         GtkWidget *dialog = gtk_message_dialog_new_with_markup
-                (parent,
+                (parent ? parent : get_app_window (),
                  GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
                  GTK_MESSAGE_QUESTION,
                  GTK_BUTTONS_YES_NO,
@@ -188,7 +188,7 @@ gint GnomeAppService::question_yes_no_with_action (const gchar *question, const 
         if (is_thread_safe_no_gui_mode()) return TRUE;
         GtkWidget *dialog_action;
         GtkWidget *dialog = gtk_message_dialog_new_with_markup
-                (parent,
+                (parent ? parent : get_app_window (),
                  GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
                  GTK_MESSAGE_QUESTION,
                  GTK_BUTTONS_YES_NO,
@@ -261,7 +261,7 @@ GtkWidget* GnomeAppService::progress_info_new (const gchar *title, gint levels, 
 	last_cancel_cb = cancel_cb;
 	last_data = data;
 
-        g_message ("PROGRESS: %s", title);
+	XSM_DEBUG_GM(DBG_L1, "PROGRESS: %s", title);
         
 	if (!progress_dialog){
                 progress_dialog_box=NULL;
@@ -655,7 +655,6 @@ AppBase::AppBase (Gxsm4app *app, const gchar *title){
         gxsm4app = GXSM4_APP(app);
         main_title_buffer = g_strdup (title ? title : "AppBase: Window title is not set");
         sub_title_buffer = NULL;
-
         app_window = NULL;
         window = NULL;
 	window_key=NULL;
@@ -668,14 +667,15 @@ AppBase::AppBase (Gxsm4app *app, const gchar *title){
 }
 
 AppBase::~AppBase(){ 
-	XSM_DEBUG (DBG_L3, "AppBase::~AppBase destructor for '" << (window_key?window_key:"--") << "'."); 
+	XSM_DEBUG (DBG_L1, "AppBase::~AppBase destructor for '" << (window_key?window_key:"--") << "'."); 
 
         if (g_object_get_data (G_OBJECT (gxsm4app), "APP-MAIN"))
                 ((App*)g_object_get_data (G_OBJECT (gxsm4app), "APP-MAIN")) -> remove_appwindow_from_list (this); // remove self from list
         
 	if(!nodestroy){
 		XSM_DEBUG_GP (DBG_L3, "~AppBase -- destroy window '%s'. [DISABLED HERE HANDLED AT BASE]",  (window_key?window_key:"--")); 
-                //gtk_window_destroy (window); // final destory
+                gtk_window_destroy (window); // final destory
+                window=NULL;
 	}
         
         if (window_key)
@@ -743,11 +743,11 @@ void AppBase::AppWindowInit(const gchar *title, const gchar *sub_title){
 	g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
 
-        gtk_window_present(GTK_WINDOW(window));
-
+        //gtk_window_present(GTK_WINDOW(window));
 }
 
 gboolean AppBase::window_close_callback (GtkWidget *widget, AppBase *self){
+        XSM_DEBUG_GM (DBG_L1, "AppBase::window_close_callback (hide only)");
         self->hide ();
         return true; // no further actions!!
 }
@@ -755,7 +755,8 @@ gboolean AppBase::window_close_callback (GtkWidget *widget, AppBase *self){
         
 void AppBase::window_action_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
         AppBase *app_w = (AppBase *)user_data;
-        app_w->show ();
+        XSM_DEBUG_GM (DBG_L1, "AppBase::window_action_callback");
+        //app_w->show ();
 }
 
 GMenuModel *AppBase::find_extension_point_section (GMenuModel  *model,
@@ -768,7 +769,7 @@ GMenuModel *AppBase::find_extension_point_section (GMenuModel  *model,
         if (model == NULL)
                 return NULL;
 
-        XSM_DEBUG_GM (DBG_L7, "MyGnomeTools::find_extension_point_section '%s' in menu.", extension_point);
+        XSM_DEBUG_GM (DBG_L7, "AppBase::find_extension_point_section '%s' in menu.", extension_point);
 
         n_items = g_menu_model_get_n_items (model);
 
@@ -912,23 +913,37 @@ int AppBase::set_window_geometry (const gchar *key, gint index, gboolean add_to_
 }
 
 void AppBase::hide (){
-        gtk_widget_hide (GTK_WIDGET (window));
+	XSM_DEBUG_GM (DBG_L2, "AppBase::hide ****** Hide Window ** %s **", window_key );
+        if (window)
+                gtk_widget_hide (GTK_WIDGET (window));
+        else
+                XSM_DEBUG_GM (DBG_L2, "AppBase::hide WINDOW INVALID ** %s **", window_key );
         showstate=FALSE;
 }
 
 void AppBase::show (){
-        gtk_widget_show (GTK_WIDGET (window));
+	XSM_DEBUG_GM (DBG_L2, "AppBase::show ****** Show Window ** %s **", window_key );
+        if (window) {
+                gtk_widget_show (GTK_WIDGET (window));
+        } else
+                XSM_DEBUG_GM (DBG_L2, "AppBase::show WINDOW INVALID ** %s **", window_key );
         showstate=TRUE;
 }
 
 void AppBase::show_auto (){
         if (!window_geometry) return;
-	XSM_DEBUG_GM (DBG_L2, "AppBase::show_auto ****** Show/Hide window ** %s **", window_key );
+	XSM_DEBUG_GM (DBG_L2, "AppBase::show_auto ****** Restoring Show/Hide Window State for ** %s **", window_key );
         
         if (window_geometry[WGEO_FLAG] && window_geometry[WGEO_SHOW])
                 show ();
         else
                 hide ();
+}
+
+void AppBase::destroy(){
+        XSM_DEBUG_GM (DBG_L1, "AppBase::destroy ****** Close and unref Window ** %s **", window_key );
+        if (window) { gtk_window_destroy (GTK_WINDOW (window)); g_object_unref(window); window=NULL; }
+        nodestroy=TRUE;
 }
 
 //#define HYPR_VERBOSE
@@ -1121,7 +1136,7 @@ int AppBase::position_auto (){
                                                         g_free (title);
                                                         return -1;
                                                 } else if (1){
-                                                        g_print ("OK *** %s\n", busctl_cmdline);
+                                                         XSM_DEBUG_GM (DBG_L2, "OK *** %s\n", busctl_cmdline);
                                                         //g_print ("Stdout: %s", stdout_buf);
                                                         //g_print ("Stderr: %s\n", stderr_buf);
                                                         //g_print ("Exit Status: %d\n", exit_status);
@@ -1231,6 +1246,41 @@ int AppBase::resize_auto (){
         XSM_DEBUG_GM (DBG_L2, "AppBase::resize_auto ** ENABLE_GXSM_WINDOW_MANAGEMENT is disabled.");
 #endif
         return 0;
+}
+
+
+gboolean AppBase::position_retry_idle_callback (AppBase *self) {
+        XSM_DEBUG_GM(DBG_L3, "position_retry_idle_callback for %s", self->window_key);
+        
+        if (self->wm_attempt_count++ > 100){
+                g_message ("EE position_retry_idle_callback: giving up, permanent fail for %s", self->window_key);
+                self->wm_attempt_count=0;
+                return G_SOURCE_REMOVE;
+        }
+
+        // Check if the window has system resources (realized)
+        gboolean is_realized = gtk_widget_get_realized(GTK_WIDGET(self->window));
+
+        // Check if the surface is actually mapped to the desktop
+        GdkSurface *surface = gtk_native_get_surface(GTK_NATIVE(self->window));
+        if (surface){
+                gboolean is_mapped = gdk_surface_get_mapped(surface);
+
+                if (is_realized && is_mapped) {
+                        // Window is realized and displayed on the desktop
+                        if (self->position_auto ())
+                                return G_SOURCE_CONTINUE; // delayed retry
+                        if (self->resize_auto ())
+                                return G_SOURCE_CONTINUE; // delayed retry
+                } else {
+                        g_message ("EE position_retry_idle_callback: not mapped: %s", self->window_key);
+                        return G_SOURCE_CONTINUE; // delayed retry
+                }
+        } else {
+                g_message ("EE position_retry_idle_callback: no surface: %s", self->window_key);
+                return G_SOURCE_CONTINUE; // delayed retry
+        }
+        return G_SOURCE_REMOVE; // finally
 }
 
 void AppBase::SaveGeometryCallback(AppBase *apb){
@@ -1469,7 +1519,7 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                                         g_print ("    Exit Status: %d\n", exit_status);
                                 }
                                 if (!strncmp(stdout_buf, "s \"WNA\"", 7)){
-                                        g_print ("EE [%s] *** Attempted: %20s\nWindow is not available.\n", window_key, busctl_cmdline);
+                                        XSM_DEBUG_GM (DBG_L1, "EE [%s] *** Attempted: %20s\nWindow is not available.\n", window_key, busctl_cmdline);
                                         g_free (busctl_cmdline);
                                         g_free (stdout_buf);
                                         g_free (stderr_buf);
@@ -1693,7 +1743,7 @@ void AppBase::LoadGeometry(){
 
 
         if (window_geometry[WGEO_SHOW]){
-                g_message ("Scheduling: wm set geometry for %s", window_key);
+                //g_message ("Scheduling: wm set geometry for %s", window_key);
                 wm_attempt_count = 0;
                 if (strncmp (main_title_buffer, "Ch", 2) == 0)
                         g_timeout_add (1500, GSourceFunc (position_retry_idle_callback), this); // try wm positioning later again, may fail early :(

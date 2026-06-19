@@ -395,9 +395,9 @@ gxsm4_app_activate (GApplication *app)
 
 static void
 gxsm4_app_open (GApplication  *app,
-                  GFile        **files,
-                  gint           n_files,
-                  const gchar   *hint)
+                GFile        **files,
+                gint           n_files,
+                const gchar   *hint)
 {
   GList *windows;
   Gxsm4appWindow *win;
@@ -415,10 +415,11 @@ gxsm4_app_open (GApplication  *app,
                 main_get_gapp ()->xsm->ActivateFreeChannel();
 #endif
         
-        for (gint i=0; i < n_files; ++i)
+        for (gint i=0; i < n_files; ++i){
                 if (gxsm4_app_window_open (win, files[i], load_files_as_movie) == false)
                         break;
-
+        }
+        
         gtk_window_present (GTK_WINDOW (win));
 }
 
@@ -427,9 +428,9 @@ gxsm4_app_class_init (Gxsm4appClass *klass)
 {
         XSM_DEBUG(DBG_L2, "gxsm4_app_class_init =================================================" );
 
-        G_APPLICATION_CLASS (klass)->startup = gxsm4_app_startup;
+        G_APPLICATION_CLASS (klass)->startup  = gxsm4_app_startup;
         G_APPLICATION_CLASS (klass)->activate = gxsm4_app_activate;
-        G_APPLICATION_CLASS (klass)->open = gxsm4_app_open;
+        G_APPLICATION_CLASS (klass)->open     = gxsm4_app_open;
 
         XSM_DEBUG(DBG_L2, "gxsm4_app_class_init complete =================================================" );
 }
@@ -437,17 +438,18 @@ gxsm4_app_class_init (Gxsm4appClass *klass)
 Gxsm4app *
 gxsm4_app_new (void)
 {
-        XSM_DEBUG(DBG_L2, "gxsm4_app_new ========================================================" );
-
-        if (gxsm_new_instance) // allow new instance, disable checks
+        if (gxsm_new_instance){ // allow new instance, disable checks
+                XSM_DEBUG(DBG_L1, "gxsm4_app_new force new instance =====================================" );
                 return (Gxsm4app*) g_object_new (GXSM4_APP_TYPE,
                                                  "flags", G_APPLICATION_HANDLES_OPEN,
                                                  NULL);
-        else
+        } else {
+                XSM_DEBUG(DBG_L1, "gxsm4_app_new handle file open only ==================================" );
                 return (Gxsm4app*) g_object_new (GXSM4_APP_TYPE,
                                                  "application-id", GXSM_RES_BASE_PATH_DOT,
                                                  "flags", G_APPLICATION_HANDLES_OPEN,
                                                  NULL);
+        }
 }
 
 
@@ -473,6 +475,8 @@ App::App(Gxsm4app *gxsm4_app):AppBase(gxsm4_app)
         as_settings       = g_settings_new (GXSM_RES_BASE_PATH_DOT".gui.as");
         gxsm_app_windows_list  = NULL; // holds a list of GXSM windows classes
 
+	GnomeAppServiceSetApp (this);
+        
         app_window = NULL;
 	appbar = NULL;
 	appbar_ctx_id = 0;
@@ -739,12 +743,12 @@ gboolean App::finish_system_startup (){
         static int startup_stage=0;
 
         ++startup_stage;
-        XSM_DEBUG_GM (DBG_L2, "**** IDLE FUNC: App::finish_system_startup (build_gxsm) stage=%2d  *****", startup_stage);
+        XSM_DEBUG_GM (DBG_L1, "**** IDLE FUNC: App::finish_system_startup (build_gxsm) stage=%2d  *****", startup_stage);
 
         switch (startup_stage){
         case 1:
                 ClearStatus();
-                XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - Monitor");
+                XSM_DEBUG_GM (DBG_L1, "IDLE... App::build_gxsm - Monitor");
                 pcs_set_current_gschema_group ("monitorwindow");
                 monitorcontrol  = new MonitorControl ( get_app (), logging_level);
                 return true;
@@ -1191,6 +1195,8 @@ gint App::GxsmSplashRemove(gpointer data){
 
         gtk_window_destroy (GTK_WINDOW (a->splash));
         gtk_window_set_auto_startup_notification (TRUE);
+        a->splash_progress_bar = NULL;
+
         
 	return FALSE;
 }
@@ -1211,6 +1217,7 @@ void App::splash_draw_function (GtkWidget *area, cairo_t *cr,
                 if (text2) { delete text2; text2=NULL; }
                 if (text3) { delete text3; text3=NULL; }
                 if (text4) { delete text4; text4=NULL; }
+
                 return;
         }
         

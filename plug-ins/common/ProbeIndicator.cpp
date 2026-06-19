@@ -378,7 +378,7 @@ void ProbeIndicator::KAO_tdiv_callback (GtkWidget *widget, gpointer user_data) {
                 if (hlen >= KAO_hlen[gtk_combo_box_get_active(GTK_COMBO_BOX(widget))])
                         pv->kao_samples = KAO_hlen[gtk_combo_box_get_active(GTK_COMBO_BOX(widget))];
                 else
-                        g_warning ("ProbeIndicator::KAO_tdiv_callback current history len too short.");
+                        PI_DEBUG_GP (DBG_L2, "ProbeIndicator::KAO_tdiv_callback current history len too short.");
         }
         PI_DEBUG_GP (DBG_L2, "ProbeIndicator::KAO_tdiv_callback: %s => HLN is %d, selected %d", tmp, hlen, pv->kao_samples);
         g_free (tmp);

@@ -59,10 +59,11 @@ static GActionEntry win_monitor_entries[] = {
         { "logging-level", MonitorControl::set_logging_level_radio_callback, "s", "'normal'", NULL },
 };
 
-MonitorControl::MonitorControl (Gxsm4app *app, gint loglevel, gint maxlines):AppBase(app,"GXSM Activity Monitor and Logbook"),Monitor(loglevel){
+MonitorControl::MonitorControl (Gxsm4app *app, gint loglevel, gint maxlines):AppBase(app,MONITOR_TITLE), Monitor(loglevel){
         set_max_lines (maxlines);
+        XSM_DEBUG(DBG_L0, "MonitorControl::MonitorControl");
 
-        AppWindowInit (N_("GXSM Activity Monitor and Logbook"));
+        AppWindowInit (MONITOR_TITLE);
 
         log_view = gtk_text_view_new ();
         gtk_text_view_set_editable (GTK_TEXT_VIEW (log_view), false);
@@ -76,15 +77,13 @@ MonitorControl::MonitorControl (Gxsm4app *app, gint loglevel, gint maxlines):App
         gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window),
                                         GTK_POLICY_AUTOMATIC,
                                         GTK_POLICY_AUTOMATIC);
-        //gtk_scrollde_window_set_shadow_type (GTK_SCROLLED_WINDOW (scrolled_window), GTK_SHADOW_IN);
         gtk_widget_set_hexpand (scrolled_window, TRUE);
         gtk_widget_set_vexpand (scrolled_window, TRUE);
 	gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scrolled_window), log_view);
         gtk_grid_attach (GTK_GRID (v_grid), scrolled_window, 1,1, 10,1);
 
         set_window_geometry ("monitor");
-
-        LogEvent ("MonitorControl", "startup");
+        LogEvent ("MonitorControl", "Gxsm4 startup");
 }
 
 MonitorControl::~MonitorControl (){

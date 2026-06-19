@@ -71,7 +71,7 @@ static const char* choice_ChSDir[] =
 
 static int alife = 0;
 
-ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "Channel Selector"){
+ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, CHANNELSELECTOR_TITLE){
 	GtkWidget* wid;
 	GtkWidget* dropDownMenu;
 	char txt[32];

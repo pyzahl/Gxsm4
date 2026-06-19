@@ -110,7 +110,6 @@ static void get_rpdata_vector (GtkWidget* w, void *data){
 RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         GtkWidget *tmp;
         GtkWidget *wid;
-
         rt_monitors_shm_ptr = NULL;
 
         static const gchar* Y1Y2_tm[] = {

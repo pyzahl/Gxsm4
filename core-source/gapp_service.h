@@ -932,34 +932,7 @@ public:
 	int position_auto ();
 	int resize_auto ();
 
-        static gboolean position_retry_idle_callback (AppBase *self) {
-                if (self->wm_attempt_count++ > 100){
-                        g_message ("EE position_retry_idle_callback: giving up, permanent fail for %s", self->window_key);
-                        self->wm_attempt_count=0;
-                        return G_SOURCE_REMOVE;
-                }
-
-                // Check if the window has system resources (realized)
-                gboolean is_realized = gtk_widget_get_realized(GTK_WIDGET(self->window));
-
-                // Check if the surface is actually mapped to the desktop
-                GdkSurface *surface = gtk_native_get_surface(GTK_NATIVE(self->window));
-                gboolean is_mapped = gdk_surface_get_mapped(surface);
-
-                if (is_realized && is_mapped) {
-                        // Window is realized and displayed on the desktop
-                        if (self->position_auto ())
-                                return G_SOURCE_CONTINUE; // delayed retry
-                        if (self->resize_auto ())
-                                return G_SOURCE_CONTINUE; // delayed retry
-                } else {
-                        g_message ("EE position_retry_idle_callback: not mapped %s", self->window_key);
-                        return G_SOURCE_CONTINUE; // delayed retry
-                }
-                return G_SOURCE_REMOVE; // finally
-        };
-
-
+        static gboolean position_retry_idle_callback (AppBase *self);
         void freeze(){  gtk_widget_set_focusable (GTK_WIDGET(window), FALSE); /* gtk_widget_set_sensitive (window, FALSE); */ };
 	void thaw(){  gtk_widget_set_focusable (GTK_WIDGET(window), TRUE); /* gtk_widget_set_sensitive (window, TRUE); */ };
 
@@ -992,12 +965,17 @@ public:
         const gchar *get_window_key() { return window_key; };
         
 protected:
-        void destroy(){ if (window) { gtk_window_destroy (GTK_WINDOW (window)); window=NULL; } nodestroy=TRUE; };
+        void destroy();
 	int nodestroy;
 
         Gxsm4app* gxsm4app; // MAIN GXSM4 APPLICTAION
         Gxsm4appWindow *app_window;
-	GtkWindow* window;     // main window for this object
+
+        GtkWindow* window;     // main window for this object
+        //g_weak_ref_init(window_weak_ref, window);
+        // *** GtkWindow *window = GTK_WINDOW(g_weak_ref_get(window_weak_ref));
+        // if (window) {...    g_object_unref(window); }
+        
 	GtkWidget* header_bar;
 	GtkWidget* v_grid; // 1st level grid in window
 
@@ -1018,10 +996,10 @@ class Scan;
 
 class GnomeAppService{
 private:
-	GtkWidget *app;
+	AppBase *app; // GtkWidget
         gboolean  thread_safe_no_gui_mode;
 public:
-	GnomeAppService(GtkWidget *App=NULL){
+	GnomeAppService(AppBase *App=NULL){
                 app=App;
                 progress_dialog=NULL;
                 thread_safe_no_gui_mode=false;
@@ -1031,13 +1009,15 @@ public:
 		progress_info_close ();	
 	};
 
+        GtkWindow* get_app_window() { return app ? app->get_window () : NULL; };
+                
         inline void enter_thread_safe_no_gui_mode() { thread_safe_no_gui_mode=true; };
         inline void exit_thread_safe_no_gui_mode() { thread_safe_no_gui_mode=false; };
         inline gboolean is_thread_safe_no_gui_mode() { return thread_safe_no_gui_mode; };
         
-	void GnomeAppServiceSetApp(GtkWidget *App){ app=App; };
+	void GnomeAppServiceSetApp (AppBase *App){ app=App; };
 
-	GtkWidget *getApp(){ return app; };
+	AppBase *getApp(){ return app; };
 
         gint setup_multidimensional_data_copy (const gchar *title, Scan *src,
                                                int &ti, int &tf, int &vi, int &vf,

@@ -2046,7 +2046,7 @@ gint ProfileControl::updateTics (gboolean force)
         //        g_message ("ProfileControl::updateTics %s (%s)", scan1d->data.Zunit->MakeLongLabel(), scan1d->data.Xunit->MakeLongLabel());
         //else {
         if (!scan1d){
-                g_warning ("ProfileControl::updateTics scan1d=NULL (no data assigned)");
+                //g_warning ("ProfileControl::updateTics scan1d=NULL (no own data assigned)");
                 return -1;
         }
         

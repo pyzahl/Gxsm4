@@ -104,7 +104,13 @@ SOURCE_SIGNAL_DEF rpspmc_source_signals[] = {
         { 0x00020000, "HS-Ch-A",      " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_HS_DATA_A, 18 }, // High Speed Channel A @125MSPS fixed -- **special requirements for vector, Experimental
         { 0x00040000, "HS-Ch-B",      " ", "V",             "V",                                    1.0, PROBEDATA_ARRAY_HS_DATA_B, 19 }, // High Speed Channel B @125MSPS fixed -- **special requirements for vector, Experimental
         { 0x80000000, "BlockI",       " ", "i#",           "i#",                                    1.0, PROBEDATA_ARRAY_BLOCK, -1 }, // MUST BE ALWAYS LAST AND IN HERE!! END MARK.
-        { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
+        { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }, // REGULAR END SIGNAL SOURCES
+        { 0x00000001, "PHI",          NULL, "#",            "#",                                    1.0, PROBEDATA_ARRAY_PHI, 0 },      // DEFINE SPECIAL ROBEDATA_ARRAY_xxxx
+        { 0x00000001, "HS TIME",      NULL, "ns",          "ns",                                    1.0, PROBEDATA_ARRAY_HS_TIME, 0 },  // DEFINE SPECIAL ROBEDATA_ARRAY_xxxx
+        { 0x00000001, "HS COUNT",     NULL, "CNT",        "CNT",                                    1.0, PROBEDATA_ARRAY_COUNT, 0 },    // DEFINE SPECIAL ROBEDATA_ARRAY_xxxx
+        { 0x00000001, "HS SRCS",      NULL, "x",            "x",                                    1.0, PROBEDATA_ARRAY_SRCS, 0 },     // DEFINE SPECIAL ROBEDATA_ARRAY_xxxx
+        { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }, // END SIGNALS
+        { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 } // END SIGNALS
 };
 
 // so far fixed to swappable 4 signals as of GUI design!

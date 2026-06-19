@@ -86,18 +86,18 @@
 #define PROBEDATA_ARRAY_S13   24 // Array [24] holds LCK
 #define PROBEDATA_ARRAY_S14   25 // Array [25] holds dFreqCtrl
 #define PROBEDATA_ARRAY_S15   26 // Array [26] holds -- not yet assigned
-#define PROBEDATA_ARRAY_S16   27 // Array [26] holds -- not yet assigned
-#define PROBEDATA_ARRAY_MS_TIME   28 // Array [27] holds high resolution FPGA time in ms
+#define PROBEDATA_ARRAY_S16   27 // Array [27] holds -- not yet assigned
+#define PROBEDATA_ARRAY_MS_TIME   28 // Array [28] holds high resolution FPGA time in ms
 
 // HS DATA ARRAYS (longer with expanded time resoluition
-#define PROBEDATA_ARRAY_HS_TIME   29 // Array [27] holds high resolution expanded time for super fast channels
-#define PROBEDATA_ARRAY_HS_DATA_A 30 // Array [28] holds high resolution expanded data of super fast channel-A (digital, ...)
-#define PROBEDATA_ARRAY_HS_DATA_B 31 // Array [29] holds high resolution expanded data of super fast channel-B (digital, ...)
+#define PROBEDATA_ARRAY_HS_TIME   29 // Array [29] holds high resolution expanded time for super fast channels
+#define PROBEDATA_ARRAY_HS_DATA_A 30 // Array [30] holds high resolution expanded data of super fast channel-A (digital, ...)
+#define PROBEDATA_ARRAY_HS_DATA_B 31 // Array [31] holds high resolution expanded data of super fast channel-B (digital, ...)
 
 // Block Management
-#define PROBEDATA_ARRAY_COUNT 32 // Array [30] holds Count
-#define PROBEDATA_ARRAY_BLOCK 33 // Array [31] holds Block start index (hold start index for every section) 
-#define PROBEDATA_ARRAY_SRCS  34 // Array [32] hold SRCS mask
+#define PROBEDATA_ARRAY_COUNT 32 // Array [32] holds Count
+#define PROBEDATA_ARRAY_BLOCK 33 // Array [33] holds Block start index (hold start index for every section) 
+#define PROBEDATA_ARRAY_SRCS  34 // Array [34] hold SRCS mask
 #define PROBEDATA_ARRAY_END   PROBEDATA_ARRAY_SRCS // last element number
 
 // G_ARRAY EXPANDED PROBE DATA

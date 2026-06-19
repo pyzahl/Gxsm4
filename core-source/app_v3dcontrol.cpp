@@ -132,6 +132,7 @@ V3dControl::V3dControl (Gxsm4app *app,
 	GtkWidget *statusbar;
 
 	XSM_DEBUG(DBG_L2, "V3dControl::V3dControl" );
+	GnomeAppServiceSetApp (this);
 
 	WheelFkt = &Surf3d::Zoom;
 	scan = sc;
