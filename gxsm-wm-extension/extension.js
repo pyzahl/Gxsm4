@@ -116,6 +116,8 @@ export default class GxsmWm extends Extension {
         let wmTitle   = win.get_title();   
 	const regex_TargetClass = new RegExp (targetClass, "g"); 
 	const regex_TargetTitle = new RegExp (targetTitle, "g"); 
+	if (!wmClass || !wmTitle)
+	    return false;
 	
         if (wmClass.match (regex_TargetClass) && wmTitle.match (regex_TargetTitle)){
 	    let workspace = win.get_workspace().index();
@@ -159,7 +161,7 @@ export default class GxsmWm extends Extension {
 
             // Retrieve properties to inspect
             let wmClass   = win.get_wm_class(); // returns e.g., "firefox" or "org.gnome.Nautilus"
-            let title     = win.get_title();      // returns the current visible window title string
+            let title     = win.get_title();    // returns the current visible window title string
 
 	    if (targetClass === '*'){
 		let rect = win.get_frame_rect();
