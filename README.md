@@ -19,7 +19,7 @@ The GXSM Web Site+Discussuion Forums historically remain hosted on SF: http://gx
 ### Full window management and placement automatization now available on Wayland/Gnome Desktop and Wayland/Hyprland
 after a long struggle with Wayland policies we found a very capable work around to this problem via a bridge to gnome desktop.
 
-### New: External Python Remote Control via SHGM bridge
+### New: External Python Remote Control via SHM bridge
 allows using any Python environment, GUIs, Web-embdedding, etc. Completely thread proof.
 
 ### Get excited: RPSPMC for GXSM4 is here and fully functional!
