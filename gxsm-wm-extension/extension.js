@@ -64,7 +64,6 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Define the XML interface for your custom D-Bus object
 
-//      <arg type="i" direction="in" name="wDesk"/>
 
 
 const GXSMWMXML = `
@@ -73,11 +72,13 @@ const GXSMWMXML = `
     <method name="GetGeoAction">
       <arg type="s" direction="in" name="wClass"/>
       <arg type="s" direction="in" name="wTitle"/>
+      <arg type="i" direction="in" name="wWorkspace"/>
       <arg type="s" direction="out" name="geom"/>
     </method>
     <method name="SetGeoAction">
       <arg type="s" direction="in" name="wClass"/>
       <arg type="s" direction="in" name="wTitle"/>
+      <arg type="i" direction="in" name="wWorkspace"/>
       <arg type="i" direction="in" name="x"/>
       <arg type="i" direction="in" name="y"/>
       <arg type="i" direction="in" name="width"/>
@@ -88,6 +89,7 @@ const GXSMWMXML = `
     <method name="SetOnTopAction">
       <arg type="s" direction="in" name="wClass"/>
       <arg type="s" direction="in" name="wTitle"/>
+      <arg type="i" direction="in" name="wWorkspace"/>
       <arg type="b" direction="in" name="uop"/>
       <arg type="s" direction="out" name="res"/>
     </method>
@@ -107,34 +109,49 @@ export default class GxsmWm extends Extension {
         }
     }
 
-    setOnTopByTitleAndClass(targetClass, targetTitle, targetDesk, uop) {
+    // Wayland native apps use app_id for class; XWayland uses wm_class
+
+    match_window (win, targetClass, targetTitle, targetWorkspace) {
+	let wmClass   = win.get_wm_class();
+        let wmTitle   = win.get_title();   
+	const regex_TargetClass = new RegExp (targetClass, "g"); 
+	const regex_TargetTitle = new RegExp (targetTitle, "g"); 
+	
+        if (wmClass.match (regex_TargetClass) && wmTitle.match (regex_TargetTitle)){
+	    let workspace = win.get_workspace().index();
+	    let activeWorkspace = global.workspace_manager.get_active_workspace_index();
+	    //  match as requested              auto match on current WS                                   match all WS
+	    if (workspace == targetWorkspace || (targetWorkspace == -1 && workspace == activeWorkspace) || targetWorkspace == -2)
+		return true;
+	}
+	return false;
+    }
+    
+    setOnTopByTitleAndClass (targetClass, targetTitle, targetWorkspace, uop) {
 	let windowActors = global.get_window_actors();
+	let ret = 'WNA';
 	
 	for (let actor of windowActors) {
             let win = actor.meta_window;
             if (!win) continue;
-            
-            // Wayland native apps use app_id for class; XWayland uses wm_class
-            let wmClass   = win.get_wm_class();
-            let title     = win.get_title();   
-	    let workspace = win.get_workspace();
-	    const regex = new RegExp(targetTitle, "g"); 
-	    
-            if (wmClass === targetClass && title.match(regex)){
+
+	    if (this.match_window (win, targetClass, targetTitle, targetWorkspace)) {
 		if (uop)
 		    win.make_above();
 		else
 		    win.unmake_above();
-		return 'OK';
+		ret = 'OK';
 	    }
 	}
-	return 'WNA';
+	return ret;
     }
 
-    getWindowGeometryByClassAndTitle(targetClass, targetTitle, targetDesk, targetWS) {
+    getWindowGeometryByClassAndTitle(targetClass, targetTitle, targetWorkspace) {
 	// Get all window actors across all workspaces
-	let list='';
+	let ret  = '';
+	let list = '';
 	let windowActors = global.get_window_actors();
+	let gotmatch = false;
 	
 	for (let actor of windowActors) {
             let win = actor.meta_window;
@@ -143,54 +160,56 @@ export default class GxsmWm extends Extension {
             // Retrieve properties to inspect
             let wmClass   = win.get_wm_class(); // returns e.g., "firefox" or "org.gnome.Nautilus"
             let title     = win.get_title();      // returns the current visible window title string
-	    let workspace = win.get_workspace();
 
 	    if (targetClass === '*'){
 		let rect = win.get_frame_rect();
-		let winfo = `{class=${wmClass.padEnd(20)} title=${title.padEnd(25)} geometry=[${rect.x}, ${rect.y}, ${rect.width}, ${rect.height}] on Desktop ${workspace}},\n`;
-		list = list + winfo;
-		log (winfo);
+		let activeWorkspace = global.workspace_manager.get_active_workspace_index();
+		let workspace = win.get_workspace().index();
+
+		//  match as requested              auto match on current WS                                   match all WS
+		if (workspace == targetWorkspace || (targetWorkspace == -1 && workspace == activeWorkspace) || targetWorkspace == -2){
+		    let winfo = `{class=${wmClass.padEnd(20)} title=${title.padEnd(25)} geometry=[${rect.x}, ${rect.y}, ${rect.width}, ${rect.height}] on Desktop ${workspace} active: ${activeWorkspace}},`;
+		    list = list + winfo;
+		    log (winfo);
+		}
 		continue;
 	    }
 	    
-	    const regex = new RegExp(targetTitle, "g"); 
-	    
-            if (wmClass === targetClass && title.match(regex)) {
+	    if (this.match_window (win, targetClass, targetTitle, targetWorkspace)) {
 		// Get frame geometry matching move_resize_frame requirements
 		let rect = win.get_frame_rect(); 
-		return `[${rect.x}, ${rect.y}, ${rect.width}, ${rect.height}]`;
+		let workspace = win.get_workspace().index();
+		ret = ret + `[${rect.x}, ${rect.y}, ${rect.width}, ${rect.height}] class=${wmClass}; title=${title} on ${workspace}` + '\n';
+		gotmatch = true;
+		//return `[${rect.x}, ${rect.y}, ${rect.width}, ${rect.height}] on ${workspace}`;
             }
 	}
 	
 	if (targetClass === '*')
 	    return list;
-	else
-	    return 'WNA'; // Window not found
+	else{
+	    if (gotmatch)
+		return ret;
+	    else
+		return 'WNA'; // Window not found
+	}
     }
 
     
-    moveResizeByTitleAndClass(targetClass, targetTitle, targetDesk, x, y, width, height, uop) {
+    moveResizeByTitleAndClass(targetClass, targetTitle, targetWorkspace, x, y, width, height, uop) {
 	let windowActors = global.get_window_actors();
 	
 	for (let actor of windowActors) {
             let win = actor.meta_window;
             if (!win) continue;
-            
-            // Wayland native apps use app_id for class; XWayland uses wm_class
-            let wmClass   = win.get_wm_class();
-            let title     = win.get_title();   
-	    let workspace = win.get_workspace();
-	    const regex = new RegExp(targetTitle, "g"); 
-	    
-            if (wmClass === targetClass && title.match(regex)) {
 
+	    if (this.match_window (win, targetClass, targetTitle, targetWorkspace)) {
 		if (GSVmajor >= 50)
 		    this.Gnome50Layout(win, x, y, width, height, uop);
 		else 
 		    this.Gnome49Layout(win, x, y, width, height, uop);
 		
 		return 'OK';
-
             }
 	}
 	return 'WNA'; // window not available
@@ -245,24 +264,18 @@ export default class GxsmWm extends Extension {
     }
     
     // This is the function you want to execute from the shell
-    //GetGeoAction(wClass, wTitle, wDesk) {
-    GetGeoAction(wClass, wTitle) {
+    GetGeoAction(wClass, wTitle, wWorkspace) {
         //log(`GXSM-WM SHELL EXT GetGeo: ${wClass} >${wTitle}<`);
-	let wDesk=-1;
-	return this.getWindowGeometryByClassAndTitle(wClass, wTitle, wDesk);
+	return this.getWindowGeometryByClassAndTitle(wClass, wTitle, wWorkspace);
     }
     
-    //SetGeoAction(wClass, wTitle, wDesk, x, y, width, height, uop) {
-    SetGeoAction(wClass, wTitle, x, y, width, height, uop) {
+    SetGeoAction(wClass, wTitle, wWorkspace, x, y, width, height, uop) {
         //log(`GXSM-WM SHELL EXT SetGeo: ${wClass} >${wTitle}< [${x} ${y} ${width} ${height} ${uop}]`);
-	let wDesk=-1;
-	return this.moveResizeByTitleAndClass(wClass, wTitle, wDesk, x, y, width, height, uop);
+	return this.moveResizeByTitleAndClass(wClass, wTitle, wWorkspace, x, y, width, height, uop);
     }
 
-    //SetOnTopAction(wClass, wTitle, wDesk, uop) {
-    SetOnTopAction(wClass, wTitle, uop) {
-	let wDesk=-1;
-	return this.setOnTopByTitleAndClass(wClass, wTitle, wDesk, uop);
+    SetOnTopAction(wClass, wTitle, wWorkspace, uop) {
+	return this.setOnTopByTitleAndClass(wClass, wTitle, wWorkspace, uop);
 	metaWindow.set_above(uop);
     }
 }

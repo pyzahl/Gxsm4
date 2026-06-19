@@ -1291,7 +1291,7 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
                         gint exit_status;
                         GError *error = NULL;
 
-                        gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetOnTopAction ssb -- 'gxsm4' '^(Startup.*)$' 'TRUE'");
+                        gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetOnTopAction ssib -- 'gxsm4' '^(Startup.*)$' -1 'TRUE'");
                         g_spawn_command_line_sync (busctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
                         if (error != NULL) {
                                 g_error ("EE %s E:%s [OS:%s, ES:%s]\n", busctl_cmdline, error->message, stdout_buf?stdout_buf:"-", stderr_buf?stderr_buf:"-");

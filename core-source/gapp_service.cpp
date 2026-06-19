@@ -1080,9 +1080,9 @@ int AppBase::position_auto (){
                                                                         window_geometry[WGEO_XPOS] -= tmp_xl;
                                                 }
                                                 
-                                                // Execute shell command for busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiii "gxsm4" "Gxsm4" 100 100 500 600
-                                                gchar *wClass = !strcmp(title, "Gxsm4") ? "gxsm4" : "org.gnome.gxsm4";
-                                                gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiiib -- '%s' '%s' %d %d %d %d '%s'",
+                                                // Execute shell command for busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiiiib -- "gxsm4" "Gxsm4" -1 100 100 500 600 FALSE //** -1: operates on current workspace
+                                                gchar *wClass = "gxsm4"; //!strcmp(title, "Gxsm4") ? "gxsm4" : "org.gnome.gxsm4"; // regex is understood!
+                                                gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiiiib -- '%s' '%s' -1 %d %d %d %d '%s'",
                                                                                          wClass, title,
                                                                                          (int)window_geometry[WGEO_XPOS],
                                                                                          (int)window_geometry[WGEO_YPOS],
@@ -1134,8 +1134,8 @@ int AppBase::position_auto (){
                                                 g_free (title);
 
                                                 
-                                                // busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiii "gxsm4" "Gxsm4" 100 100 500 600
-                                                // busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ss "gxsm4" "Gxsm4"                
+                                                // busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiiiib -- "gxsm4" "Gxsm4" -1 100 100 500 600 FALSE
+                                                // busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ssi -- "gxsm4" "Gxsm4" -1                
                                                 // => s "[100, 100, 500, 600]"
 
                                                 //g_message ("SORRY WAYLAND DOES NOT GIVE ANY ACCESS TO WINDOW GEOMETRY. Hint: try Hyprland!");
@@ -1444,9 +1444,9 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                                 } else  title = g_strdup (main_title_buffer);
 
                                         
-                                // Execute shell command for busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ss "gxsm4" "Gxsm4"
-                                gchar *wClass = !strcmp(title, "Gxsm4") ? "gxsm4" : "org.gnome.gxsm4";
-                                gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ss '%s' '%s'",
+                                // Execute shell command for busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ssi -- "gxsm4" "Gxsm4 -1"   //** -1: operates on current workspace
+                                gchar *wClass = "gxsm4"; //!strcmp(title, "Gxsm4") ? "gxsm4" : "org.gnome.gxsm4"; // regex is understood!
+                                gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ssi -- '%s' '%s' -1",
                                                                          wClass, title
                                                                          );
                                 g_free (title);
