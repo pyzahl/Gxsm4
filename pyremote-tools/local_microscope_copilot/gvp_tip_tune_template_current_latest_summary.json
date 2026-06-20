@@ -1,0 +1,84 @@
+{
+  "timestamp": "2026-06-02T16:34:10",
+  "name": "authoritative tip-tune GVP template readback",
+  "program_file": "gvp_tip_tune_template_current_latest.json",
+  "numeric_key_count": 512,
+  "checkbox_key_count": 66,
+  "nonzero_rows": {
+    "00": {
+      "dt": 1.0,
+      "n": 500.0,
+      "nrep": 1.0
+    },
+    "01": {
+      "dt": 0.2,
+      "du": -0.1,
+      "n": 100.0,
+      "nrep": 1.0
+    },
+    "02": {
+      "dt": 30.0,
+      "dz": -5.0,
+      "n": 500.0,
+      "nrep": 1.0,
+      "xcmpv": 1.0,
+      "xopcd": 1.0,
+      "xrchi": 4.0
+    },
+    "03": {
+      "dt": 0.5,
+      "du": 0.1,
+      "n": 100.0,
+      "nrep": 1.0
+    },
+    "04": {
+      "dt": 30.0,
+      "dz": 5.0,
+      "n": 500.0,
+      "nrep": 1.0
+    },
+    "05": {
+      "dt": 10.0,
+      "dz": 10.0,
+      "n": 500.0,
+      "nrep": 1.0
+    },
+    "06": {
+      "dt": 0.1,
+      "du": -0.1,
+      "n": 500.0,
+      "nrep": 1.0
+    },
+    "07": {
+      "dt": 0.5,
+      "du": 0.1,
+      "n": 100.0,
+      "nrep": 1.0
+    },
+    "08": {
+      "dt": 1.0,
+      "dz": -10.0,
+      "n": 500.0,
+      "nrep": 1.0
+    },
+    "09": {
+      "dt": 1.0,
+      "n": 500.0
+    }
+  },
+  "fb_checked_rows": [
+    {
+      "row": "00",
+      "key": "GETCHECK-dsp-gvp-FB00"
+    },
+    {
+      "row": "08",
+      "key": "GETCHECK-dsp-gvp-FB08"
+    }
+  ],
+  "parameter_notes": {
+    "indentation_A": "template rows use dz02=-depth and dz04=+depth for the main -/+ indentation pair",
+    "contact_bias_delta_V": "template bias rows around contact use +/-0.1 V values as tunable parameters",
+    "initial_bias_remove_V": "initial -0.1 V removes current scan bias during approach"
+  }
+}

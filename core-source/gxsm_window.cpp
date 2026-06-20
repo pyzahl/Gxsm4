@@ -69,9 +69,6 @@ gxsm4_app_window_init (Gxsm4appWindow *window)
         priv = (Gxsm4appWindowPrivate *) gxsm4_app_window_get_instance_private (window);
         priv->self = window;
 
-        // no template in use currently
-        // gtk_widget_init_template (GTK_WIDGET (win));
-        // NEW**REMOVED FROM HERE to gxsm_main.C
         if (main_get_gapp ()->gxsm_app_window_present ()){
                 // VIEW WINDOW
                 XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_init ** GENERIC VIEW WINDOW ========================" );
@@ -90,7 +87,6 @@ gxsm4_app_window_dispose (GObject *object)
         Gxsm4appWindowPrivate *priv = (Gxsm4appWindowPrivate *) gxsm4_app_window_get_instance_private (GXSM4_APP_WINDOW (object));
 
         XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_dispose ============================================ >> PRIV: %s", priv? "OK":"ERROR");
-        // FIX-ME !!
         if (!priv) return;
         
         GList *windows = gtk_application_get_windows (GTK_APPLICATION (priv->gxsm4app));
@@ -108,8 +104,6 @@ gxsm4_app_window_dispose (GObject *object)
         G_OBJECT_CLASS (gxsm4_app_window_parent_class)->dispose (object);
 }
 
-//#define COMPLILE_TEST_WAYLAND 1
-
 Gxsm4appWindow *
 gxsm4_app_window_new (Gxsm4app *app)
 {
@@ -118,21 +112,14 @@ gxsm4_app_window_new (Gxsm4app *app)
         //Gxsm4appWindowPrivate *priv = (Gxsm4appWindowPrivate *) gxsm4_app_window_get_instance_private (GXSM4_APP_WINDOW (app));
         //priv->gxsm4app = app;
         
-#if COMPLILE_TEST_WAYLAND
-        Gxsm4appWindow *window = (Gxsm4appWindow *) g_object_new (GXSM4_APP_WINDOW_TYPE, "application", app, gdk_get_default_root_window ()); // WAYLAND
-#else
         Gxsm4appWindow *window = (Gxsm4appWindow *) g_object_new (GXSM4_APP_WINDOW_TYPE, "application", app, NULL); // X11
-#endif
+
         // change destroy on closs button to hide
         gtk_window_set_hide_on_close (GTK_WINDOW (window), true);
      
         windows = g_list_append (windows, window);
         XSM_DEBUG_GM (DBG_L1,"gxsm4_app_window_new **** # Windows in List: %ul,  time: %ld us", g_list_length (windows), g_get_real_time());
-#if 0
-        gchar* tmp = g_strdup_printf ("W# %u", g_list_length (windows));
-        GtkWidget *lab = gtk_label_new (tmp);
-        gtk_window_set_child (GTK_WINDOW(window), lab);
-#endif
+
         return window;
 }
 
@@ -142,30 +129,41 @@ gxsm4_app_window_open (Gxsm4appWindow *win,
                        gboolean in_active_channel)
 {
         gboolean ret=false;
-        gchar *basename;
-        basename = g_file_get_basename (file);
+        gchar *basename = g_file_get_basename (file);
+        gchar *path     = g_file_get_path (file);
         XSM_DEBUG_GM (DBG_L1, "gxsm4_app_window_open =================>>>  %s", basename);
 
         std::ifstream test;
-        test.open (basename, std::ios::in);
+        test.open (path, std::ios::in);
 
         if (test.good ()) {
-
                 test.close ();
-                XSM_DEBUG (DBG_L2, "gxsm4_app_window_open ** request to open file <" << basename << ">");
+                XSM_DEBUG (DBG_L1, "gxsm4_app_window_open ** request to open file (exists): " << path);
                 
-                // XSM_DEBUG_GM (DBG_L1,"GXSM comandline load file <%s>", basename);
-#if 0                
-                if (in_active_channel){
-                        main_get_gapp ()->xsm->load (basename);
-                        ret=true;
-                } else if (!main_get_gapp ()->xsm->ActivateFreeChannel()){ // returns 1 on error/no channel
-                        main_get_gapp ()->xsm->load (basename);
-                        ret=true;
+                if (main_get_gapp ()){
+                        int k=3;
+                        main_get_gapp ()->check_events(); // try: make sure we are ready
+                        do {
+                                if (main_get_gapp ()->xsm){
+                                        if (in_active_channel){
+                                                main_get_gapp ()->xsm->load (path);
+                                                ret=true;
+                                        } else if (!main_get_gapp ()->xsm->ActivateFreeChannel()){ // returns 1 on error/no channel
+                                                main_get_gapp ()->xsm->load (path);
+                                                ret=true;
+                                        }
+                                } else {
+                                        g_warning ("gxsm4_app_window_open ** gapplication->surface class is not ready ** auto retry #%d", 4-k);
+                                        main_get_gapp ()->check_events();
+                                }
+                        } while (--k && !ret);
                 }
-#endif
+                if (!ret)
+                        g_warning ("gxsm4_app_window_open ** gapplication->surface class is not ready ** please try again after Gxsm4 startup is completed.");
         }
+
         g_free (basename);
+        g_free (path);
         return ret;
 }
 

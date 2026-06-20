@@ -123,7 +123,7 @@ static const GOptionEntry gxsm_options[] =
 
 	/* New instance */
 	{ "new-instance", 's', G_OPTION_FLAG_NONE, G_OPTION_ARG_NONE, &gxsm_new_instance,
-          N_("Start a new instance of gxsm4 -- not yet functional, use different user account via ssh -X... for now."), NULL
+          N_("Start a new instance of gxsm4. This will not connect SHM for external python control to prevent conflicts. Howvere, external python may signal to the wrong PID as a warning as it cannot differentiate process names!"), NULL
 	},
 
 	/* Build self test python script */
@@ -197,6 +197,8 @@ int main (int argc, char **argv)
 
         XSM_DEBUG(DBG_L2, "gxsm4_main g_application_run =========================================" );
         GXSM_STARTUP_MESSAGE_VERBOSE ("GXSM4: starting application module -- arguments left argc=%d", argc);
+        for (int i=argc-1; i>=0; i--)
+                GXSM_STARTUP_MESSAGE_VERBOSE ("  [%d]: %s", i, argv[i]);
         
         int ret = g_application_run (G_APPLICATION (gxsm4_app_new ()), argc, argv);
 

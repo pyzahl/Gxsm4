@@ -178,7 +178,7 @@ static void GVPMoverControl_Thaw_callback (gpointer x){
 		this_mover_control->thaw ();	 
 }
 
-GVPMoverControl::GVPMoverControl (Gxsm4app *app):AppBase(app)
+GVPMoverControl::GVPMoverControl (Gxsm4app *app):AppBase(app, "Mover Control")
 {
         hwi_settings = g_settings_new (GXSM_RES_BASE_PATH_DOT".hwi.rpspmc-gvpmover");
         mover_param.AFM_GPIO_setting = g_settings_get_int (hwi_settings, "mover-gpio-last");

@@ -472,7 +472,6 @@ DSPControlUserTabs::DSPControlUserTabs (Gxsm4app *app):AppBase(app)
 {
         GtkWidget *notebook;
         GtkWidget *grid_base;
-
 	gchar *tmp = g_strdup_printf ("SR DSP Control %s %s [%s]",
                                       (DSPPACClass)? "MK3-PLL/A810":"MK2/A810",
                                       N_("User Tabs"), xsmres.DSPDev);

@@ -339,7 +339,7 @@ void ProbeIndicator::KAO_zoom_callback (GtkWidget *widget, gpointer user_data) {
         double KAO_zf[] = { 1, 1.27, 1.5 };
         if (pv->probe)
                 pv->probe->set_kao_zoom (KAO_zf[gtk_combo_box_get_active(GTK_COMBO_BOX(widget))]);
-        g_message ("ProbeIndicator::KAO_zoom_callback: %s", tmp);
+        PI_DEBUG_GP (DBG_L2, "ProbeIndicator::KAO_zoom_callback: %s", tmp);
         g_free (tmp);
 }
 
@@ -356,7 +356,7 @@ void ProbeIndicator::KAO_kaoch_callback (GtkWidget *widget, gpointer user_data) 
         else
                 g_slist_foreach (pv->kao_ch34_widget_list, (GFunc) App::show_w, NULL), pv->kao_num_ch = 4;
 
-        g_message ("ProbeIndicator::KAO_zoom_callback: %s", tmp);
+        PI_DEBUG_GP (DBG_L2, "ProbeIndicator::KAO_zoom_callback: %s", tmp);
         g_free (tmp);
 }
 
@@ -378,9 +378,9 @@ void ProbeIndicator::KAO_tdiv_callback (GtkWidget *widget, gpointer user_data) {
                 if (hlen >= KAO_hlen[gtk_combo_box_get_active(GTK_COMBO_BOX(widget))])
                         pv->kao_samples = KAO_hlen[gtk_combo_box_get_active(GTK_COMBO_BOX(widget))];
                 else
-                        g_warning ("ProbeIndicator::KAO_tdiv_callback current history len too short.");
+                        PI_DEBUG_GP (DBG_L2, "ProbeIndicator::KAO_tdiv_callback current history len too short.");
         }
-        g_message ("ProbeIndicator::KAO_tdiv_callback: %s => HLN is %d, selected %d", tmp, hlen, pv->kao_samples);
+        PI_DEBUG_GP (DBG_L2, "ProbeIndicator::KAO_tdiv_callback: %s => HLN is %d, selected %d", tmp, hlen, pv->kao_samples);
         g_free (tmp);
 }
 
@@ -393,7 +393,7 @@ void ProbeIndicator::KAO_mode_callback (GtkWidget *widget, gpointer user_data) {
                                       gtk_combo_box_get_active(GTK_COMBO_BOX(widget))
                                       );
         pv->kao_mode[ch] = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-        g_message ("ProbeIndicator::KAO_mode_callback: %s", tmp);
+        PI_DEBUG_GP (DBG_L2, "ProbeIndicator::KAO_mode_callback: %s", tmp);
         g_free (tmp);
 }
 
@@ -415,7 +415,7 @@ void ProbeIndicator::KAO_skl_callback (GtkWidget *widget, gpointer user_data) {
                                       s,
                                       pv->kao_scale_M[ch], pv->kao_scale_m[ch], pv->kao_scale[ch]
                                       );
-        g_message ("ProbeIndicator::KAO_skl_callback: %s", tmp);
+        PI_DEBUG_GP (DBG_L2, "ProbeIndicator::KAO_skl_callback: %s", tmp);
         g_free (tmp);
 }
 
@@ -438,7 +438,7 @@ void ProbeIndicator::KAO_sklX_callback (GtkWidget *widget, gpointer user_data) {
                                       s,
                                       pv->kao_scale_M[ch], pv->kao_scale_m[ch], pv->kao_scale[ch]
                                       );
-        g_message ("ProbeIndicator::KAO_skl_callback: %s", tmp);
+        PI_DEBUG_GP (DBG_L2, "ProbeIndicator::KAO_skl_callback: %s", tmp);
         g_free (tmp);
 }
 
@@ -453,10 +453,10 @@ void ProbeIndicator::KAO_signal_callback (GtkWidget *widget, gpointer user_data)
                                               gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget))
                                               );
                 int sn = main_get_gapp()->xsm->hardware->RTQuery (tmp, 0, (double*)pv->kao_ch_unit[ch]); // Request Signal, Copy unit sym into unit
-                g_message ("ProbeIndicator::KAO_signal_callback: %s  in %d", tmp, pv->kao_ch_unit[ch]);
+                PI_DEBUG_GP (DBG_L2, "ProbeIndicator::KAO_signal_callback: %s  in %d", tmp, pv->kao_ch_unit[ch]);
                 g_free (tmp);
         }
-        g_message ("ProbeIndicator::KAO_signal_callback OK");
+        PI_DEBUG_GP (DBG_L2, "ProbeIndicator::KAO_signal_callback OK");
 }
 
 void ProbeIndicator::KAO_dc_set_callback (GtkWidget *widget, gpointer user_data) {
@@ -478,7 +478,7 @@ void ProbeIndicator::close_callback (GtkWidget *widget, gpointer user_data) {
 
 void ProbeIndicator::shutdown_callback (GtkWidget *widget, gpointer user_data) {
         //ProbeIndicator *pv = (ProbeIndicator *) user_data; 
-        g_print ("ProbeIndicator::shutdown_callback TB: %d\n", gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)));
+        PI_DEBUG_GP (DBG_L2, "ProbeIndicator::shutdown_callback TB: %d\n", gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)));
 }
 
 void ProbeIndicator::run_scope_callback (GtkWidget *widget, gpointer user_data) {
@@ -798,7 +798,7 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app, "HUD Probe Indicator
         }
 
         
-        g_message ("Probe Indicator HUD Object Init");
+        PI_DEBUG_GP (DBG_L1, "Probe Indicator HUD Object Init");
         
         probe = new hud_object();
 
@@ -867,7 +867,7 @@ ProbeIndicator::ProbeIndicator (Gxsm4app *app):AppBase(app, "HUD Probe Indicator
 	info->set_spacing (-.1);
 	info->set_anchor (CAIRO_ANCHOR_E);
 
-        g_message ("Probe Indicator GUI build complete.");
+        PI_DEBUG_GP (DBG_L2, "Probe Indicator GUI build complete.");
 
 
         // KAO Zoom -- init requires probe object (above) been build!
@@ -955,7 +955,7 @@ gint ProbeIndicator::canvas_event_cb(GtkWidget *canvas, GdkEvent *event, ProbeIn
 		case 1:
                         //g_object_set_data (G_OBJECT(canvas), "preset_xy", preset);
                         //main_get_gapp()->offset_to_preset_callback (canvas, gapp);
-                        g_message ("ProbeIndicator Button1 Pressed at XY=%g, %g",  mouse_pix_xy[0], mouse_pix_xy[1]);
+                        PI_DEBUG_GP (DBG_L2, "ProbeIndicator Button1 Pressed at XY=%g, %g",  mouse_pix_xy[0], mouse_pix_xy[1]);
                 }
                 break;
 		

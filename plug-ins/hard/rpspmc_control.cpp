@@ -180,7 +180,7 @@ GtkWidget*  GUI_Builder::grid_add_mixer_options (gint channel, gint preset, gpoi
         gchar *id;
         GtkWidget *cbtxt = gtk_combo_box_text_new ();
 
-        g_message ("RPSPMC:: GUI_Builder::grid_add_mixer_options");
+        //g_message ("RPSPMC:: GUI_Builder::grid_add_mixer_options");
         
         g_object_set_data (G_OBJECT (cbtxt), "mix_channel", GINT_TO_POINTER (channel)); 
                                                                         
@@ -591,9 +591,7 @@ void RPSPMC_Control::GVP_store_vp (const gchar *key){
 }
 
 void RPSPMC_Control::GVP_restore_vp (const gchar *key){
-	// g_message ("GVP-VP restore memo key=%s", key);
 	PI_DEBUG_GP (DBG_L2, "GVP-VP restore memo %s\n", key);
-	g_message ( "GVP-VP restore memo %s\n", key);
         GVariant *v = g_settings_get_value (hwi_settings, "probe-gvp-vector-program-matrix");
         //GVariant *v = g_settings_get_value (hwi_settings, "probe-lm-vector-program-matrix");
         GVariantDict *dict = g_variant_dict_new (v);
@@ -614,7 +612,7 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
         
         for (int i=0; vckey_i[i]; ++i){
                 gchar *m_vckey = g_strdup_printf ("%s-%s", vckey_i[i], key);
-                g_print ( "GVP-VP restore %s\n", m_vckey);
+                PI_DEBUG_GP (DBG_L1, "GVP-VP restore %s\n", m_vckey);
 
                 for (int k=0; k<N_GVP_VECTORS; ++k) GVPi[i][k]=0; // zero init vector
                 if ((vi[i] = g_variant_dict_lookup_value (dict, m_vckey, ((const GVariantType *) "ai"))) == NULL){
@@ -623,7 +621,7 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
                         g_free (m_vckey);
                         continue;
                 }
-                g_print ("GVP restore: %s = %s\n", m_vckey, g_variant_print (vi[i], true));
+                PI_DEBUG_GP (DBG_L1, "GVP restore: %s = %s", m_vckey, g_variant_print (vi[i], true));
 
                 pc_array_i[i] = (gint32*) g_variant_get_fixed_array (vi[i], &n, sizeof (gint32));
                 if (i==0) // actual length of this vector should fit all others -- verify
@@ -640,14 +638,14 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
 
         {
                 gchar *m_vckey = g_strdup_printf ("%s-%s", "grm", key);
-                g_print ( "GVP-VP restore %s\n", m_vckey);
+                PI_DEBUG_GP (DBG_L1, "GVP-VP restore %s\n", m_vckey);
                 GVariant *viG;
                 if ((viG = g_variant_dict_lookup_value (dict, m_vckey, ((const GVariantType *) "at"))) == NULL){
                         PI_DEBUG_GP (DBG_L2, "GXSM4 DCONF: RPSPMC_Control::GVP_restore_vp -- key_i '%s' memo not found. Setting to Zero.\n", m_vckey);
                         // g_warning ("GXSM4 DCONF: RPSPMC_Control::GVP_restore_vp -- key_i '%s' memo not found. Setting to Zero.\n", m_vckey);
                         g_free (m_vckey);
                 } else {
-                        g_print ("GVP restore: %s = %s\n", m_vckey, g_variant_print (viG, true));
+                        PI_DEBUG_GP (DBG_L1, "GVP restore: %s = %s\n", m_vckey, g_variant_print (viG, true));
                         guint64 *gvp_grm_array_i =  (guint64*) g_variant_get_fixed_array (viG, &n, sizeof (gint64));
                         for (int k=0; k<n && k<6; ++k)
                                 GVP_glock_data[k]=gvp_grm_array_i[k];
@@ -663,7 +661,7 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
                         g_free (m_vckey);
                         continue;
                 }
-                g_print ("GVP restore: %s = %s\n", m_vckey, g_variant_print (vd[i], true));
+                PI_DEBUG_GP (DBG_L1, "GVP restore: %s = %s\n", m_vckey, g_variant_print (vd[i], true));
 
                 pc_array_d[i] = (double*) g_variant_get_fixed_array (vd[i], &n, sizeof (double));
                 //g_assert_cmpint (n, ==, N_GVP_VECTORS);
@@ -884,7 +882,7 @@ void RPSPMC_Control::get_tab_settings (const gchar *tab_key, guint64 &option_fla
         GVariant *value = g_variant_dict_lookup_value (dict, tab_key, ((const GVariantType *) "at")); // array uint64
         if (!value){
                 g_warning ("WARNING (Normal at first start) -- Note: only at FIRST START: Building Settings. RPSPMC_Control::get_tab_settings:\n --> can't get find array 'at' data for key '%s' in 'probe-tab-options' dictionary.\n Storing default now.", tab_key);
-                g_print ("WARNING (Normal at first start) -- Note: only at FIRST START: Building Settings. RPSPMC_Control::get_tab_settings:\n --> can't get find array 'at' data for key '%s' in 'probe-tab-options' dictionary.\n Storing default now.", tab_key);
+                PI_DEBUG_GP (DBG_L1, "WARNING (Normal at first start) -- Note: only at FIRST START: Building Settings. RPSPMC_Control::get_tab_settings:\n --> can't get find array 'at' data for key '%s' in 'probe-tab-options' dictionary.\n Storing default now.", tab_key);
 
                 if (dict)
                         g_variant_dict_unref (dict);
@@ -1163,7 +1161,7 @@ int RPSPMC_Control::choice_VGain_callback (GtkWidget *widget, RPSPMC_Control *se
 	gint j = GPOINTER_TO_INT (g_object_get_data( G_OBJECT (widget), "VGindex"));
 	switch(j){
 	case 0: double g = rpspmc_pacpll_hwi_pi.app->xsm->Inst->set_current_gain_modifier (i);
-                g_message ("Adjusting IVC VGain: %f nV/A x pos[%d] %f => %f nV/A", xsmres.nAmpere2Volt, i, xsmres.VG[i], g);
+                PI_DEBUG_GP (DBG_L1, "Adjusting IVC VGain: %f nV/A x pos[%d] %f => %f nV/A", xsmres.nAmpere2Volt, i, xsmres.VG[i], g);
 		break;
 	}
         
@@ -2479,8 +2477,7 @@ void RPSPMC_Control::create_folder (){
                         rpspmc_source_signals[i].unit         = rpspmc_swappable_signals[k].unit;
                         rpspmc_source_signals[i].unit_sym     = rpspmc_swappable_signals[k].unit_sym;
                         rpspmc_source_signals[i].scale_factor = rpspmc_swappable_signals[k].scale_factor;
-                        PI_DEBUG (DBG_L4, "GRAPHS*** SWPS init i=" << i << " k=" << k << " " << rpspmc_source_signals[i].label << " sfac=" << rpspmc_source_signals[i].scale_factor);
-                        g_message ("GRAPHS*** SWPS init i=%d k=%d {%s} sfac=%g", i, k, rpspmc_source_signals[i].label,rpspmc_source_signals[i].scale_factor);
+                        PI_DEBUG_GP (DBG_L1, "GRAPHS*** SWPS init i=%d k=%d {%s} sfac=%g", i, k, rpspmc_source_signals[i].label,rpspmc_source_signals[i].scale_factor);
                 }
 
                 switch (rpspmc_source_signals[i].mask){
@@ -2493,7 +2490,7 @@ void RPSPMC_Control::create_folder (){
 
                 bp->set_xy (c, r);
 
-                g_message ("GRAPHS MATRIX SELECTOR BUILD: %d => 0x%08x",i,rpspmc_source_signals[i].mask);
+                PI_DEBUG_GP (DBG_L1, "GRAPHS MATRIX SELECTOR BUILD: %d => 0x%08x",i,rpspmc_source_signals[i].mask);
                 
                 // Source
                 bp->set_input_width_chars (1);
@@ -2568,14 +2565,13 @@ void RPSPMC_Control::create_folder (){
                 gtk_widget_set_size_request (sep, 5, -1);
                 bp->grid_add_widget (sep);
 	}
-        g_message ("GRAPHS MATRIX SELECTOR BUILD complete.");
+        PI_DEBUG_GP (DBG_L2, "GRAPHS MATRIX SELECTOR BUILD complete.");
 
         
         bp->pop_grid ();
         bp->new_line ();
         bp->new_grid_with_frame ("Plot Mode Configuration");
 
-        g_message ("GRAPHS PLOT CFG");
 	graphs_matrix[0][31] = bp->grid_add_check_button ("Join all graphs for same X", "Join all plots with same X.\n"
                                                           "Note: if auto scale (default) Y-scale\n"
                                                           "will only apply to 1st graph - use hold/exp. only for asolute scale.)", 1,
@@ -2591,7 +2587,6 @@ void RPSPMC_Control::create_folder (){
         bp->new_line ();
         bp->new_grid_with_frame ("Plot / Save current data in buffer -- for convenience: extra Execute GVP button");
 
-        g_message ("GRAPHS PLOT ACTIONS");
 	bp->grid_add_button ("Plot");
 	g_signal_connect (G_OBJECT (bp->button), "clicked",
                           G_CALLBACK (RPSPMC_Control::Probing_graph_callback), this);
@@ -2611,7 +2606,7 @@ void RPSPMC_Control::create_folder (){
 
 
 // ==== Folder: RPSPMC System Connection ========================================
-        g_message ("Folder: RPSPMC System Connection");
+        //g_message ("Folder: RPSPMC System Connection");
         bp->set_pcs_remote_prefix ("");
         bp->new_grid ();
         bp->start_notebook_tab (notebook, "RedPitaya Web Socket", "rpspmc-tab-system", hwi_settings);
@@ -2632,7 +2627,7 @@ void RPSPMC_Control::create_folder (){
         //gtk_entry_set_text (GTK_ENTRY (input_rpaddress), "130.199.243.200");
         //gtk_entry_set_text (GTK_ENTRY (input_rpaddress), "192.168.1.10");
 
-        g_message ("Folder: RPSPMC CHECK CONNECT");
+        //g_message ("Folder: RPSPMC CHECK CONNECT");
 
         bp->grid_add_check_button ( N_("Restart"), "Check to reload FPGA and initiate connection, uncheck to close connection.", 1,
                                     G_CALLBACK (RPspmc_pacpll::connect_cb), rpspmc_pacpll);
@@ -2656,7 +2651,7 @@ void RPSPMC_Control::create_folder (){
         g_signal_connect (G_OBJECT (GVP_stop_all_zero_button), "clicked", G_CALLBACK (RPSPMC_Control::GVP_AllZero), this);
         gtk_widget_set_tooltip_text (GVP_stop_all_zero_button, "Click to force reset GVP (WARNING: XYZ JUMP possible)!");
 
-        g_message ("Folder: RPSPMC DBG");
+        //g_message ("Folder: RPSPMC DBG");
 
         bp->new_line ();
         bp->grid_add_check_button ( N_("Debug"), "Enable debugging LV1.", 1,
@@ -2694,7 +2689,7 @@ void RPSPMC_Control::create_folder (){
         rpspmc_pacpll->update_health ("Not connected.");
         bp->new_line ();
 
-        g_message ("Folder: RPSPMC LOG");
+        //g_message ("Folder: RPSPMC LOG");
         
         rpspmc_pacpll->text_status = gtk_text_view_new ();
  	gtk_text_view_set_editable (GTK_TEXT_VIEW (rpspmc_pacpll->text_status), FALSE);
@@ -2712,7 +2707,7 @@ void RPSPMC_Control::create_folder (){
         bp->pop_grid ();
         bp->show_all ();
 
-        g_message ("*** STORE LISTS ***");
+        //g_message ("*** STORE LISTS ***");
 
         
 	// ============================================================
@@ -2736,12 +2731,12 @@ void RPSPMC_Control::create_folder (){
         AppWindowInit (NULL); // stage two
         set_window_geometry ("rpspmc-main-control"); // must add key to xml file: core-sources/org.gnome.gxsm4.window-geometry.gschema.xml
 
-        g_message ("RPSPMC CONTROL READY -- updating");
+        //g_message ("RPSPMC CONTROL READY -- updating");
        
         //Probing_RampFBoff_callback (multiIV_checkbutton, this); // update
         //Probing_multiIV_callback (multiIV_checkbutton, this); // update
 
-        g_message ("RPSPMC BUILD TABS DONE.");
+        //g_message ("RPSPMC BUILD TABS DONE.");
 }
 
 void RPSPMC_Control::Init_SPMC_on_connect (){
@@ -2780,7 +2775,7 @@ void RPSPMC_Control::Init_SPMC_after_cold_start (){
 }
 
 void  RPSPMC_Control::spmc_server_control_callback (GtkWidget *widget, RPSPMC_Control *self){
-        g_message ("RPSPMC+Control::spmc_server_control_callback DMA: %d ms, VL: %d",(int)spmc_parameters.rpspmc_dma_pull_interval, (int)self->rp_verbose_level);
+        //g_message ("RPSPMC+Control::spmc_server_control_callback DMA: %d ms, VL: %d",(int)spmc_parameters.rpspmc_dma_pull_interval, (int)self->rp_verbose_level);
         //RPSPMC_Control::GVP_AllZero (self);
         if (rpspmc_pacpll){
                 rpspmc_pacpll->write_parameter ("RPSPMC_DMA_PULL_INTERVAL", (int)spmc_parameters.rpspmc_dma_pull_interval);
@@ -2801,19 +2796,17 @@ void RPSPMC_Control::GVP_zero_all_smooth (){
                              0, VP_INITIAL_SET_VEC | gvp_options);
         append_null_vector (vector_index, gvp_options);
 
-        g_message ("last vector confirmed: %d, need %d", rpspmc_hwi->getVPCconfirmed (), rpspmc_hwi->last_vector_index);
+        PI_DEBUG_GP (DBG_L1, "last vector confirmed: %d, need %d", rpspmc_hwi->getVPCconfirmed (), rpspmc_hwi->last_vector_index);
 
         int timeout = 100;
         while (rpspmc_hwi->getVPCconfirmed () < rpspmc_hwi->last_vector_index && timeout--){
-#if GVP_DEBUG_VERBOSE > 4
-                g_message ("GVP-ZERO: Waiting for GVP been written and confirmed. [Vector %d]", rpspmc_hwi->getVPCconfirmed ());
-#endif
+                PI_DEBUG_GP (DBG_L4, "GVP-ZERO: Waiting for GVP been written and confirmed. [Vector %d]", rpspmc_hwi->getVPCconfirmed ());
                 usleep(20000);
         }
         if (timeout > 0)
-                g_message ("GVP-ZERO been written and confirmed for vector #%d. Init GVP. Executing GVP now.", rpspmc_hwi->getVPCconfirmed ());
+                PI_DEBUG_GP (DBG_L1, "GVP-ZERO been written and confirmed for vector #%d. Init GVP. Executing GVP now.", rpspmc_hwi->getVPCconfirmed ());
         else {
-                g_message ("GVP-ZERO program write and confirm failed. Aborting Scan.");
+                PI_DEBUG_GP (DBG_L1, "GVP-ZERO program write and confirm failed. Aborting Scan.");
                 rpspmc_hwi->EndScan2D();
                 return NULL;
         }
@@ -2824,7 +2817,7 @@ void RPSPMC_Control::GVP_zero_all_smooth (){
 
 int RPSPMC_Control::GVP_AllZero (GtkWidget *widget, RPSPMC_Control *self){
         PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
-        g_message ("RPSPMC_Control::GVP_AllZero: GVP STOP and set ALL ZERO   ** DANGER IF IN OPERATION ** -- No Action here in productioin version or confirm dialog.");
+        PI_DEBUG_GP (DBG_L1, "RPSPMC_Control::GVP_AllZero: GVP STOP and set ALL ZERO   ** DANGER IF IN OPERATION ** -- No Action here in productioin version or confirm dialog.");
 
         if (gapp->question_yes_no ("WARNING WARNING WARNING\n"
                                    "RPSPMC will force all GVP componet to zero (smooth).\n"
@@ -2996,7 +2989,7 @@ void RPSPMC_Control::ZServoControlInv (GtkWidget *widget, RPSPMC_Control* self){
 
 
 void RPSPMC_Control::ChangedNotifyVP(Param_Control* pcs, RPSPMC_Control* self){
-        g_message ("**ChangedNotifyVP**");
+        PI_DEBUG_GP (DBG_L1, "**ChangedNotifyVP**");
 
 	//gchar *id=pcs->get_refname();
 
@@ -3054,7 +3047,7 @@ int RPSPMC_Control::choice_scansource_callback (GtkWidget *widget, RPSPMC_Contro
 
 	self->scan_source[channel] = selection;
 
-        g_message ("RPSPMC_Control::choice_scansource_callback: scan_source[%d] = %d [%s]", channel, selection, rpspmc_swappable_signals[selection].label);
+        PI_DEBUG_GP (DBG_L1, "RPSPMC_Control::choice_scansource_callback: scan_source[%d] = %d [%s]", channel, selection, rpspmc_swappable_signals[selection].label);
 
 	PI_DEBUG_GP (DBG_L3, "GVP STREAM MUX SELECTOR:  [%d] %s ==> [%d]\n",signal, rpspmc_swappable_signals[selection].label, channel);
 
@@ -3204,7 +3197,7 @@ int RPSPMC_Control::choice_prbsource_callback (GtkWidget *widget, RPSPMC_Control
                 rpspmc_hwi->set_spmc_signal_mux (RPSPMC_ControlClass->probe_source);
                 rpspmc_pacpll->set_stream_mux (RPSPMC_ControlClass->probe_source);
         }
-        g_message ("RPSPMC_Control::choice_prbsource_callback: probe_source[%d] = %d [%s] MUX=%016lx", channel, selection,
+        PI_DEBUG_GP (DBG_L1, "RPSPMC_Control::choice_prbsource_callback: probe_source[%d] = %d [%s] MUX=%016lx", channel, selection,
                    rpspmc_swappable_signals[selection].label,
                    __GVP_selection_muxval (self->probe_source));
 
@@ -3263,13 +3256,13 @@ int RPSPMC_Control::Probing_multiIV_callback(GtkWidget *widget, RPSPMC_Control *
 int RPSPMC_Control::Probing_exec_IV_callback( GtkWidget *widget, RPSPMC_Control *self){
 
         if (rpspmc_hwi->is_scanning()){
-                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is busy scanning. Please stop scanning for any GVP actions.");
+                PI_DEBUG_GP (DBG_L1, " RPSCPM_Control::Probing_abort_callback ** RPSPMC is busy scanning. Please stop scanning for any GVP actions.");
                 //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP actions.", window);
                 return -1;
         }
 
 	if (self->check_vp_in_progress ()){
-                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is streaming GVP data -- ABORT FIRST");
+                PI_DEBUG_GP (DBG_L1, " RPSCPM_Control::Probing_abort_callback ** RPSPMC is streaming GVP data -- ABORT FIRST");
                 return -1;
         }
 
@@ -3316,13 +3309,13 @@ int RPSPMC_Control::Probing_exec_IV_callback( GtkWidget *widget, RPSPMC_Control 
 
 int RPSPMC_Control::Probing_write_IV_callback( GtkWidget *widget, RPSPMC_Control *self){
          if (rpspmc_hwi->is_scanning()){
-                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is busy scanning. Please stop scanning for any GVP actions.");
+                PI_DEBUG_GP (DBG_L1, " RPSCPM_Control::Probing_abort_callback ** RPSPMC is busy scanning. Please stop scanning for any GVP actions.");
                 //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP actions.", window);
                 return -1;
         }
 
         if (rpspmc_hwi->probe_fifo_thread_active>0){
-                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is streaming GVP data -- FORCE UPDATE REQUESTED");
+                PI_DEBUG_GP (DBG_L1, " RPSCPM_Control::Probing_abort_callback ** RPSPMC is streaming GVP data -- FORCE UPDATE REQUESTED");
         }
 
         // write GVP code to controller
@@ -3364,7 +3357,7 @@ int RPSPMC_Control::callback_change_LCK_mode (GtkWidget *widget, RPSPMC_Control 
         else
                 spmc_parameters.lck_mode &= ~msk;
 
-        g_message ("RPSPMC_Control::callback_change_LCK_mode %d", spmc_parameters.lck_mode);
+        PI_DEBUG_GP (DBG_L1, "RPSPMC_Control::callback_change_LCK_mode %d", spmc_parameters.lck_mode);
         
         return 0;
 }
@@ -3377,7 +3370,7 @@ int RPSPMC_Control::callback_change_RF_mode (GtkWidget *widget, RPSPMC_Control *
         else
                 spmc_parameters.rf_gen_mode &= ~msk;
 
-        g_message ("RPSPMC_Control::callback_change_RF_mode %d", spmc_parameters.rf_gen_mode);
+        PI_DEBUG_GP (DBG_L1, "RPSPMC_Control::callback_change_RF_mode %d", spmc_parameters.rf_gen_mode);
         
         return 0;
 }
@@ -3513,7 +3506,7 @@ int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control
                 return -1;
         
         if (rpspmc_hwi->is_scanning()){
-                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is busy scanning. Please stop scanning for any GVP actions.");
+                PI_DEBUG_GP (DBG_L1, " RPSCPM_Control::Probing_abort_callback ** RPSPMC is busy scanning. Please stop scanning for any GVP actions.");
                 if (gapp->question_yes_no ("WARNING: Scan in progress.\n"
                                            "RPSPMC is currently streaming GVP data.\n"
                                            "Abort current activity/scanning and start GVP?", self->window)){
@@ -3524,7 +3517,7 @@ int RPSPMC_Control::Probing_exec_GVP_callback( GtkWidget *widget, RPSPMC_Control
         }
 
 	if (self->check_vp_in_progress ()){ 
-                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is streaming GVP data -- ABORT FIRST");
+                PI_DEBUG_GP (DBG_L1, " RPSCPM_Control::Probing_abort_callback ** RPSPMC is streaming GVP data -- ABORT FIRST");
                 if (gapp->question_yes_no ("WARNING: Scan/Probe in progress.\n"
                                            "RPSPMC is currently streaming GVP data.\n"
                                            "Abort current activity and start GVP?",  self->window)){
@@ -3582,13 +3575,13 @@ int RPSPMC_Control::Probing_write_GVP_callback( GtkWidget *widget, RPSPMC_Contro
         self->check_GVP();
         
         if (rpspmc_hwi->is_scanning()){
-                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is busy scanning. Please stop scanning for any GVP actions.");
+                PI_DEBUG_GP (DBG_L1, " RPSCPM_Control::Probing_abort_callback ** RPSPMC is busy scanning. Please stop scanning for any GVP actions.");
                 //gapp->warning ("RPSPMC is busy scanning.\nPlease stop scanning and any GVP actions.", window);
                 return -1;
         }
 
         if (rpspmc_hwi->probe_fifo_thread_active>0){
-                g_message (" RPSCPM_Control::Probing_abort_callback ** RPSPMC is streaming GVP data -- FORCE UPDATE REQUESTED");
+                PI_DEBUG_GP (DBG_L1, " RPSCPM_Control::Probing_abort_callback ** RPSPMC is streaming GVP data -- FORCE UPDATE REQUESTED");
         }
 
         // write GVP code to controller
@@ -3623,7 +3616,7 @@ int RPSPMC_Control::change_source_callback (GtkWidget *widget, RPSPMC_Control *s
                 default: break;
                 }
 
-        g_message ("CH=%08x MAP:%d *** S%08x X%08x Y%08x",channel, mapping, self->Source,self->XSource,self->PSource );
+        PI_DEBUG_GP (DBG_L1, "CH=%08x MAP:%d *** S%08x X%08x Y%08x",channel, mapping, self->Source,self->XSource,self->PSource );
         
         //g_message ("change_source_callback: Ch: %08x => Srcs: %08x", channel, self->Source);
         
@@ -3678,7 +3671,7 @@ void RPSPMC_Control::configure_filter(int id, int mode, double sos[6], int decim
 
         int jdata_i[2] = { mode & 0xffff | (decimation << 16), id };
                 
-        g_message ("Config BQ Filter #%d (SOS AB coef)", id);
+        PI_DEBUG_GP (DBG_L1, "Config BQ Filter #%d (SOS AB coef)", id);
         rpspmc_pacpll->write_array (SPMC_SET_BQ_COMPONENTS, 2, jdata_i,  6, sos);
 }
 
@@ -3698,7 +3691,7 @@ static guint RPSPMC_Control::delayed_filter_update_callback (RPSPMC_Control *sel
 void RPSPMC_Control::bq_filter_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
         self->BQ_decimation = 128; //1 + (int)round(8 * 5000. / spmc_parameters.lck_frequency);
         spmc_parameters.lck_bq_dec_monitor = self->BQ_decimation;
-        g_message ("BQ Filter Deciamtion: #%d",  self->BQ_decimation);
+        PI_DEBUG_GP (DBG_L1, "BQ Filter Deciamtion: #%d",  self->BQ_decimation);
         //self->configure_filter (1, spmc_parameters.sc_bq1mode, spmc_parameters.sc_bq1_coef, decimation);
         //self->configure_filter (2, spmc_parameters.sc_bq2mode, spmc_parameters.sc_bq2_coef, decimation);
 
@@ -3754,7 +3747,7 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                         fn /= 2.0;
                 }
 
-                g_message ("LCK Adjust Calc: RP-Fs: %g Hz, AD-NACLKs: %d, FLCK/BQ: %g Hz, Fnorm: %g @ decii2: %d", rp_fs, naclks, rp_fs/naclks/(1<<decii2), fn, decii2);
+                PI_DEBUG_GP (DBG_L1, "LCK Adjust Calc: RP-Fs: %g Hz, AD-NACLKs: %d, FLCK/BQ: %g Hz, Fnorm: %g @ decii2: %d", rp_fs, naclks, rp_fs/naclks/(1<<decii2), fn, decii2);
 
                 
                 const gchar *SPMC_LCK_COMPONENTS[] = {
@@ -3767,7 +3760,7 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                 double jdata[2];
                 jdata_i[0] = spmc_parameters.lck_mode;
                 if (spmc_parameters.lck_sens <= 0.){
-                        g_message ("LCK Gain defaulting to 1x (0)");
+                        PI_DEBUG_GP (DBG_L1, "LCK Gain defaulting to 1x (0)");
                         jdata_i[1] = 0;
                 } else {
                         /* on RP:
@@ -3792,7 +3785,7 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                         if (g < 1.) g=1.;
                         int  gl2 = int(log2(g));
                         int  gain_in = gl2 <= decii2_max ? gl2 : decii2_max;
-                        g_message ("LCK Gain request: %g -> shift#: %d ", g, gain_in);
+                        PI_DEBUG_GP (DBG_L1, "LCK Gain request: %g -> shift#: %d ", g, gain_in);
                         int gain_out=0;
 
         
@@ -3815,7 +3808,7 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                 else
                         jdata[1] = 0.;
 
-                g_message ("LCK Adjust SENDING UPDATE T#%d M:%d G:<<%x F:%g Hz V: %g {%g} Decii2 requested: %d => fs=%g Hz, fn=%g Hz ", self->LCK_Target, jdata_i[0], jdata_i[1], jdata[0], self->LCK_Volume[self->LCK_Target], jdata[1], decii2, rp_fs/naclks/(1<<decii2), fn);
+                PI_DEBUG_GP (DBG_L1, "LCK Adjust SENDING UPDATE T#%d M:%d G:<<%x F:%g Hz V: %g {%g} Decii2 requested: %d => fs=%g Hz, fn=%g Hz ", self->LCK_Target, jdata_i[0], jdata_i[1], jdata[0], self->LCK_Volume[self->LCK_Target], jdata[1], decii2, rp_fs/naclks/(1<<decii2), fn);
                 rpspmc_pacpll->write_array (SPMC_LCK_COMPONENTS, 2, jdata_i,  2, jdata);
         }
 }
@@ -3833,7 +3826,7 @@ void RPSPMC_Control::rfgen_adjust_callback(Param_Control* pcs, RPSPMC_Control *s
                 jdata_i[0] = spmc_parameters.rf_gen_mode;
                 jdata[0]   = spmc_parameters.rf_gen_frequency;
                 jdata[1]   = spmc_parameters.rf_gen_fmscale;
-                g_message ("RF-GEN Adjust SENDING MODE, RF-FREQ, FM-SCALE");
+                PI_DEBUG_GP (DBG_L1, "RF-GEN Adjust SENDING MODE, RF-FREQ, FM-SCALE");
                 rpspmc_pacpll->write_array (SPMC_RFGEN_COMPONENTS, 1, jdata_i,  2, jdata);
         }
 }
@@ -3847,7 +3840,7 @@ int RPSPMC_Control::choice_mod_target_callback (GtkWidget *widget, RPSPMC_Contro
                 gtk_widget_set_sensitive (self->LCK_VolumeEntry[jj], jj == self->LCK_Target);
         
         if (rpspmc_pacpll){
-                g_message ("Setting LCK TARGET: %d", self->LCK_Target);
+                PI_DEBUG_GP (DBG_L1, "Setting LCK TARGET: %d", self->LCK_Target);
                 rpspmc_pacpll->write_parameter ("SPMC_LCK_TARGET", self->LCK_Target);
                 self->lockin_adjust_callback (NULL, self); // update correct volume
         }
@@ -3877,25 +3870,25 @@ int RPSPMC_Control::choice_BQfilter_type_callback (GtkWidget *widget, RPSPMC_Con
                 gchar *wids[3][3] = {{ "IIR1-TC", "BQ1-TC", "BQ1-Q" }, { "IIR2-TC", "BQ2-TC", "BQ2-Q" }, { "IIRZS-TC", "BQZS-TC", "BQZS-Q" }};
                 switch (id){
                 case 0:
-                        g_message ("Set %s BQ to ONE, PASS", bqid[BQsec]);
+                        PI_DEBUG_GP (DBG_L1, "Set %s BQ to ONE, PASS", bqid[BQsec]);
                         break;
                 case 1:
-                        g_message ("BQ: N/A --- **IIR 1st");
+                        PI_DEBUG_GP (DBG_L1, "BQ: N/A --- **IIR 1st");
                         break;
                 case 2:
-                        g_message ("BQ: N/A --- **BiQuad 2nd");
+                        PI_DEBUG_GP (DBG_L1, "BQ: N/A --- **BiQuad 2nd");
                         break;
                 case 3:
-                        g_message ("Set %s BiQuad SOS from AB-Coef", bqid[BQsec]);
+                        PI_DEBUG_GP (DBG_L1, "Set %s BiQuad SOS from AB-Coef", bqid[BQsec]);
                         break;
                 case 4:
-                        g_message ("Set %s BiQuad SOS to NULL (STOP)", bqid[BQsec]); break;
+                        PI_DEBUG_GP (DBG_L1, "Set %s BiQuad SOS to NULL (STOP)", bqid[BQsec]); break;
                         break;
                 case 5:
-                        g_message ("Set %s BiQuad SOS to By-Pass Mode", bqid[BQsec]); break;
+                        PI_DEBUG_GP (DBG_L1, "Set %s BiQuad SOS to By-Pass Mode", bqid[BQsec]); break;
                         break;
                 case 6:
-                        g_message ("Set %s BiQuad SOS to STOP", bqid[BQsec]);
+                        PI_DEBUG_GP (DBG_L1, "Set %s BiQuad SOS to STOP", bqid[BQsec]);
                         break;
                 }
         }
@@ -3994,7 +3987,7 @@ void RPSPMC_Control::delayed_vector_update (){
         
         gchar *info = g_strdup_printf (" (%g ms/pix, %g Hz)", scanpixelrate*1e3, 1./scanpixelrate);
         scan_speed_ec->set_info (info);
-        g_message ("Delayed Scan Speed Update: rewriting GVP Scan code for %s", info);
+        PI_DEBUG_GP (DBG_L1, "Delayed Scan Speed Update: rewriting GVP Scan code for %s", info);
         g_free (info);
 
         if (rpspmc_hwi->is_scanning()) // only if scanning!
@@ -4040,7 +4033,7 @@ int RPSPMC_Control::check_vp_in_progress (const gchar *extra_info=NULL) {
         int p = (int)c & 2; // PAUSE/STOPPED
         int r = (int)c & 4; // RESET
         
-        g_message ("RPSPMC_Control::check_vp_in_progres ** GVP status: %02x == %s %s %s", (int)c, g? "GVP":"--", p? "PAUSE":"--", r? "RESET":"--");
+        PI_DEBUG_GP (DBG_L1, "RPSPMC_Control::check_vp_in_progres ** GVP status: %02x == %s %s %s", (int)c, g? "GVP":"--", p? "PAUSE":"--", r? "RESET":"--");
         
         return (g && !p && !r) ? true : false;
         //return rpspmc_hwi->probe_fifo_thread_active>0 ? true:false;

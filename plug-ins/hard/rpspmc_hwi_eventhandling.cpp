@@ -102,7 +102,7 @@ void RPSPMC_Control::init_vp_signal_info_lookup_cache(){
                                unitlookup[i]  = rpspmc_source_signals[k].unit_sym;
                                expdi_lookup[i] = rpspmc_source_signals[k].garr_index;
                         }
-                g_print ("Mask[%02d] 0x%08x => %s in %s x %g\n",i,msklookup[i],lablookup[i],unitlookup[i], scalelookup[i]);
+                PI_DEBUG_GP (DBG_L1, "Mask[%02d] 0x%08x => %s in %s x %g\n",i,msklookup[i],lablookup[i],unitlookup[i], scalelookup[i]);
         }
         // END MARK:
         msklookup[NUM_PROBEDATA_ARRAYS] = -1;
@@ -140,7 +140,7 @@ const char* RPSPMC_Control::vp_unit_lookup(int i){
 
 // apply life 2nd level scalings (may change at runtime, gains, ...) base Volts to GXSM units, Volt to Ang, Volt to nA, etc.
 double RPSPMC_Control::vp_scale_lookup(int i){
-        for (int k=0; rpspmc_source_signals[k].mask; ++k){
+        for (int k=0; rpspmc_source_signals[k].mask || rpspmc_source_signals[k+1].mask; ++k){
                 //g_print ("looking for %d == [%d] in vpsl %20s  [%02d]: %08x,  %g\n",i, rpspmc_source_signals[k].garr_index, rpspmc_source_signals[k].label, i,rpspmc_source_signals[k].mask, rpspmc_source_signals[k].scale_factor);
                 if (rpspmc_source_signals[k].garr_index == i){
                         //g_print ("Found: vpsl[%d]: %08x, ScaleFac= %g\n",i,rpspmc_source_signals[k].mask, rpspmc_source_signals[k].scale_factor);
@@ -174,7 +174,7 @@ double RPSPMC_Control::vp_scale_lookup(int i){
                         }
                 }
         }
-        g_warning ("vp_scale_lookup -- failed to find scale for garr index %d", i);
+        g_warning ("vp_scale_lookup -- failed to find scale for garr index %d (N/A)", i);
         return 1.;
 }
 

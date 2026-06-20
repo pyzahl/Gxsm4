@@ -110,7 +110,6 @@ static void get_rpdata_vector (GtkWidget* w, void *data){
 RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         GtkWidget *tmp;
         GtkWidget *wid;
-
         rt_monitors_shm_ptr = NULL;
 
         static const gchar* Y1Y2_tm[] = {
@@ -3047,6 +3046,9 @@ gboolean RPspmc_pacpll::update_shm_monitors (int close_shm){
         static int shm_data_fd = -1;
         static void *shm_data_ptr = NULL;
         static size_t shm_data_size = 0;
+
+        if (gxsm_new_instance)
+                return;
         
         if (shm_fd == -1){
                 // create SHM monitor memory block

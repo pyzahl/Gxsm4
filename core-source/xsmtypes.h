@@ -109,7 +109,7 @@ public:
                 scale_to_unit = s;
                 position=0;
 
-                g_message ("New Data_Source: %s %s X%016x in x%g %s", Sname, Slabel, source_mask, scale_to_unit, SunitID);
+                XSM_DEBUG_GP (DBG_L1, "New Data_Source: %20s %20s X%016x in x%g %s\n", Sname, Slabel, source_mask, scale_to_unit, SunitID);
         };
         ~Data_Source (){
                 g_free (Sname);
@@ -131,7 +131,7 @@ public:
                         source_mask = msk;
                 if (fabs(s) > 1e-99)
                         scale_to_unit = s;
-                g_message ("Updated Data_Source: %s %s X%016x in x%g %s", Sname, Slabel, source_mask, scale_to_unit, SunitID);
+                XSM_DEBUG_GP (DBG_L1, "Updated Data_Source: %s %s X%016x in x%g %s\n", Sname, Slabel, source_mask, scale_to_unit, SunitID);
         };
 
         void set_type (gchar *Styp){
@@ -310,7 +310,7 @@ class Display_Param{
 public:
 	Display_Param(){
                 vframe =  vlayer = 0;
-                contrast=1.; bright=0.; z_high=z_low=0.; vrange_z=10.; voffset_z=0.;
+                contrast=1.; bright=0.; z_high=1.; z_low=0.; vrange_z=1.; voffset_z=0.;
                 ViewFlg=1;
                 px_shift_xy[0]=px_shift_xy[1]=0.; px_shift_xy[2]=5e-5;
                 use_high_low = 0;

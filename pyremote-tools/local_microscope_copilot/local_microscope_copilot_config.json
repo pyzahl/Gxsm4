@@ -1,0 +1,28 @@
+{
+  "ollama_host": "http://127.0.0.1:11434",
+  "model": "qwen3:4b",
+  "cpu_model": "qwen3:4b",
+  "amd_16gb_gpu_model": "qwen3:8b",
+  "larger_amd_16gb_gpu_model": "qwen3:14b",
+  "gemma_cpu_test_model": "gemma3:4b",
+  "gemma_amd_16gb_gpu_model": "gemma3:12b",
+  "gemma_large_model": "gemma3:27b",
+  "model_alternatives": [
+    "qwen3:4b",
+    "qwen3:8b",
+    "qwen3:14b",
+    "gemma3:4b",
+    "gemma3:12b",
+    "gemma3:27b"
+  ],
+  "temperature": 0.2,
+  "default_live": true,
+  "confirm_hardware_actions": true,
+  "confirm_gvp_execute": true,
+  "notes": [
+    "Use qwen3:4b as the default CPU-friendly local model.",
+    "Use qwen3:8b if local speed is acceptable and better reasoning is needed.",
+    "For Gemma testing, use gemma3:12b on a 16 GB GPU first; gemma3:27b may spill or run slowly.",
+    "The LLM may request tools, but this wrapper owns safety checks and confirmations."
+  ]
+}

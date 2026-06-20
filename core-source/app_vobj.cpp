@@ -370,6 +370,7 @@ void VObject::show_profile_cb (GtkWidget *widget, VObject *vo){
 }
 
 void VObject::show_profile (gboolean pflg){
+        //g_message ("VObject::show_profile: %s", pflg?"YES":"NO");
 	if(pflg){
 		if (profile) // already exists, done
 			return;
@@ -388,6 +389,7 @@ void VObject::show_profile (gboolean pflg){
 						 get_profile_path_dimension (),
 						 get_profile_series_dimension ()
 						 );
+                //g_message ("VObject::show_profile %s", proftit);
 		profile = new ProfileControl((Gxsm4app *) g_object_get_data (G_OBJECT (canvas), "MAIN_APP"), proftit);        
 		g_free(proftit);
 
@@ -1110,10 +1112,10 @@ void VObject::properties(){
         build_properties_view (false);
         gtk_box_append (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), properties_bp->grid);
                 
-        gtk_widget_show (dialog);
         g_signal_connect (dialog, "response",
                           G_CALLBACK (VObject::properties_callback),
                           this);
+	gtk_widget_show (dialog);
 }
 
 void  VObject::destroy_properties_bp (){

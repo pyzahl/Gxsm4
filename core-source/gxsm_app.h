@@ -178,6 +178,7 @@ public:
         };
 
         void add_appwindow_to_list (AppBase *w) {
+                XSM_DEBUG_GM (DBG_L1, "Adding to App Window List: %s", w->get_window_key());
                 gxsm_app_windows_list = g_slist_prepend (gxsm_app_windows_list, w);
         };
 
@@ -194,8 +195,12 @@ public:
         static void call_auto_probeview_geometry (AppBase* a, gpointer data){
                 a->LoadGeometryWRefAutoPlaceABmode ("view-gvp");
         };
-        void save_app_geometry () { g_slist_foreach (gxsm_app_windows_list, (GFunc) App::call_save_geometry, NULL); };
-        void load_app_geometry () { g_slist_foreach (gxsm_app_windows_list, (GFunc) App::call_load_geometry, NULL); };
+        void save_app_geometry () {
+                g_slist_foreach (gxsm_app_windows_list, (GFunc) App::call_save_geometry, NULL);
+        };
+        void load_app_geometry () {
+                g_slist_foreach (gxsm_app_windows_list, (GFunc) App::call_load_geometry, NULL);
+        };
         void auto_scanview_geometry () {
                 save_app_geometry ();
                 g_slist_foreach (gxsm_app_windows_list, (GFunc) App::call_auto_scanview_geometry, NULL);

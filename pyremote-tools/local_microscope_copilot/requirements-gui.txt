@@ -1,0 +1,4 @@
+gradio>=4.44
+matplotlib
+psutil
+requests

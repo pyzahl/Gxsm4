@@ -53,14 +53,12 @@ using namespace netCDF;
 		gtk_editable_set_editable (GTK_EDITABLE (VAR), FALSE); \
                 gtk_editable_set_width_chars (GTK_EDITABLE (VAR), 15); \
 		gtk_widget_set_sensitive (VAR, TRUE);   \
-		gtk_widget_show (VAR); \
 	}while(0)
 
 
 #define SETUP_LABEL(LAB) \
 	do {\
                 gtk_label_set_xalign (GTK_LABEL (LAB), 1.0); \
-		gtk_widget_show (LAB); \
 	}while(0)
 
 
@@ -83,6 +81,7 @@ public:
                                                             );
                 g_signal_connect (dialog, "response", G_CALLBACK (gtk_window_destroy), NULL);
                 gtk_widget_show (dialog);
+
 	};
 	void cleanup (GtkWidget *box){
                 XSM_DEBUG_GM (DBG_L1, "NcDumpToWidge::cleanup **");
@@ -128,7 +127,6 @@ public:
                         
                         gtk_widget_set_tooltip_text (tog, varname);
                 }
-		gtk_widget_show (tog);
 	};
 
         gchar *get_gatt_as_string (netCDF::NcGroupAtt &att){
@@ -443,26 +441,18 @@ public:
                 XSM_DEBUG_GM (DBG_L3, "NcDumpToWidge::dump ** new grid...");
                 grid = gtk_grid_new ();
                 gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (box), grid);
-                gtk_widget_show (box);
-                gtk_widget_show (grid);
 
                 grid_selected = gtk_grid_new ();
                 gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (box_selected), grid_selected);
-                gtk_widget_show (grid_selected);
-                gtk_widget_show (box_selected);
 
                 gtk_grid_attach (GTK_GRID (grid), lab=gtk_label_new("Selected NetCDF values"), 0, grid_row++, 10, 1);
                 gtk_grid_attach (GTK_GRID (grid), sep=gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 0, grid_row++, 10, 1);
-                gtk_widget_show (lab);
-                gtk_widget_show (sep);
     
                 // ===============================================================================
                 // DUMP:  global attributes
                 // ===============================================================================
                 gtk_grid_attach (GTK_GRID (grid), lab=gtk_label_new("Global Attributes"), 0, grid_row++, 10, 1);
                 gtk_grid_attach (GTK_GRID (grid), sep=gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 0, grid_row++, 10, 1);
-                gtk_widget_show (lab);
-                gtk_widget_show (sep);
 
                 g_message ("NC DUMP: ATTS");
                 
@@ -475,7 +465,6 @@ public:
                         VarName = gtk_label_new (name.data());
                         SETUP_LABEL (VarName);
                         gtk_grid_attach (GTK_GRID (grid), VarName, 0, grid_row, 2, 1);
-                        gtk_widget_show (VarName);
 
                         variable = gtk_entry_new ();
                         //NcGroupAtt att = pair.second;
@@ -486,7 +475,6 @@ public:
                         else SETUP_ENTRY (variable, "*NULL*");
                         g_free (tmp);
                         gtk_grid_attach (GTK_GRID (grid), variable, 2, grid_row++, 1, 1);
-                        gtk_widget_show (variable);
                 }
 
                 //	static gchar *types[] = {"","byte","char","short","long","float","double"};
@@ -494,9 +482,7 @@ public:
                 // ===============================================================================
 
                 gtk_grid_attach (GTK_GRID (grid), sep=gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 0, grid_row++, 10, 1);
-                gtk_widget_show (sep);
                 gtk_grid_attach (GTK_GRID (grid), sep=gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 0, grid_row++, 10, 1);
-                gtk_widget_show (sep);
 
                 // ===============================================================================
                 // DUMP:  dimension value
@@ -504,16 +490,13 @@ public:
                 g_message ("NC DUMP: DIMS");
   
                 gtk_grid_attach (GTK_GRID (grid), lab=gtk_label_new("NC Dimensions"), 0, grid_row++, 10, 1);
-                gtk_widget_show (lab);
                 gtk_grid_attach (GTK_GRID (grid), sep=gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 0, grid_row++, 10, 1);
-                gtk_widget_show (sep);
 
                 std::multimap<std::string, netCDF::NcDim> dims = getDims();
                 for (auto const& [name, dim] : dims) {
                         VarName = gtk_check_button_new_with_label (name.data());
                         setup_toggle (VarName, name.data());
                         gtk_grid_attach (GTK_GRID (grid), VarName, 0, grid_row, 2, 1);
-                        gtk_widget_show (VarName);
 
                         variable = gtk_entry_new ();
                         gchar *dimval=NULL;
@@ -524,7 +507,6 @@ public:
     
                         SETUP_ENTRY(variable, dimval);
                         gtk_grid_attach (GTK_GRID (grid), variable, 2, grid_row++, 1, 1);
-                        gtk_widget_show (variable);
 
                         if (gtk_check_button_get_active (GTK_CHECK_BUTTON (VarName))){
                                 VarName_i = gtk_label_new (name.data());
@@ -533,27 +515,21 @@ public:
                                 SETUP_ENTRY(variable_i, dimval);
 
                                 gtk_grid_attach (GTK_GRID (grid_selected), VarName_i, 0, grid_row_s, 2, 1);
-                                gtk_widget_show (VarName_i);
                                 gtk_grid_attach (GTK_GRID (grid_selected), variable_i, 2, grid_row_s++, 1, 1);
-                                gtk_widget_show (variable_i);
                         }
                 }
         
                 // ===============================================================================
 
                 gtk_grid_attach (GTK_GRID (grid), sep=gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 0, grid_row++, 10, 1);
-                gtk_widget_show (sep);
                 gtk_grid_attach (GTK_GRID (grid), sep=gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 0, grid_row++, 10, 1);
-                gtk_widget_show (sep);
 
                 // ===============================================================================
                 // DUMP:  vartype varname(dims)   data
                 // ===============================================================================
 
                 gtk_grid_attach (GTK_GRID (grid), lab=gtk_label_new("NC Data, Variables"), 0, grid_row++, 10, 1);
-                gtk_widget_show (lab);
                 gtk_grid_attach (GTK_GRID (grid), sep=gtk_separator_new (GTK_ORIENTATION_HORIZONTAL), 0, grid_row++, 10, 1);
-                gtk_widget_show (sep);
         
                 // Define a multimap to hold the variable names and objects
                 std::multimap<std::string, NcVar> allVariables;
@@ -599,7 +575,6 @@ public:
                         g_free(vardef);
 
                         gtk_grid_attach (GTK_GRID (grid), VarName, 0, grid_row, 2, 1);
-                        gtk_widget_show (VarName);
 
                         variable = gtk_entry_new ();
                         ostringstream ostr_val;
@@ -635,7 +610,6 @@ public:
                         SETUP_ENTRY(variable, (const gchar*)ostr_val.str().c_str());
                         
                         gtk_grid_attach (GTK_GRID (grid), variable, 2, grid_row, 1, 1);
-                        gtk_widget_show (variable);
 
                         std::cout << "pre varAttributes info dlg data" << std::endl;
                         
@@ -663,7 +637,6 @@ public:
                         info = gtk_button_new_with_label (" Details ");
                         
                         gtk_grid_attach (GTK_GRID (grid), info, 3, grid_row++, 1, 1);
-                        gtk_widget_show (info);
 
                         g_signal_connect (G_OBJECT (info), "clicked",
                                           G_CALLBACK (show_info_callback),
@@ -719,15 +692,11 @@ public:
                                         SETUP_ENTRY(variable_i, (const gchar*)ostr_val.str().c_str());
                                 }
                                 gtk_grid_attach (GTK_GRID (grid_selected), VarName_i, 0, grid_row_s, 2, 1);
-                                gtk_widget_show (VarName_i);
                                 gtk_grid_attach (GTK_GRID (grid_selected), variable_i, 2, grid_row_s++, 1, 1);
-                                gtk_widget_show (variable_i);
                         }
                 }
                 g_object_set_data (G_OBJECT (box), "info_list", infolist);
                 
-                gtk_widget_show (grid); // FIX-ME GTK4 SHOWALL
-                gtk_widget_show (grid_selected); // FIX-ME GTK4 SHOWALL
         };
         
         int maxvals;

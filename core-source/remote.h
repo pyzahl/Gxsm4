@@ -58,7 +58,6 @@ public:
         void point_return_data_to_cbdata (){
                 data = &return_data;
         };
-        
         gboolean check (gpointer args){
 		if(! strcmp(((gchar**)args)[1], cmd)){
                         g_message ("remote action match for %s", cmd);

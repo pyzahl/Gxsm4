@@ -226,8 +226,8 @@ CHV5_monitor = {
         'monitor_max': [0.0,0.0,0.0],
         }
 
-CHV5_gain_list = [3,6,12,24]
-CHV5_gains = [12., 12., 24.]
+CHV5_gain_list = np.array([3,6,12,24])
+CHV5_gains = np.array([12., 12., 24.])
 
 
 CHV5_coarse = {

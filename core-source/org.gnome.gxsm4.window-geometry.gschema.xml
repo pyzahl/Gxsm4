@@ -8,13 +8,29 @@
 	select to safe and restore window state and positions
       </description>
     </key>
-    <key name="main" type="ai">
-      <default>[0,1, 0,0,0,0]</default>
+    <key name="auto-push-to-first-screen" type="b">
+      <default>false</default>
+      <summary>automatically restore windows to first screen / left of xpos</summary>
+      <description>
+	FIX FOR BROKEN WAYLAND RDP.
+	Automatically restore windows to (first screen) if X is beyond 3800 or as set in xpos below.
+      </description>
+    </key>
+    <key name="auto-push-to-left-of-xpos" type="i">
+      <default>3800</default>
+      <summary>automatically restore windows to first screen aka X left of this x-position (=screen res / scaling), if enabled via auto-push-to-first-screen</summary>
+      <description>
+	FIX FOR BROKEN WAYLAND RDP.
+	Automatically restore windows to first screen aka X left of this x-position (=screen res / scaling), if enabled via auto-push-to-first-screen.
+      </description>
+    </key>
+    <key name="gxsm4" type="ai">
+      <default>[1,1, 0,0,0,0]</default>
       <summary>show/hide state, option, X,Y, H,W</summary>
       <description>geometry</description>
     </key>
     <key name="channel-selector" type="ai">
-      <default>[0,0, 0,0,0,0]</default>
+      <default>[1,0, 0,0,0,0]</default>
       <summary>show/hide state, option, X,Y, H,W</summary>
       <description>geometry</description>
     </key>
@@ -84,6 +100,46 @@
       <description>geometry</description>
     </key>
     <key name="view-scan2d-12" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+    <key name="view-scan2d-13" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+    <key name="view-scan2d-14" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+    <key name="view-scan2d-15" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+    <key name="view-scan2d-16" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+    <key name="view-scan2d-17" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+    <key name="view-scan2d-18" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+    <key name="view-scan2d-19" type="ai">
+      <default>[0,0, 0,0,0,0]</default>
+      <summary>show/hide state, option, X,Y, H,W</summary>
+      <description>geometry</description>
+    </key>
+    <key name="view-scan2d-20" type="ai">
       <default>[0,0, 0,0,0,0]</default>
       <summary>show/hide state, option, X,Y, H,W</summary>
       <description>geometry</description>

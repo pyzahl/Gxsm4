@@ -1,0 +1,119 @@
+{
+  "controller": {
+    "gxsm_dconf": {
+      "enabled": true,
+      "main_window_path": "/org/gnome/gxsm4/pcs/mainwindow/",
+      "controller_path": "/org/gnome/gxsm4/pcs/plugin-librpspmc-pacpll/",
+      "adjustment_path": "/org/gnome/gxsm4/pcsadjustments/plugin-librpspmc-rpspmc-pacpll/",
+      "main_window_keys": {
+        "RangeX": "range-x",
+        "RangeY": "range-y",
+        "PointsX": "points-x",
+        "PointsY": "points-y",
+        "StepsX": "steps-x",
+        "StepsY": "steps-y",
+        "OffsetX": "offset-x",
+        "OffsetY": "offset-y",
+        "ScanX": "scan-x",
+        "ScanY": "scan-y",
+        "Rotation": "rotation"
+      },
+      "controller_keys": {
+        "dsp-fbs-bias": "dsp-fbs-bias",
+        "dsp-fbs-mx0-current-set": "dsp-fbs-mx0-current-set",
+        "dsp-fbs-mx0-current-level": "dsp-fbs-mx0-current-level",
+        "dsp-fbs-scan-speed-scan": "dsp-fbs-scan-speed-scan",
+        "dsp-fbs-scan-speed-move": "dsp-fbs-scan-speed-move",
+        "dsp-fbs-cp": "dsp-fbs-cp",
+        "dsp-fbs-ci": "dsp-fbs-ci",
+        "dsp-fbs-upper": "dsp-fbs-upper",
+        "dsp-fbs-lower": "dsp-fbs-lower",
+        "dsp-adv-scan-slope-x": "dsp-adv-scan-slope-x",
+        "dsp-adv-scan-slope-y": "dsp-adv-scan-slope-y",
+        "dsp-adv-dsp-zpos-ref": "dsp-adv-dsp-zpos-ref",
+        "dsp-adv-dsp-zpos-mon": "dsp-adv-dsp-zpos-mon",
+        "rp-pacpll-amplitude-fb-setpoint": "rp-pacpll-amplitude-fb-setpoint",
+        "rp-pacpll-dfreq-fb-setpoint": "rp-pacpll-dfreq-fb-setpoint",
+        "rp-pacpll-frequency-center": "rp-pacpll-frequency-center",
+        "rp-pacpll-frequency-manual": "rp-pacpll-frequency-manual"
+      },
+      "adjustment_keys": {
+        "dsp-fbs-bias": "dsp-fbs-bias",
+        "dsp-fbs-mx0-current-set": "dsp-fbs-mx0-current-set",
+        "dsp-fbs-scan-speed-scan": "dsp-fbs-scan-speed-scan",
+        "dsp-fbs-scan-speed-move": "dsp-fbs-scan-speed-move",
+        "dsp-fbs-cp": "dsp-fbs-cp",
+        "dsp-fbs-ci": "dsp-fbs-ci",
+        "dsp-adv-scan-slope-x": "dsp-adv-scan-slope-x",
+        "dsp-adv-scan-slope-y": "dsp-adv-scan-slope-y",
+        "dsp-adv-dsp-zpos-ref": "dsp-adv-dsp-zpos-ref"
+      }
+    },
+    "level3_thv_base_url": "http://192.168.40.10/",
+    "scan_restart": {
+      "autosave_wait_s": 2.0,
+      "autosave_check_actions": [
+        "GETCHECK-AutoSave",
+        "GETCHECK-autosave",
+        "GETCHECK-AUTOSAVE"
+      ]
+    },
+    "safety_limits": {
+      "level1_max_abs_bias_V": 1.0,
+      "level1_max_current_nA": 0.05,
+      "level1_scan_speed_multiplier_range": [0.5, 1.5],
+      "level1_feedback_cp_ci_range_dB": [-120.0, -50.0],
+      "level1_max_abs_gvp_bias_pulse_du_V": 4.0,
+      "level1_scan_range_A": [10.0, 2000.0],
+      "level1_scan_points": [16, 5000],
+      "level1_rotation_deg": [-360.0, 360.0],
+      "level1_max_abs_scan_slope": 0.1,
+      "gvp_execute_extra_confirmation": "EXECUTE GVP",
+      "level3_extra_confirmation": "EXECUTE LEVEL 3",
+      "level3_large_motion_confirmation": "EXECUTE LEVEL 3 LARGE MOTION",
+      "level3_max_auto_approach_steps": 10,
+      "level3_max_abs_dFreq_Hz": 5.0,
+      "level3_max_coarse_burstcount": 5,
+      "level3_max_coarse_voltage_V": 100.0,
+      "level3_z_down_period_s": 0.5,
+      "level3_z_down_voltage_V": 30.0,
+      "level3_z_down_max_burstcount": 5,
+      "level3_z_down_max_voltage_V": 60.0,
+      "level3_max_large_coarse_burstcount": 5000,
+      "level3_coarse_period_s_range": [0.05, 2.0]
+    },
+    "gvp_defaults": {
+      "bias_pulse_du_V": 2.0,
+      "tip_fine_tune_dip_depth_A": 4.0,
+      "tip_dip_depth_A": 5.0,
+      "tip_contact_bias_V": 0.0,
+      "tip_ramp_time_s": 30.0,
+      "tip_dip_depth_range_A": [0.0, 25.0],
+      "tip_contact_bias_range_V": [-1.0, 1.0],
+      "tip_ramp_time_range_s": [1.0, 60.0],
+      "execute_wait_min_s": 180.0,
+      "execute_wait_max_s": 300.0,
+      "execute_wait_extra_s": 60.0
+    },
+    "tip_loop_defaults": {
+      "max_cycles": 2,
+      "channel": 0,
+      "min_lines": 140,
+      "range_A": 700.0,
+      "points": 400,
+      "max_large_hazards": 8,
+      "max_abs_dfreq_Hz": 4.0,
+      "auto_shift_on_blobs": false,
+      "shift_direction": "image_left_below"
+    },
+    "tip_loop_ranges": {
+      "max_cycles": [1, 6],
+      "channel": [0, 8],
+      "min_lines": [20, 400],
+      "range_A": [100.0, 1200.0],
+      "points": [64, 5000],
+      "max_large_hazards": [1, 30],
+      "max_abs_dfreq_Hz": [0.5, 20.0]
+    }
+  }
+}

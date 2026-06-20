@@ -71,7 +71,7 @@ static const char* choice_ChSDir[] =
 
 static int alife = 0;
 
-ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "Channel Selector"){
+ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, CHANNELSELECTOR_TITLE){
 	GtkWidget* wid;
 	GtkWidget* dropDownMenu;
 	char txt[32];
@@ -287,7 +287,7 @@ ChannelSelector::ChannelSelector (Gxsm4app *app, int ChAnz):AppBase(app, "Channe
         }
         alife = 1;
 
-        gtk_window_present(GTK_WINDOW(window));
+        //gtk_window_present(GTK_WINDOW(window));
 
 	set_window_geometry ("channel-selector");
 }
@@ -493,7 +493,7 @@ void ChannelSelector::SetModeChannelSignal(int mode_id, const gchar* signal_name
 // position is a running nummer of data sources from 0 ..
 
 void ChannelSelector::ConfigureHardwareMapping(int position, const gchar* signal_name, guint64 msk, const gchar* signal_label, const gchar *signal_unit, double d2unit = 1.0){
-        g_message ("ChannelSelector::ConfigureHardwareMapping for %32s, 0x%08x at scale %g for %s", signal_name, msk, d2unit, signal_unit);
+        XSM_DEBUG_GP (DBG_L2, "ChannelSelector::ConfigureHardwareMapping for %32s, 0x%08x at scale %g for %s", signal_name, msk, d2unit, signal_unit);
 
         Data_Source *ch_data_src=find_data_source_by_name (signal_name);
         

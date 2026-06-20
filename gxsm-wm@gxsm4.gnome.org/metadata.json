@@ -1,8 +1,0 @@
-{
-  "uuid": "gxsm-wm@gxsm4.gnome.org",
-  "name": "Gxsm WM",
-  "version": 1,  
-  "description": "GXSM WM ** WAYLAND FIX",
-  "shell-version": [ "47", "48", "49", "50" ],
-  "url": "https://github.com/pyzahl/Gxsm4"  
-}

@@ -1051,10 +1051,10 @@ int Scan::Update_ZData_NcFile(){
                                                             GTK_BUTTONS_YES_NO,
                                                             N_("File '%s' exists or can't be written, try overwrite?"),
                                                             storage_manager.get_filename());
+                gtk_widget_show (dialog);
                 // FIX-ME-GTK4
                 int overwrite = GTK_RESPONSE_YES;
                 g_signal_connect (dialog, "response", G_CALLBACK (gtk_window_destroy), NULL);
-                gtk_widget_show (dialog);
                 //int overwrite = gtk_dialog_run (GTK_DIALOG (dialog));
                 //gtk_widget_destroy (dialog);
                 if (overwrite != GTK_RESPONSE_YES){

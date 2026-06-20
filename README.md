@@ -16,6 +16,12 @@ The GXSM Web Site+Discussuion Forums historically remain hosted on SF: http://gx
 
 
 ## Latest
+### Full window management and placement automatization now available on Wayland/Gnome Desktop and Wayland/Hyprland
+after a long struggle with Wayland policies we found a very capable work around to this problem via a bridge to gnome desktop.
+
+### New: External Python Remote Control via SHM bridge
+allows using any Python environment, GUIs, Web-embdedding, etc. Completely thread proof.
+
 ### Get excited: RPSPMC for GXSM4 is here and fully functional!
 <img align="right" width="128" alt="image" src="https://github.com/user-attachments/assets/153b25c1-678e-4c44-b551-def0121a2c42" />
 
@@ -133,23 +139,14 @@ ninja uninstall
 ```
 
 # Pending ports and known issues
-
-- Window Position Management....  gtk4 dropped native access to window geometry controls -- a big convenience and usability issue for diverse multi control window applications 🙁
-		- X11: works again via native X11 calls... (fully functional on X11)
-		- Wayland: likely never a solution ever as the default Wayland Compositor dose not give access at all to window's positioning. But please educate me if I am wrong.
-		  Gtk4 and Wayland Compositor does not allow Window Geometry managemnt from Gxsm.
-          Solution: For convenient efficient work used X11 display backend. Or, hang in in tight:
-  		- Hyprland (on Wayland): The more modern Wayland provides a better and snappier experience vs. aging X11. And there is hope: For those loving exploring experimental and cutting edge tools: the latest tweaks and developments of Gxsm4 provide now experimental support for Window Geometry managenemnt when using Hyprland on Wayland via hyprctl! See: https://hypr.land/ For Debian Tetsing/Trixie start your adventure here: https://github.com/JaKooLit/Debian-Hyprland
-		
+	
 - GL3D Scan View Mode: currently disabled. Port pending.
 
 - known GTK4 shortcomings so far noted:
-  - on X11 onyl: Window focus to activiate keyboard accellerator is at random lagging. Requires expplicit Menu call to get attention?!?!
-  - Rendering in cairo fall back mode (when using X11 export via ssh -X for example) can be slow.
-  - press/release signals not available for simple button widget. Work around assigning handlers does not work as expected. Work for a canvas "home made" button. Non perfec tbu tworkable workaround currently used: Arrow icons on button widget accept press and release events. (Needed for Mover Controls: "fire wave signal on DSP when pressed" direction buttons.
+  - Rendering in cairo fall back mode (when using X11 export via ssh -X for example) can be crawling slow with old GPU hardware.
+  - press/release signals not available for simple button widget. Work around assigning handlers does not work as expected. Work for a canvas "home made" button. Non perfect but workable workaround currently used: Arrow icons on button widget accept press and release events. (Needed for Mover Controls: "fire wave signal on DSP when pressed" direction buttons.
 
-- Pending back/forward sync or porting from gxsm3: idle callbacks for Tip Move and related vs. blocking or singel shot. Address pending minor random but rare move issue with initiating a scan.
-- Pending odd behavior for object move/edit in some situations. (Workaround: remove all (F12), start over)
+- Pending odd behavior for object move/edit in some situations or dropped GTK4 DnD handles, missed evnts, etc. (Workaround: remove all (F12), start over. Activate/hover a pull down menu item also helps!)
 
 - SRANGER-MK23/ MULIT TAB MANAGEMENT: DSP-CONTROL windows A, B -- initial TAB Drag to empty secondary window impossible (or hard??) to find a hook area to drop off. Work around for now:
 Manually hack config via dconf-editor, then further DnD is easy and as usual again:

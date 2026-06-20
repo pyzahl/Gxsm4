@@ -160,7 +160,6 @@ gxsm4_app_startup (GApplication *app)
 {
         GtkBuilder *builder;
         XSM_DEBUG(DBG_L2, "gxsm4_app_startup ====================================================" );
-        
 
         G_APPLICATION_CLASS (gxsm4_app_parent_class)->startup (app);
 
@@ -171,18 +170,7 @@ gxsm4_app_startup (GApplication *app)
         //gtk_css_provider_load_from_resource (GTK_CSS_PROVIDER(provider), "/" GXSM_RES_BASE_PATH "/gxsm4-styles.css");
         gtk_css_provider_load_from_resource (GTK_CSS_PROVIDER(provider), "/" GXSM_RES_BASE_PATH "/css/styles.css");
         gtk_style_context_add_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_USER);
-        
-        // https://developer.gnome.org/gtk3/stable/chap-css-overview.html
-        /*
-        gtk_css_provider_load_from_data(GTK_CSS_PROVIDER(provider),
-                                        "#view-headerbar-tip-follow:checked{\n"
-                                        "    color: #dd0000;\n"
-                                        "}\n"
-                                        "\n",
-                                        -1, NULL);
-        */
-        //g_object_unref(provider);
-        
+               
         // GXSM core application -- NOT the G APPLCIATION/WINDOW MANAGEMENT
         XSM_DEBUG(DBG_L2, "gxsm4 core startup" );
        
@@ -407,9 +395,9 @@ gxsm4_app_activate (GApplication *app)
 
 static void
 gxsm4_app_open (GApplication  *app,
-                  GFile        **files,
-                  gint           n_files,
-                  const gchar   *hint)
+                GFile        **files,
+                gint           n_files,
+                const gchar   *hint)
 {
   GList *windows;
   Gxsm4appWindow *win;
@@ -427,10 +415,11 @@ gxsm4_app_open (GApplication  *app,
                 main_get_gapp ()->xsm->ActivateFreeChannel();
 #endif
         
-        for (gint i=0; i < n_files; ++i)
+        for (gint i=0; i < n_files; ++i){
                 if (gxsm4_app_window_open (win, files[i], load_files_as_movie) == false)
                         break;
-
+        }
+        
         gtk_window_present (GTK_WINDOW (win));
 }
 
@@ -439,9 +428,9 @@ gxsm4_app_class_init (Gxsm4appClass *klass)
 {
         XSM_DEBUG(DBG_L2, "gxsm4_app_class_init =================================================" );
 
-        G_APPLICATION_CLASS (klass)->startup = gxsm4_app_startup;
+        G_APPLICATION_CLASS (klass)->startup  = gxsm4_app_startup;
         G_APPLICATION_CLASS (klass)->activate = gxsm4_app_activate;
-        G_APPLICATION_CLASS (klass)->open = gxsm4_app_open;
+        G_APPLICATION_CLASS (klass)->open     = gxsm4_app_open;
 
         XSM_DEBUG(DBG_L2, "gxsm4_app_class_init complete =================================================" );
 }
@@ -449,17 +438,18 @@ gxsm4_app_class_init (Gxsm4appClass *klass)
 Gxsm4app *
 gxsm4_app_new (void)
 {
-        XSM_DEBUG(DBG_L2, "gxsm4_app_new ========================================================" );
-
-        if (gxsm_new_instance) // allow new instance, disable checks
+        if (gxsm_new_instance){ // allow new instance, disable checks
+                XSM_DEBUG(DBG_L1, "gxsm4_app_new force new instance =====================================" );
                 return (Gxsm4app*) g_object_new (GXSM4_APP_TYPE,
                                                  "flags", G_APPLICATION_HANDLES_OPEN,
                                                  NULL);
-        else
+        } else {
+                XSM_DEBUG(DBG_L1, "gxsm4_app_new handle file open only ==================================" );
                 return (Gxsm4app*) g_object_new (GXSM4_APP_TYPE,
                                                  "application-id", GXSM_RES_BASE_PATH_DOT,
                                                  "flags", G_APPLICATION_HANDLES_OPEN,
                                                  NULL);
+        }
 }
 
 
@@ -485,6 +475,8 @@ App::App(Gxsm4app *gxsm4_app):AppBase(gxsm4_app)
         as_settings       = g_settings_new (GXSM_RES_BASE_PATH_DOT".gui.as");
         gxsm_app_windows_list  = NULL; // holds a list of GXSM windows classes
 
+	GnomeAppServiceSetApp (this);
+        
         app_window = NULL;
 	appbar = NULL;
 	appbar_ctx_id = 0;
@@ -669,18 +661,15 @@ void App::MAINAppWindowInit(Gxsm4appWindow* win, const gchar *title, const gchar
         /* main window content is a grid to place main control elements */
         grid = gtk_grid_new ();
         gtk_window_set_child (GTK_WINDOW (window), grid);
-        gtk_widget_show (grid); // FIX-ME GTK4 SHOWALL
 
         /* Make Statusbar and attach to grid at bottom now */
 	appbar = gtk_statusbar_new ();
 	appbar_ctx_id = gtk_statusbar_get_context_id (GTK_STATUSBAR (appbar), "GXSM MAIN STATUS");
         gtk_grid_attach (GTK_GRID (grid), appbar, 0, 10, 1, 1);
-        gtk_widget_show (appbar); // FIX-ME GTK4 SHOWALL
 
         XSM_DEBUG (DBG_L2,  "App GXSM main window status: " << (GTK_IS_WIDGET (window) ? "OK":"NOT A WIDGET"));
 
-        // What is this about??? (gxsm4:1156915): Gtk-WARNING **: 16:26:15.840: A window is shown after it has been destroyed. This will leave the window in an inconsistent state.
-       	gtk_widget_show (GTK_WIDGET (window)); // FIX-ME GTK4 SHOWALL
+        //gtk_window_present (GTK_WINDOW (window));
 }
 
 void App::build_gxsm (Gxsm4appWindow *win){
@@ -700,7 +689,7 @@ void App::build_gxsm (Gxsm4appWindow *win){
 
         /* Now able to bring up Splash and Startup Info window */
         GxsmSplash (-1.0, "GXSM Startup.", "Initializing Windows and Modules."); // this will auto remove splash after timout!
-        
+    
         XSM_DEBUG(DBG_L2, "App::build_gxsm - starting up" );
         SetStatus(N_("Starting GXSM..."));
         
@@ -738,7 +727,8 @@ void App::build_gxsm (Gxsm4appWindow *win){
         XSM_DEBUG(DBG_L2, "App::build_gxsm - destroy preferences object" );
 	gnome_res_destroy (pref);
 
-        set_window_geometry    ("main");
+        XSM_DEBUG(DBG_L1, "App::build_gxsm Set WIndow Key and Load Geometry for GXSM4 Main Window");
+        set_window_geometry    ("gxsm4"); // Set and Load Geometry for GXSM4 Main Window
         
         XSM_DEBUG (DBG_L3,
                    "App::build_gxsm - finished with main window.\n"
@@ -753,12 +743,12 @@ gboolean App::finish_system_startup (){
         static int startup_stage=0;
 
         ++startup_stage;
-        XSM_DEBUG_GM (DBG_L2, "**** IDLE FUNC: App::finish_system_startup (build_gxsm) stage=%2d  *****", startup_stage);
+        XSM_DEBUG_GM (DBG_L1, "**** IDLE FUNC: App::finish_system_startup (build_gxsm) stage=%2d  *****", startup_stage);
 
         switch (startup_stage){
         case 1:
                 ClearStatus();
-                XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - Monitor");
+                XSM_DEBUG_GM (DBG_L1, "IDLE... App::build_gxsm - Monitor");
                 pcs_set_current_gschema_group ("monitorwindow");
                 monitorcontrol  = new MonitorControl ( get_app (), logging_level);
                 return true;
@@ -812,22 +802,18 @@ gboolean App::finish_system_startup (){
                         spm_control  = create_spm_control ();
 
                 gtk_grid_attach (GTK_GRID (grid), spm_control, 0, 1, 1, 1);
-                gtk_widget_show (spm_control);
                 return true;
         case 6:
                 XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - AS Controls");
                 // Auto Save Control
                 as_control   = create_as_control ();
                 gtk_grid_attach (GTK_GRID (grid), as_control, 0, 2, 1, 1);
-                gtk_widget_show (as_control); // FIX-ME GTK4 SHOWALL
                 return true;
         case 7:
                 XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - UI Controls");
                 // User Info Control
                 ui_control   = create_ui_control ();
                 gtk_grid_attach (GTK_GRID (grid), ui_control, 0, 3, 1, 1);
-                gtk_widget_show (ui_control);
-                gtk_widget_show (GTK_WIDGET (window));
                 return true;
         case 8:
                 XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - Building Channelselector");
@@ -868,6 +854,7 @@ gboolean App::finish_system_startup (){
                 return true;
         case 13:
                 XSM_DEBUG_GM (DBG_L2, "IDLE... App::build_gxsm - Reposition all window to stored Window Geometry (X11)");
+                LoadGeometry ();
                 if (!geometry_management_off)
                         load_app_geometry ();
                 else
@@ -1206,7 +1193,10 @@ gint App::GxsmSplashRemove(gpointer data){
 
         splash_draw_function (NULL, NULL, 0,0, NULL); // clean up
 
-        gtk_popover_popdown (GTK_POPOVER (a->splash));
+        gtk_window_destroy (GTK_WINDOW (a->splash));
+        gtk_window_set_auto_startup_notification (TRUE);
+        a->splash_progress_bar = NULL;
+
         
 	return FALSE;
 }
@@ -1227,6 +1217,7 @@ void App::splash_draw_function (GtkWidget *area, cairo_t *cr,
                 if (text2) { delete text2; text2=NULL; }
                 if (text3) { delete text3; text3=NULL; }
                 if (text4) { delete text4; text4=NULL; }
+
                 return;
         }
         
@@ -1296,9 +1287,31 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
         static gboolean run=true;
         static gchar* priv_info = NULL;
         static gchar* priv_text = NULL;
+        static gboolean ontop = false;
         GVariant *splash_timeout = g_settings_get_value (gxsm_app_settings, "splash-timeout");
 
 	if (splash_progress_bar && splash && progress > -0.2){
+
+                if (!ontop){ // PUT ME ON TOP
+                        gchar *stdout_buf = NULL;
+                        gchar *stderr_buf = NULL;
+                        gint exit_status;
+                        GError *error = NULL;
+
+                        gchar *busctl_cmdline = g_strdup_printf ("busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetOnTopAction ssib -- 'gxsm4' '^(Startup.*)$' -1 'TRUE'");
+                        g_spawn_command_line_sync (busctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
+                        if (error != NULL) {
+                                g_error ("EE %s E:%s [OS:%s, ES:%s]\n", busctl_cmdline, error->message, stdout_buf?stdout_buf:"-", stderr_buf?stderr_buf:"-");
+                                g_error_free (error);
+                        } else {
+                                ontop = true;
+                                XSM_DEBUG_GM (DBG_L2, "II %s\n   OS:%s\n   ES:%s\n   R: %d", busctl_cmdline, stdout_buf, stderr_buf, exit_status);
+                        }
+                        g_free (busctl_cmdline);
+                        g_free (stdout_buf);
+                        g_free (stderr_buf);
+                }
+                
                 XSM_DEBUG_GM (DBG_L3, "App::GxsmSplash Update: %.1f%%, %s, %s", 100*progress, info, text);
 		if (progress >= 0. && progress <= 1.0)
 			gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (splash_progress_bar), progress);
@@ -1344,11 +1357,19 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
 
         // if (g_variant_get_boolean (splash_display) && (strncmp (getenv(“XDG_SESSION_TYPE”), 'x11', 3) == 0)){
         if (g_variant_get_boolean (splash_display)){
-                splash = gtk_popover_new ();
+                ontop = false;
+
+                gtk_window_set_auto_startup_notification (FALSE);
+                splash = gtk_window_new ();
+                gtk_window_set_title (GTK_WINDOW (splash), "Startup...");
+                gtk_window_set_default_size (GTK_WINDOW (splash), 300, 200);
+                gtk_window_set_decorated (GTK_WINDOW (splash), FALSE); // Remove borders
+                gtk_window_set_modal (GTK_WINDOW (splash), TRUE); // Modal
+                gtk_widget_show (splash);
+
                 GtkWidget *vb = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
-		gtk_widget_show (vb);
-                gtk_popover_set_child (GTK_POPOVER (splash), vb);
-               
+                gtk_window_set_child (GTK_WINDOW (splash), vb);
+
                 splash_darea = gtk_drawing_area_new ();
                 gtk_drawing_area_set_content_width  (GTK_DRAWING_AREA (splash_darea), ImgW);
                 gtk_drawing_area_set_content_height (GTK_DRAWING_AREA (splash_darea), ImgH);
@@ -1370,20 +1391,14 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
                                                 this, NULL);
                 
                 gtk_box_append (GTK_BOX (vb), splash_darea);
-                gtk_widget_show (splash_darea);
 
 		splash_progress_bar = gtk_progress_bar_new ();
                 gtk_progress_bar_set_show_text (GTK_PROGRESS_BAR (splash_progress_bar), true);
 		gtk_progress_bar_set_ellipsize (GTK_PROGRESS_BAR (splash_progress_bar), PANGO_ELLIPSIZE_START);
-		gtk_widget_show (splash_progress_bar);
 		gtk_box_append (GTK_BOX (vb), splash_progress_bar);
 
-                gtk_widget_set_parent (splash, GTK_WIDGET(app_window));
-                gtk_popover_set_has_arrow (GTK_POPOVER (splash), FALSE);
-                // FIX-ME GTK4 
-                gtk_popover_set_pointing_to (GTK_POPOVER (splash), &(GdkRectangle){ 1000-ImgW/2, 500-ImgH/2, 1, 1});
+                g_message ("Gxsm Splash Message: %s", g_variant_get_string (splash_message, NULL));
 
-                gtk_popover_popup (GTK_POPOVER (splash));
         }
 }
 

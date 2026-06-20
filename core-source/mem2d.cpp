@@ -2084,7 +2084,9 @@ void Mem2d::AutoDataSkl(double *contrast, double *bright){
 			*contrast=Zcontrast; *bright=Zbright;
 		}
 		XSM_DEBUG (DBG_L6, "AutoSkl: Zmax=" << Zmax << " Zmin=" << Zmin << " ZRange=" << Zrange << " Contrast=" << Zcontrast << " Bright=" << Zbright);
-	}
+	} else {
+                *contrast=Zcontrast=1.; *bright=Zbright=1.;
+        }
 }
 
 void Mem2d::CalcLinRegress(int yfirst, int ylast)

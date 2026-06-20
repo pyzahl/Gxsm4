@@ -420,10 +420,10 @@ int Surface::load(const char *rname){
 		gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (chooser), all_filter);
                 g_object_unref (all_filter);
                 
-                gtk_widget_show (chooser);
                 g_signal_connect (chooser, "response",
                                   G_CALLBACK (Surface::load_exec),
                                   this);
+                gtk_widget_show (chooser);
                 return 1;
 	}else{
 		if(!strrchr(rname, '/'))
@@ -735,10 +735,10 @@ int Surface::save(AUTO_SAVE_MODE automode, char *rname, int chidx, int forceOver
                                 gtk_file_filter_add_pattern (x_filter, "*.DAT");
                                 gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (chooser), x_filter);
                         }
-                        gtk_widget_show (chooser);
                         g_signal_connect (chooser, "response",
                                           G_CALLBACK (Surface::save_new_path_exec),
                                           this);
+                        gtk_widget_show (chooser);
 			return 0;
 		}
 	}
@@ -782,10 +782,10 @@ int Surface::save(AUTO_SAVE_MODE automode, char *rname, int chidx, int forceOver
 
                         ffname = NULL;
                         chidx_save_as = chidx;
-                        gtk_widget_show (chooser);
                         g_signal_connect (chooser, "response",
                                           G_CALLBACK (Surface::save_exec),
                                           this);
+                        gtk_widget_show (chooser);
                         return 1;
                         /*
                         if (gtk_dialog_run (GTK_DIALOG (chooser)) == GTK_RESPONSE_ACCEPT){
@@ -828,12 +828,12 @@ int Surface::save(AUTO_SAVE_MODE automode, char *rname, int chidx, int forceOver
                                                                             GTK_BUTTONS_YES_NO,
                                                                             N_("File '%s' exists, overwrite?"),
                                                                             fname);
+                                gtk_widget_show (dialog);
                                 // FIX-ME-GTK4
                                 overwrite = GTK_RESPONSE_YES;
                                 g_signal_connect_swapped (G_OBJECT (dialog), "response",
                                                           G_CALLBACK (gtk_window_destroy),
                                                           G_OBJECT (dialog));
-                                gtk_widget_show (dialog);
                                 //overwrite = gtk_dialog_run (GTK_DIALOG (dialog));
                                 //gtk_widget_destroy (dialog);
                                 if (overwrite != GTK_RESPONSE_YES){

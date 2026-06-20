@@ -52,6 +52,13 @@
         used in spm_scancontrol: image update rate while scanning.
       </description>
     </key>
+    <key name="progress-info" type="b">
+      <default>true</default>
+      <summary>Indicates if gxsm shows progress info box</summary>
+      <description>
+	Set to false to disable. May be required for Wayland/popover issue.
+      </description>
+    </key>
   </schema>
 
   <schema id="org.gnome.gxsm4.hardware-interfaces" path="/org/gnome/gxsm4/hardware-interfaces/">

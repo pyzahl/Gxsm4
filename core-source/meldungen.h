@@ -75,7 +75,7 @@
 #define PROBE_CONTROL_TITLE      N_("Probe Control")
 #define PROFILE_TITLE            N_("Line Profile")
 #define HISTOGRAMM_TITLE         N_("Histogram")
-#define MONITOR_TITLE            N_("Log/Monitor")
+#define MONITOR_TITLE            N_("Activity Monitor and Logbook")
 #define OPTI_TITLE               N_("Optimize")
 #define OSZI_TITLE               N_("Oszi")
 #define PRINT_TITLE              N_("Print")

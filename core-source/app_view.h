@@ -249,12 +249,6 @@ public:
                 return FALSE;
         };
 
-        static gboolean update_view_wm_idle_callback (AppBase *self) {
-                g_message ("update_view_wm_idle_callback");
-                self->position_auto (); // delayed retry
-                return FALSE; // finally
-        };
-
         void update_XYpixshift() {
                 double pdx,pdy;
                 scan->mem2d->data->get_shift_px (pdx, pdy);

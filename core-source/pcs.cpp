@@ -311,7 +311,7 @@ void Param_Control::Put_Value(){
 
 double Param_Control::Get_dValue(){
 	if(Dval)
-		return *Dval;
+		return isnan(*Dval) ? 999999. : *Dval; // ** preven NAN errors for adjustements
 	else
 		if(Ival)
 			return (double)*Ival;
@@ -1088,7 +1088,7 @@ gboolean Gtk_EntryControl::ShowVerifySet (const char *header, const char *text){
 		g_signal_connect_swapped (G_OBJECT (dialog), "response",
 					  G_CALLBACK (gtk_window_destroy),
 					  G_OBJECT (dialog));
-		gtk_widget_show (dialog);
+                gtk_widget_show (dialog);
                 // FIX-ME-GTK4
                 //result = gtk_dialog_run (GTK_DIALOG (dialog));
 
@@ -1205,6 +1205,7 @@ void Gtk_EntryControl::pcs_adjustment_configure (){
 							 _("_OK"), GTK_RESPONSE_ACCEPT,
 							 _("_Cancel"), GTK_RESPONSE_REJECT,
 							 NULL);
+	gtk_widget_show (dialog);
 	g_free (tmp);
 
         BuildParam *bp = new BuildParam;
@@ -1255,7 +1256,6 @@ void Gtk_EntryControl::pcs_adjustment_configure (){
         
         g_object_set_data  (G_OBJECT (dialog), "TMP-BP-REF", bp);
                             
-        gtk_widget_show (dialog);
         g_signal_connect (dialog, "response",
                           G_CALLBACK (Gtk_EntryControl::pcs_adjustment_configure_response_callback),
                           this);

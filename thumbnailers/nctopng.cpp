@@ -191,7 +191,8 @@ public:
 		double dnum;
 		int    bin_num, med_bin, lo_bin, hi_bin;
 		double *bins;
-
+                double eps=1e-20;
+                
 		// find range
 		low = high = soft (0,0);
 		for (int i=0; i<ny; ++i)
@@ -203,9 +204,17 @@ public:
 
 		// calc histogramm
 		zrange = high-low;
-		dnum = zrange/3; // +/-1 dz (3dz) in ein bin per default
+
+                // check for meaning full range
+                if (fabs (zrange) < eps){
+                        min = low-eps;
+                        max = high+eps;
+                        return;
+                }
+                
+		//dnum = zrange/3; // +/-1 dz (3dz) in ein bin per default
 	
-		bin_num   = (int)dnum;
+		bin_num   = 256;
 		bin_width = zrange / bin_num;
 		dz_norm   = 1./bin_width;
 		

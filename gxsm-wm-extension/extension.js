@@ -32,7 +32,19 @@
 
 import Gio from 'gi://Gio';
 import Meta from 'gi://Meta';
+import Clutter from 'gi://Clutter'
+import GObject from 'gi://GObject'
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import * as Config from 'resource:///org/gnome/shell/misc/config.js';
+
+
+// Get the full version string (e.g., "46.1" or "47.alpha")
+const versionString = Config.PACKAGE_VERSION; 
+const [GSVmajor, GSVminor] = versionString.split('.').map(s => parseInt(s, 10));
+    
+const GLib = imports.gi.GLib;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // busctl --user tree org.gnome.Shell 
 // busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction s "'Gxsm4'"
@@ -40,7 +52,7 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 // └─ /org/gnome/Shell/Extensions/GxsmWmExtension
 
 // Set Window Geometry: SetGeoAction (wClass, title, x,y,w,h,op); use op=0
-// busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiiii -- "gxsm4" "Gxsm4" 100 100 500 600 0
+// busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm SetGeoAction ssiiiii -- "gxsm4" "Gxsm4" 100 100 500 600 'FALSE'
 
 // Query Window Geometry: GetGeoAction (wClass, title);
 // busctl --user call org.gnome.Shell /org/gnome/Shell/Extensions/GxsmWmExtension org.gnome.Shell.Extensions.GxsmWm GetGeoAction ss "gxsm4" "Gxsm4"                
@@ -51,22 +63,34 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 // list: '{class=...},...'
 
 // Define the XML interface for your custom D-Bus object
+
+
+
 const GXSMWMXML = `
 <node>
   <interface name="org.gnome.Shell.Extensions.GxsmWm">
     <method name="GetGeoAction">
       <arg type="s" direction="in" name="wClass"/>
       <arg type="s" direction="in" name="wTitle"/>
+      <arg type="i" direction="in" name="wWorkspace"/>
       <arg type="s" direction="out" name="geom"/>
     </method>
     <method name="SetGeoAction">
       <arg type="s" direction="in" name="wClass"/>
       <arg type="s" direction="in" name="wTitle"/>
+      <arg type="i" direction="in" name="wWorkspace"/>
       <arg type="i" direction="in" name="x"/>
       <arg type="i" direction="in" name="y"/>
       <arg type="i" direction="in" name="width"/>
       <arg type="i" direction="in" name="height"/>
-      <arg type="i" direction="in" name="op"/>
+      <arg type="b" direction="in" name="uop"/>
+      <arg type="s" direction="out" name="res"/>
+    </method>
+    <method name="SetOnTopAction">
+      <arg type="s" direction="in" name="wClass"/>
+      <arg type="s" direction="in" name="wTitle"/>
+      <arg type="i" direction="in" name="wWorkspace"/>
+      <arg type="b" direction="in" name="uop"/>
       <arg type="s" direction="out" name="res"/>
     </method>
   </interface>
@@ -85,76 +109,175 @@ export default class GxsmWm extends Extension {
         }
     }
 
+    // Wayland native apps use app_id for class; XWayland uses wm_class
 
-    getWindowGeometryByClassAndTitle(targetClass, targetTitle) {
-	// Get all window actors across all workspaces
-	let list='';
+    match_window (win, targetClass, targetTitle, targetWorkspace) {
+	let wmClass   = win.get_wm_class();
+        let wmTitle   = win.get_title();   
+	const regex_TargetClass = new RegExp (targetClass, "g"); 
+	const regex_TargetTitle = new RegExp (targetTitle, "g"); 
+	if (!wmClass || !wmTitle)
+	    return false;
+	
+        if (wmClass.match (regex_TargetClass) && wmTitle.match (regex_TargetTitle)){
+	    let workspace = win.get_workspace().index();
+	    let activeWorkspace = global.workspace_manager.get_active_workspace_index();
+	    //  match as requested              auto match on current WS                                   match all WS
+	    if (workspace == targetWorkspace || (targetWorkspace == -1 && workspace == activeWorkspace) || targetWorkspace == -2)
+		return true;
+	}
+	return false;
+    }
+    
+    setOnTopByTitleAndClass (targetClass, targetTitle, targetWorkspace, uop) {
 	let windowActors = global.get_window_actors();
+	let ret = 'WNA';
+	
+	for (let actor of windowActors) {
+            let win = actor.meta_window;
+            if (!win) continue;
+
+	    if (this.match_window (win, targetClass, targetTitle, targetWorkspace)) {
+		if (uop)
+		    win.make_above();
+		else
+		    win.unmake_above();
+		ret = 'OK';
+	    }
+	}
+	return ret;
+    }
+
+    getWindowGeometryByClassAndTitle(targetClass, targetTitle, targetWorkspace) {
+	// Get all window actors across all workspaces
+	let ret  = '';
+	let list = '';
+	let windowActors = global.get_window_actors();
+	let gotmatch = false;
 	
 	for (let actor of windowActors) {
             let win = actor.meta_window;
             if (!win) continue;
 
             // Retrieve properties to inspect
-            let wmClass = win.get_wm_class(); // returns e.g., "firefox" or "org.gnome.Nautilus"
-            let title = win.get_title();      // returns the current visible window title string
+            let wmClass   = win.get_wm_class(); // returns e.g., "firefox" or "org.gnome.Nautilus"
+            let title     = win.get_title();    // returns the current visible window title string
 
 	    if (targetClass === '*'){
-		let rect = win.get_frame_rect(); 
-		let winfo = `{class=${wmClass} title=${title} geometry=[${rect.x}, ${rect.y}, ${rect.width}, ${rect.height}]},`;
-		list = list + winfo;
-		log (winfo);
+		let rect = win.get_frame_rect();
+		let activeWorkspace = global.workspace_manager.get_active_workspace_index();
+		let workspace = win.get_workspace().index();
+
+		//  match as requested              auto match on current WS                                   match all WS
+		if (workspace == targetWorkspace || (targetWorkspace == -1 && workspace == activeWorkspace) || targetWorkspace == -2){
+		    let winfo = `{class=${wmClass.padEnd(20)} title=${title.padEnd(25)} geometry=[${rect.x}, ${rect.y}, ${rect.width}, ${rect.height}] on Desktop ${workspace} active: ${activeWorkspace}},`;
+		    list = list + winfo;
+		    log (winfo);
+		}
 		continue;
 	    }
 	    
-	    const regex = new RegExp(targetTitle, "g"); 
-	    
-            if (wmClass === targetClass && title.match(regex)) {
+	    if (this.match_window (win, targetClass, targetTitle, targetWorkspace)) {
 		// Get frame geometry matching move_resize_frame requirements
 		let rect = win.get_frame_rect(); 
-		return `[${rect.x}, ${rect.y}, ${rect.width}, ${rect.height}]`;
+		let workspace = win.get_workspace().index();
+		ret = ret + `[${rect.x}, ${rect.y}, ${rect.width}, ${rect.height}] class=${wmClass}; title=${title} on ${workspace}` + '\n';
+		gotmatch = true;
+		//return `[${rect.x}, ${rect.y}, ${rect.width}, ${rect.height}] on ${workspace}`;
             }
 	}
 	
 	if (targetClass === '*')
 	    return list;
-	else
-	    return 'WNA'; // Window not found
+	else{
+	    if (gotmatch)
+		return ret;
+	    else
+		return 'WNA'; // Window not found
+	}
     }
 
     
-    moveResizeByTitleAndClass(targetClass, targetTitle, x, y, width, height, op) {
+    moveResizeByTitleAndClass(targetClass, targetTitle, targetWorkspace, x, y, width, height, uop) {
 	let windowActors = global.get_window_actors();
 	
 	for (let actor of windowActors) {
             let win = actor.meta_window;
             if (!win) continue;
-            
-            // Wayland native apps use app_id for class; XWayland uses wm_class
-            let wmClass = win.get_wm_class();
-            let title = win.get_title();   
-	    const regex = new RegExp(targetTitle, "g"); 
-	    
-            if (wmClass === targetClass && title.match(regex)) {
-		// true = move/resize frame, false = move/resize client area only
-		if (op)
-		    win.move_resize_frame(true, x, y, width, height);
-		else
-		    win.move_resize_frame(false, x, y, width, height);
+
+	    if (this.match_window (win, targetClass, targetTitle, targetWorkspace)) {
+		if (GSVmajor >= 50)
+		    this.Gnome50Layout(win, x, y, width, height, uop);
+		else 
+		    this.Gnome49Layout(win, x, y, width, height, uop);
+		
 		return 'OK';
             }
 	}
 	return 'WNA'; // window not available
     }
-    
-    // This is the function you want to execute from the shell
-    GetGeoAction(wClass, wTitle) {
-        //log(`GXSM-WM SHELL EXT GetGeo: ${wClass} >${wTitle}<`);
-	return this.getWindowGeometryByClassAndTitle(wClass, wTitle);
+
+    Gnome50Layout(window, x, y, width, height, uop) {
+	if (!window) return;
+
+	window.move_resize_frame(false, x, y, width, height);
+
+	GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+            // Fetch the window actor layer safely
+            const actor = window.get_compositor_private();
+            
+            // THE FIX: If actor is gone or explicitly destroyed, drop out safely
+            if (!actor || actor.is_destroyed?.()) {
+		return GLib.SOURCE_REMOVE; 
+            }
+
+            // Safe to execute structural commands now
+            window.move_frame(false, x, y);
+
+            if (global.stage?.update_pointer_focus) {
+		global.stage.update_pointer_focus();
+            }
+
+            return GLib.SOURCE_REMOVE;
+	});
+    }
+
+
+    Gnome49Layout(window, x, y, width, height, uop) {
+	if (!window) return;
+	window.move_frame(false, x, y);
+	//win.move_resize_frame(false, x, y, width, height);
+	
+	sleep(200);
+	window.move_resize_frame(false, x, y, width, height);
+	
+	if (uop){
+	    window.move_resize_frame(false, x, y, width, height);
+	    //log(`win.move_resize forced.`);
+	    //return 'OK*';
+	}
+	
+	GLib.timeout_add(GLib.PRIORITY_DEFAULT_IDLE, 30, () => {
+	    //GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+	    window.move_resize_frame('false', x, y, width, height);
+	    //log(`win.move_resize completed OK.`);
+	    return GLib.SOURCE_REMOVE; // Always return remove to prevent looping
+	});
     }
     
-    SetGeoAction(wClass, wTitle, x, y, width, height, op) {
-        //log(`GXSM-WM SHELL EXT SetGeo: ${wClass} >${wTitle}< [${x} ${y} ${width} ${height}]`);
-	return this.moveResizeByTitleAndClass(wClass, wTitle, x, y, width, height, op);
+    // This is the function you want to execute from the shell
+    GetGeoAction(wClass, wTitle, wWorkspace) {
+        //log(`GXSM-WM SHELL EXT GetGeo: ${wClass} >${wTitle}<`);
+	return this.getWindowGeometryByClassAndTitle(wClass, wTitle, wWorkspace);
+    }
+    
+    SetGeoAction(wClass, wTitle, wWorkspace, x, y, width, height, uop) {
+        //log(`GXSM-WM SHELL EXT SetGeo: ${wClass} >${wTitle}< [${x} ${y} ${width} ${height} ${uop}]`);
+	return this.moveResizeByTitleAndClass(wClass, wTitle, wWorkspace, x, y, width, height, uop);
+    }
+
+    SetOnTopAction(wClass, wTitle, wWorkspace, uop) {
+	return this.setOnTopByTitleAndClass(wClass, wTitle, wWorkspace, uop);
+	metaWindow.set_above(uop);
     }
 }
