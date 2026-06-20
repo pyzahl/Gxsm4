@@ -787,10 +787,13 @@ gpointer ProbeDataReadThread (void *ptr_hwi){
 
 int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, bool init){
         static int position=0; // internal write position
-
+        static clock_t start_time = 0;
+        static guint64 measured_len = 0;
         //g_message ("on_new_data(len=%u) pos=0x%08x", len, position);
         
         if (init){
+                start_time = clock();
+                measured_len = 0;
                 g_message ("on_new_data(INIT)");
                 position=0;
                 memset (GVP_stream_buffer, 0xee, EXPAND_MULTIPLES*DMA_SIZE*sizeof(gint32));
@@ -798,10 +801,12 @@ int rpspmc_hwi_dev::on_new_data (gconstpointer contents, gsize len, bool init){
         }
 
         g_mutex_lock (&GVP_stream_buffer_mutex);
+        measured_len += len;
 
         int half_full = EXPAND_MULTIPLES*DMA_SIZE/2;
         if (GVP_stream_buffer_offset > half_full){ // shift upper 1/2 data back down to 0 if completed processing lower half data
-                g_message ("on_new_data() GXSM stream buffer processing pos > 1/2 full mark. [proc:%08x, wpos:%08x], copy back down...", GVP_stream_buffer_offset, position);
+                double MBs = 8*measured_len / (1024*1024*((double)(clock() - start_time) / CLOCKS_PER_SEC));
+                g_message ("on_new_data() GXSM stream buffer processing pos > 1/2 full mark. [proc:%08x, wpos:%08x], copy back down. ** %g MBit/s  %g MB", GVP_stream_buffer_offset, position, MBs, measured_len/(1024.*1024.));
                 GVP_stream_buffer_offset -= half_full;
                 position -= half_full;
                 memcpy (&GVP_stream_buffer[0], &GVP_stream_buffer[half_full], half_full*sizeof(gint32));
