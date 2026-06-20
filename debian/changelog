@@ -1,3 +1,17 @@
+gxsm4 (4.4.1-0ubuntu0) resolute; urgency=medium
+
+  * gnome-wm updated
+  * gnome-nc-thumbnailer updated 
+
+ -- Thorsten Wagner <stm@users.sf.net>  Sat, 20 Jun 2026 17:04:44 +0200
+
+gxsm4 (4.4.0-0ubuntu0) resolute; urgency=medium
+
+  * bumping to new version
+  * gxsm-wm (gnome-shell extension) as separate package
+
+ -- Thorsten Wagner <stm@users.sf.net>  Thu, 11 Jun 2026 20:05:23 +0200
+
 gxsm4 (4.3.0-0ubuntu2) resolute; urgency=medium
 
   * added desktop-file-utils to dependendies
