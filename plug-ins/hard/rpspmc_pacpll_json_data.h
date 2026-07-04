@@ -132,6 +132,23 @@ struct PACPLL_parameters {
         double Udfreq_control;
         double control_dfreq_fb_upper;
         double control_dfreq_fb_lower;
+
+        // HETERODYNE LMS-PAC + KELVIN CONTROLLER ** KPAFM
+        double htd_pactau;
+        double htd_fb_setpoint;
+        double htd_fb_invert;
+        double htd_fb_cp_db;
+        double htd_fb_ci_db;
+        double htd_fb_cp;
+        double htd_fb_ci;
+        double htd_fb_upper;
+        double htd_fb_lower;
+        double htd_pac_rot_ab;
+        double htd_kv_freq;
+        double htd_kv_control;
+        double htd_kv_mode;
+        double htd_kv_monitor;
+        double htd_phase_monitor;
         
         // RP-PAC-PLL / extra PLL signal phase aligned pulse former
         double pulse_form_bias0, pulse_form_bias1;

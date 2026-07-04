@@ -441,6 +441,84 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
                                     G_CALLBACK (RPspmc_pacpll::EnUdfreq_control), this);
 
         // =======================================
+        // HETERODYNE LMS-PAC + KELVIN CONTROLLER ** KPAFM
+        //double htd_pactau;
+        //double htd_fb_setpoint;
+        //double htd_fb_cp;
+        //double htd_fb_ci;
+        //double htd_fb_upper;
+        //double htd_fb_lower;
+        //double htd_pac_rot_ab;
+        //double htd_kv_freq;
+        //double htd_kv_control;
+        //double htd_kv_mode;
+
+        bp->pop_grid ();
+        bp->new_grid_with_frame ("HTD Kelvin Controller");
+        bp->set_input_nx (3);
+        bp->grid_add_ec ("Reading", Deg, &parameters.htd_phase_monitor, -180.0, 180.0, "g", 1., 10., "PHASE-MONITOR");
+        EC_R_list = g_slist_prepend( EC_R_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->new_line ();
+        parameters.htd_fb_setpoint = 60.;
+        parameters.htd_fb_invert = 1.;
+        parameters.htd_fb_cp_db = -123.5;
+        parameters.htd_fb_ci_db = -184.;
+        parameters.htd_fb_upper = 300000.;
+        parameters.htd_fb_lower = 100000.;
+        bp->set_no_spin (false);
+        bp->set_input_width_chars (8);
+        bp->set_default_ec_change_notice_fkt (RPspmc_pacpll::htd_ctrl_parameter_changed, this);
+  	bp->grid_add_ec ("Tau PAC", uTime, &parameters.htd_pactau, 0.0, 63e6, "6g", 10., 1., "HTD-PACTAU");
+        bp->new_line ();
+        bp->grid_add_ec ("Setpoint", Deg, &parameters.htd_fb_setpoint, -180.0, 180.0, "5g", 0.1, 1.0, "HTD-FB-SETPOINT");
+        bp->new_line ();
+        bp->set_default_ec_change_notice_fkt (RPspmc_pacpll::htd_gain_changed, this);
+        bp->grid_add_ec ("CP gain", dB, &parameters.htd_fb_cp_db, -200.0, 200.0, "g", 0.1, 1.0, "HTD-FB-CP");
+        SETUP_dB_RANGE_from_Q(bp->ec, 31); // HTD  QPHCOEF = Q31 
+        bp->new_line ();
+        bp->grid_add_ec ("CI gain", dB, &parameters.htd_fb_ci_db, -200.0, 200.0, "g", 0.1, 1.0, "HTD-FB-CI");
+        SETUP_dB_RANGE_from_Q(bp->ec, 31); // HTD  QPHCOEF = Q31 
+        bp->new_line ();
+        bp->set_no_spin (true);
+        bp->set_input_width_chars (16);
+        bp->set_default_ec_change_notice_fkt (RPspmc_pacpll::htd_ctrl_parameter_changed, this);
+        bp->set_input_width_chars (10);
+        bp->set_input_nx (1);
+        bp->grid_add_ec ("Limits", Hz, &parameters.htd_fb_lower, 0.0, 25e6, "g", 0.1, 1.0, "HTD-FB-LOWER");
+        bp->grid_add_ec ("...", Hz, &parameters.htd_fb_upper, 0.0, 25e6, "g", 0.1, 1.0, "HTD-FB-UPPER");
+        bp->new_line ();
+        bp->set_input_width_chars (16);
+        bp->set_input_nx (3);
+        bp->set_default_ec_change_notice_fkt (NULL, NULL);
+        bp->grid_add_ec ("KV", Volt, &parameters.htd_kv_monitor, 0.0, 25e6, ".4lf", 0.1, 1., "HTD-KV-MONITOR");
+        EC_R_list = g_slist_prepend( EC_R_list, bp->ec);
+        input_ddsfreq=bp->ec;
+        bp->ec->Freeze ();
+
+        bp->new_line ();
+        bp->set_input_nx (1);
+        bp->grid_add_check_button ( N_("Enable"), bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Enable Htd Controller","rp-pacpll-HTDcontroller"), 2,
+                                    G_CALLBACK (RPspmc_pacpll::htd_controller), this);
+        bp->grid_add_check_button ( N_("Invert"), "Invert Htd Controller Gain. Normally positive.", 2,
+                                    G_CALLBACK (RPspmc_pacpll::htd_controller_invert), this);
+        bp->new_line ();
+        GtkWidget *htdcbrotab = gtk_combo_box_text_new ();
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htdcbrotab), "0", "r0");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htdcbrotab), "1", "r45");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htdcbrotab), "2", "r-45");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htdcbrotab), "3", "r90");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htdcbrotab), "4", "r-90");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htdcbrotab), "5", "r180");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htdcbrotab), "6", "r-180");
+        g_signal_connect (G_OBJECT (htdcbrotab), "changed",
+                          G_CALLBACK (RPspmc_pacpll::htd_rot_ab), 
+                          this);				
+        gtk_combo_box_set_active_id (GTK_COMBO_BOX (htdcbrotab), "0");
+        bp->grid_add_widget (htdcbrotab);
+
+
+        // =======================================
         bp->pop_grid ();
         
         bp->new_grid_with_frame ("Pulse Former");
@@ -1190,6 +1268,42 @@ void RPspmc_pacpll::dfreq_ctrl_parameter_changed (Param_Control* pcs, gpointer u
         self->write_parameter ("DFREQ_FB_UPPER", self->parameters.control_dfreq_fb_upper);
         self->write_parameter ("DFREQ_FB_LOWER", self->parameters.control_dfreq_fb_lower);
 }
+
+void RPspmc_pacpll::htd_ctrl_parameter_changed (Param_Control* pcs, gpointer user_data){
+        RPspmc_pacpll *self = (RPspmc_pacpll *)user_data;
+        self->write_parameter ("HTD_PACTAU", self->parameters.htd_pactau);
+        self->write_parameter ("HTD_FB_SETPOINT", self->parameters.htd_fb_setpoint);
+        self->write_parameter ("HTD_FB_UPPER", self->parameters.htd_fb_upper);
+        self->write_parameter ("HTD_FB_LOWER", self->parameters.htd_fb_lower);
+}
+
+void RPspmc_pacpll::htd_gain_changed (Param_Control* pcs, gpointer user_data){
+        RPspmc_pacpll *self = (RPspmc_pacpll *)user_data;
+        self->parameters.htd_fb_cp = self->parameters.htd_fb_invert * pow (10., self->parameters.htd_fb_cp_db/20.);
+        self->parameters.htd_fb_ci = self->parameters.htd_fb_invert * pow (10., self->parameters.htd_fb_ci_db/20.);
+        // g_message("PH_CICP=%g, %g", self->parameters.htd_fb_ci, self->parameters.htd_fb_cp );
+        self->write_parameter ("HTD_FB_CP", self->parameters.htd_fb_cp);
+        self->write_parameter ("HTD_FB_CI", self->parameters.htd_fb_ci);
+}
+
+void RPspmc_pacpll::htd_controller_invert (GtkWidget *widget, RPspmc_pacpll *self){
+        self->parameters.htd_fb_invert = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)) ? -1.:1.;
+        self->htd_gain_changed (NULL, self);
+}
+
+void RPspmc_pacpll::htd_controller (GtkWidget *widget, RPspmc_pacpll *self){
+        self->write_parameter ("HTD_KV_CONTROL", gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)));
+        self->parameters.htd_kv_control = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
+}
+
+void RPspmc_pacpll::htd_rot_ab (GtkWidget *widget, RPspmc_pacpll *self){
+        self->write_parameter ("HTD_PAC_ROT_AB", gtk_combo_box_get_active (GTK_COMBO_BOX (widget)));
+}
+
+
+
+
+
 
 void  RPspmc_pacpll::pulse_form_write_AB (int ab){
 

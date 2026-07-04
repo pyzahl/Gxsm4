@@ -148,6 +148,14 @@ public:
         static void EnZdfreq_control (GtkWidget *widget, RPspmc_pacpll *self);
         static void EnUdfreq_control (GtkWidget *widget, RPspmc_pacpll *self);
 
+	static void htd_ctrl_parameter_changed (Param_Control* pcs, gpointer user_data);
+	static void htd_gain_changed (Param_Control* pcs, gpointer user_data);
+        static void htd_controller_invert (GtkWidget *widget, RPspmc_pacpll *self);
+        static void htd_controller (GtkWidget *widget, RPspmc_pacpll *self);
+        static void htd_rot_ab (GtkWidget *widget, RPspmc_pacpll *self);
+
+
+        
 	static void pulse_form_parameter_changed (Param_Control* pcs, gpointer user_data);
         static void pulse_form_enable (GtkWidget *widget, RPspmc_pacpll *self);
         static void pulse_form_fire (GtkWidget *widget, RPspmc_pacpll *self);

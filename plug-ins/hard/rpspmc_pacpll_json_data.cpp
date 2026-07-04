@@ -114,6 +114,17 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "DFREQ_CONTROL_Z", &pacpll_parameters.Zdfreq_control, false, "bool" },
         { "DFREQ_CONTROL_U", &pacpll_parameters.Udfreq_control, false, "bool" },
 
+        { "HTD_PACTAU", &pacpll_parameters.htd_pactau, false, "us" },
+        { "HTD_FB_SETPOINT", &pacpll_parameters.htd_fb_setpoint, false, "deg" },
+        { "HTD_FB_CP", &pacpll_parameters.htd_fb_cp, false, "1" },
+        { "HTD_FB_CI", &pacpll_parameters.htd_fb_ci, false, "1" },
+        { "HTD_FB_UPPER", &pacpll_parameters.htd_fb_upper, false, "Hz" },
+        { "HTD_FB_LOWER", &pacpll_parameters.htd_fb_lower, false, "Hz" },
+        { "HTD_PAC_ROT_AB", &pacpll_parameters.htd_pac_rot_ab, false, "1" },
+        { "HTD_KV_FREQ", &pacpll_parameters.htd_kv_freq, false, "Hz" },
+        { "HTD_KV_CONTROL", &pacpll_parameters.htd_kv_control, false, "1" },
+        { "HTD_KV_MODE", &pacpll_parameters.htd_kv_mode, false, "1" },
+        
         { "PULSE_FORM_BIAS0", &pacpll_parameters.pulse_form_bias0, false, "mV1" },
         { "PULSE_FORM_BIAS1", &pacpll_parameters.pulse_form_bias1, false, "mV1" },
         { "PULSE_FORM_PHASE0", &pacpll_parameters.pulse_form_phase0, false, "deg" },

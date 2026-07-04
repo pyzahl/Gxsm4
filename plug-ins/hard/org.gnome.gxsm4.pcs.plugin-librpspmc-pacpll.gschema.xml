@@ -205,6 +205,50 @@
       <description>pcs0000, PCS Remote-ID: 'rp-pacpll-DFREQ-CONTROL-MONITOR', Default/U: 0.0000 Hz    , Adjustment PCS Name: 'rp-pacpll-DFREQ-CONTROL-MONITOR' </description>
     </key>
 
+
+    <key name="rp-pacpll-htd-pactau" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-HTD-PACTAU', Default/U:      0 µs     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-HTD-PACTAU', Default/U:      0 µs    , Adjustment PCS Name: 'rp-pacpll-HTD-PACTAU' </description>
+    </key>
+
+    <key name="rp-pacpll-htd-fb-setpoint" type="d">
+      <default>60</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-HTD-FB-SETPOINT', Default/U:    60 °     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-HTD-FB-SETPOINT', Default/U:    60 °    , Adjustment PCS Name: 'rp-pacpll-HTD-FB-SETPOINT' </description>
+    </key>
+
+    <key name="rp-pacpll-htd-fb-cp" type="d">
+      <default>-123.5</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-HTD-FB-CP', Default/U: -123.5 dB     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-HTD-FB-CP', Default/U: -123.5 dB    , Adjustment PCS Name: 'rp-pacpll-HTD-FB-CP' </description>
+    </key>
+
+    <key name="rp-pacpll-htd-fb-ci" type="d">
+      <default>-184</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-HTD-FB-CI', Default/U: -184 dB     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-HTD-FB-CI', Default/U: -184 dB    , Adjustment PCS Name: 'rp-pacpll-HTD-FB-CI' </description>
+    </key>
+
+    <key name="rp-pacpll-htd-fb-lower" type="d">
+      <default>100000</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-HTD-FB-LOWER', Default/U: 100000 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-HTD-FB-LOWER', Default/U: 100000 Hz    , Adjustment PCS Name: 'rp-pacpll-HTD-FB-LOWER' </description>
+    </key>
+
+    <key name="rp-pacpll-htd-fb-upper" type="d">
+      <default>300000</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-HTD-FB-UPPER', Default/U: 300000 Hz     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-HTD-FB-UPPER', Default/U: 300000 Hz    , Adjustment PCS Name: 'rp-pacpll-HTD-FB-UPPER' </description>
+    </key>
+
+    <key name="rp-pacpll-htd-kv-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'rp-pacpll-HTD-KV-MONITOR', Default/U: 0.0000 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'rp-pacpll-HTD-KV-MONITOR', Default/U: 0.0000 V    , Adjustment PCS Name: 'rp-pacpll-HTD-KV-MONITOR' </description>
+    </key>
+
+    
     <key name="rp-pacpll-pulse-form-bias0" type="d">
       <default>0</default>
       <summary>PCS Remote-ID: 'rp-pacpll-PULSE-FORM-BIAS0', Default/U:   0 mV     </summary>
