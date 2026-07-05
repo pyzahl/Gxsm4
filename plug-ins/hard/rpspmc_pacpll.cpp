@@ -362,8 +362,8 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         bp->grid_add_check_button ( N_("Invert"), "Invert Phase Controller Gain. Normally positive.", 2,
                                     G_CALLBACK (RPspmc_pacpll::phase_controller_invert), this);
         bp->new_line ();
-        bp->grid_add_check_button ( N_("Unwrapping"), "Always unwrap phase/auto unwrap only if controller is enabled", 2,
-                                    G_CALLBACK (RPspmc_pacpll::phase_unwrapping_always), this);
+        //bp->grid_add_check_button ( N_("Unwrapping"), "Always unwrap phase/auto unwrap only if controller is enabled", 2,
+        //                            G_CALLBACK (RPspmc_pacpll::phase_unwrapping_always), this);
         //bp->grid_add_check_button ( N_("Unwap Plot"), "Unwrap plot at high level", 2,
         //                            G_CALLBACK (RPspmc_pacpll::phase_unwrap_plot), this);
         GtkWidget *cbrotab = gtk_combo_box_text_new ();
@@ -381,10 +381,12 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         bp->grid_add_widget (cbrotab);
 
         bp->new_line ();
-        bp->grid_add_check_button ( N_("Use LockIn Mode"), "Use LockIn Mode", 2,
-                                    G_CALLBACK (RPspmc_pacpll::select_pac_lck_phase), this);
+        //bp->grid_add_check_button ( N_("Use LockIn Mode"), "Use LockIn Mode", 2,
+        //                            G_CALLBACK (RPspmc_pacpll::select_pac_lck_phase), this);
         bp->grid_add_check_button ( N_("dFreq Control"), "Show delta Frequency Controller", 2,
                                     G_CALLBACK (RPspmc_pacpll::show_dF_control), this);
+        bp->grid_add_check_button ( N_("HTD KV Control"), "Show Heterodyne Kelvin PAC Controller", 2,
+                                    G_CALLBACK (RPspmc_pacpll::show_KV_control), this);
 
         bp->pop_grid ();
 
@@ -442,33 +444,42 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
 
         // =======================================
         // HETERODYNE LMS-PAC + KELVIN CONTROLLER ** KPAFM
-        //double htd_pactau;
-        //double htd_fb_setpoint;
-        //double htd_fb_cp;
-        //double htd_fb_ci;
-        //double htd_fb_upper;
-        //double htd_fb_lower;
-        //double htd_pac_rot_ab;
-        //double htd_kv_freq;
-        //double htd_kv_control;
-        //double htd_kv_mode;
 
         bp->pop_grid ();
-        bp->new_grid_with_frame ("HTD Kelvin Controller");
-        bp->set_input_nx (3);
-        bp->grid_add_ec ("Reading", Deg, &parameters.htd_phase_monitor, -180.0, 180.0, "g", 1., 10., "PHASE-MONITOR");
-        EC_R_list = g_slist_prepend( EC_R_list, bp->ec);
-        bp->ec->Freeze ();
-        bp->new_line ();
-        parameters.htd_fb_setpoint = 60.;
+        bp->new_grid_with_frame ("Heterodyne Kelvin PAC Controller");
+        KV_control_frame = bp->frame;
+        parameters.htd_kv_freq = 160000.;
+        parameters.htd_pactau  = 10.;
+        parameters.htd_fb_setpoint = 0.;
         parameters.htd_fb_invert = 1.;
         parameters.htd_fb_cp_db = -123.5;
         parameters.htd_fb_ci_db = -184.;
-        parameters.htd_fb_upper = 300000.;
-        parameters.htd_fb_lower = 100000.;
+        parameters.htd_fb_upper = 1.;
+        parameters.htd_fb_lower = -1.;
+        bp->set_input_nx (1);
+        bp->grid_add_ec ("Readings PH", Deg, &parameters.htd_kv_phase_monitor, -180.0, 180.0, "g", 1., 10., "HTD-PHASE-MONITOR");
+        EC_R_list = g_slist_prepend( EC_R_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->grid_add_ec ("AM", mVolt, &parameters.htd_kv_ampl_monitor, 0.0, 5000.0, "g", 1., 10., "HTD-AMPL-MONITOR");
+        EC_R_list = g_slist_prepend( EC_R_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->new_line ();
         bp->set_no_spin (false);
         bp->set_input_width_chars (8);
         bp->set_default_ec_change_notice_fkt (RPspmc_pacpll::htd_ctrl_parameter_changed, this);
+        bp->set_input_nx (2);
+        bp->grid_add_ec ("HTD Freq.", Hz, &parameters.htd_kv_freq, 0.0, 25e6, ".3f", 0.1, 1.0, "HTD-FREQ");
+        GtkWidget *htdmode = gtk_combo_box_text_new ();
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htdmode), "0", "+0");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htdmode), "1", "+F0");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htdmode), "2", "-F0");
+        g_signal_connect (G_OBJECT (htdmode), "changed",
+                          G_CALLBACK (RPspmc_pacpll::htd_kv_mode), 
+                          this);				
+        gtk_combo_box_set_active_id (GTK_COMBO_BOX (htdmode), "2");
+        bp->grid_add_widget (htdmode);
+        bp->new_line ();
+        bp->set_input_nx (3);
   	bp->grid_add_ec ("Tau PAC", uTime, &parameters.htd_pactau, 0.0, 63e6, "6g", 10., 1., "HTD-PACTAU");
         bp->new_line ();
         bp->grid_add_ec ("Setpoint", Deg, &parameters.htd_fb_setpoint, -180.0, 180.0, "5g", 0.1, 1.0, "HTD-FB-SETPOINT");
@@ -485,15 +496,33 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         bp->set_default_ec_change_notice_fkt (RPspmc_pacpll::htd_ctrl_parameter_changed, this);
         bp->set_input_width_chars (10);
         bp->set_input_nx (1);
-        bp->grid_add_ec ("Limits", Hz, &parameters.htd_fb_lower, 0.0, 25e6, "g", 0.1, 1.0, "HTD-FB-LOWER");
-        bp->grid_add_ec ("...", Hz, &parameters.htd_fb_upper, 0.0, 25e6, "g", 0.1, 1.0, "HTD-FB-UPPER");
+        bp->grid_add_ec ("Limits", Volt, &parameters.htd_fb_lower, -5.0, 5.0, "g", 0.1, 1.0, "HTD-FB-LOWER");
+        bp->grid_add_ec ("...", Volt, &parameters.htd_fb_upper, -5.0, 5.0, "g", 0.1, 1.0, "HTD-FB-UPPER");
         bp->new_line ();
         bp->set_input_width_chars (16);
-        bp->set_input_nx (3);
+        bp->set_input_nx (1);
         bp->set_default_ec_change_notice_fkt (NULL, NULL);
-        bp->grid_add_ec ("KV", Volt, &parameters.htd_kv_monitor, 0.0, 25e6, ".4lf", 0.1, 1., "HTD-KV-MONITOR");
+        bp->grid_add_ec ("Kelvin Value", Volt, &parameters.htd_kv_value_monitor, 0.0, 25e6, ".4lf", 0.1, 1., "HTD-KV-MONITOR");
+
+        bp->grid_add_label ("@~");
+        GtkWidget *htd_modamp = gtk_combo_box_text_new ();
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0", "5.0 V");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "1", "2.5 V");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "2", "1.25 V");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "3", "0.625 V");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "4", "310 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "5", "160 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "6", "80 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "7", "40 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "8", "20 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "9", "10 mV");
+        g_signal_connect (G_OBJECT (htd_modamp), "changed",
+                          G_CALLBACK (RPspmc_pacpll::htd_kv_modamp), 
+                          this);				
+        gtk_combo_box_set_active_id (GTK_COMBO_BOX (htd_modamp), "3");
+        bp->grid_add_widget (htd_modamp);
+        
         EC_R_list = g_slist_prepend( EC_R_list, bp->ec);
-        input_ddsfreq=bp->ec;
         bp->ec->Freeze ();
 
         bp->new_line ();
@@ -1209,6 +1238,13 @@ void RPspmc_pacpll::show_dF_control (GtkWidget *widget, RPspmc_pacpll *self){
                 gtk_widget_hide (self->dF_control_frame);
 }
 
+void RPspmc_pacpll::show_KV_control (GtkWidget *widget, RPspmc_pacpll *self){
+        if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
+                gtk_widget_show (self->KV_control_frame);
+        else
+                gtk_widget_hide (self->KV_control_frame);
+}
+
 void RPspmc_pacpll::show_pulse_control (GtkWidget *widget, RPspmc_pacpll *self){
         if (gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)))
                 gtk_widget_show (self->pulse_control_frame);
@@ -1275,6 +1311,7 @@ void RPspmc_pacpll::htd_ctrl_parameter_changed (Param_Control* pcs, gpointer use
         self->write_parameter ("HTD_FB_SETPOINT", self->parameters.htd_fb_setpoint);
         self->write_parameter ("HTD_FB_UPPER", self->parameters.htd_fb_upper);
         self->write_parameter ("HTD_FB_LOWER", self->parameters.htd_fb_lower);
+        self->write_parameter ("HTD_KV_MODGAINSHR", self->parameters.htd_kv_modgainshr);
 }
 
 void RPspmc_pacpll::htd_gain_changed (Param_Control* pcs, gpointer user_data){
@@ -1300,8 +1337,13 @@ void RPspmc_pacpll::htd_rot_ab (GtkWidget *widget, RPspmc_pacpll *self){
         self->write_parameter ("HTD_PAC_ROT_AB", gtk_combo_box_get_active (GTK_COMBO_BOX (widget)));
 }
 
+void RPspmc_pacpll::htd_kv_modamp (GtkWidget *widget, RPspmc_pacpll *self){
+        self->write_parameter ("HTD_KV_MODGAINSHR", gtk_combo_box_get_active (GTK_COMBO_BOX (widget)));
+}
 
-
+void RPspmc_pacpll::htd_kv_mode (GtkWidget *widget, RPspmc_pacpll *self){
+        self->write_parameter ("HTD_KV_MODE", gtk_combo_box_get_active (GTK_COMBO_BOX (widget)));
+}
 
 
 
@@ -1595,6 +1637,9 @@ void RPspmc_pacpll::send_all_parameters (){
         phase_gain_changed (NULL, this);
         dfreq_ctrl_parameter_changed (NULL, this);
         dfreq_gain_changed (NULL, this);
+
+        htd_ctrl_parameter_changed (NULL, this);
+        htd_gain_changed (NULL, this);
 }
 
 // AT COLD START AND RECONNECT
@@ -1815,6 +1860,10 @@ void RPspmc_pacpll::update_monitoring_parameters(){
         parameters.phase_monitor = pacpll_parameters.phase_monitor;
         parameters.control_dfreq_monitor = pacpll_parameters.control_dfreq_monitor;
         parameters.dfreq_monitor = pacpll_parameters.dfreq_monitor;
+
+        parameters.htd_kv_phase_monitor = pacpll_parameters.htd_kv_phase_monitor;
+        parameters.htd_kv_ampl_monitor  = pacpll_parameters.htd_kv_ampl_monitor;
+        parameters.htd_kv_value_monitor = pacpll_parameters.htd_kv_value_monitor;
         
         parameters.cpu_load = pacpll_parameters.cpu_load;
         parameters.free_ram = pacpll_parameters.free_ram;
@@ -1822,10 +1871,9 @@ void RPspmc_pacpll::update_monitoring_parameters(){
 
         pacpll_parameters.dds_dfreq_computed = parameters.dds_frequency_monitor - parameters.frequency_center;
         gchar *delta_freq_info = g_strdup_printf ("[%g]", pacpll_parameters.dds_dfreq_computed);
-
-        
         input_ddsfreq->set_info (delta_freq_info);
         g_free (delta_freq_info);
+        
         if (G_IS_OBJECT (window))
 		g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "RPSPMCONTROL_EC_READINGS_list"),
 				(GFunc) App::update_ec, NULL);

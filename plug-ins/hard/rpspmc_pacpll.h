@@ -125,6 +125,7 @@ public:
         static void select_pac_lck_amplitude (GtkWidget *widget, RPspmc_pacpll *self);
         static void select_pac_lck_phase (GtkWidget *widget, RPspmc_pacpll *self);
         static void show_dF_control (GtkWidget *widget, RPspmc_pacpll *self);
+        static void show_KV_control (GtkWidget *widget, RPspmc_pacpll *self);
         static void show_pulse_control (GtkWidget *widget, RPspmc_pacpll *self);
         static void qcontrol (GtkWidget *widget, RPspmc_pacpll *self);
 	static void qc_parameter_changed (Param_Control* pcs, gpointer user_data);
@@ -152,7 +153,9 @@ public:
 	static void htd_gain_changed (Param_Control* pcs, gpointer user_data);
         static void htd_controller_invert (GtkWidget *widget, RPspmc_pacpll *self);
         static void htd_controller (GtkWidget *widget, RPspmc_pacpll *self);
+        static void htd_kv_mode (GtkWidget *widget, RPspmc_pacpll *self);
         static void htd_rot_ab (GtkWidget *widget, RPspmc_pacpll *self);
+        static void htd_kv_modamp (GtkWidget *widget, RPspmc_pacpll *self);
 
 
         
@@ -316,6 +319,7 @@ private:
 
         GtkWidget *signal_graph;
         GtkWidget *dF_control_frame;
+        GtkWidget *KV_control_frame;
         GtkWidget *pulse_control_frame;
         Gtk_EntryControl *input_ddsfreq;
         UnitObj *Unity, *Hz, *Deg, *VoltDeg, *Volt, *mVolt, *VoltHz, *dB, *Time, *mTime, *uTime;
