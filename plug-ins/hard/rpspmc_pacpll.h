@@ -156,6 +156,7 @@ public:
         static void htd_kv_mode (GtkWidget *widget, RPspmc_pacpll *self);
         static void htd_rot_ab (GtkWidget *widget, RPspmc_pacpll *self);
         static void htd_kv_modamp (GtkWidget *widget, RPspmc_pacpll *self);
+        static void htd_phase_unwrapping_always (GtkWidget *widget, RPspmc_pacpll *self);
 
 
         

@@ -304,8 +304,8 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
                                     G_CALLBACK (RPspmc_pacpll::qcontrol), this);
 	g_object_set_data( G_OBJECT (bp->button), "QC_SETTINGS_list", EC_QC_list);
         bp->new_line ();
-        bp->grid_add_check_button ( N_("Use LockIn Mode*"), "Use LockIn Mode.\n*: Must use PAC/LockIn FPGA bit code\n instead of Dual PAC FPGA bit code.", 2,
-                                    G_CALLBACK (RPspmc_pacpll::select_pac_lck_amplitude), this);
+        //bp->grid_add_check_button ( N_("Use LockIn Mode*"), "Use LockIn Mode.\n*: Must use PAC/LockIn FPGA bit code\n instead of Dual PAC FPGA bit code.", 2,
+        //G_CALLBACK (RPspmc_pacpll::select_pac_lck_amplitude), this);
         bp->new_line ();
         bp->grid_add_check_button ( N_("Pulse Control"), "Show Pulse Controller", 2,
                                     G_CALLBACK (RPspmc_pacpll::show_pulse_control), this);
@@ -362,8 +362,8 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         bp->grid_add_check_button ( N_("Invert"), "Invert Phase Controller Gain. Normally positive.", 2,
                                     G_CALLBACK (RPspmc_pacpll::phase_controller_invert), this);
         bp->new_line ();
-        //bp->grid_add_check_button ( N_("Unwrapping"), "Always unwrap phase/auto unwrap only if controller is enabled", 2,
-        //                            G_CALLBACK (RPspmc_pacpll::phase_unwrapping_always), this);
+        bp->grid_add_check_button ( N_("Unwrapping"), "Always unwrap phase/auto unwrap only if controller is enabled", 2,
+                                    G_CALLBACK (RPspmc_pacpll::phase_unwrapping_always), this);
         //bp->grid_add_check_button ( N_("Unwap Plot"), "Unwrap plot at high level", 2,
         //                            G_CALLBACK (RPspmc_pacpll::phase_unwrap_plot), this);
         GtkWidget *cbrotab = gtk_combo_box_text_new ();
@@ -456,6 +456,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         parameters.htd_fb_ci_db = -184.;
         parameters.htd_fb_upper = 1.;
         parameters.htd_fb_lower = -1.;
+        parameters.htd_kv_mod_gain = 0.;
         bp->set_input_nx (1);
         bp->grid_add_ec ("Readings PH", Deg, &parameters.htd_kv_phase_monitor, -180.0, 180.0, "g", 1., 10., "HTD-PHASE-MONITOR");
         EC_R_list = g_slist_prepend( EC_R_list, bp->ec);
@@ -473,6 +474,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htdmode), "0", "+0");
         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htdmode), "1", "+F0");
         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htdmode), "2", "-F0");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htdmode), "3", "PLL");
         g_signal_connect (G_OBJECT (htdmode), "changed",
                           G_CALLBACK (RPspmc_pacpll::htd_kv_mode), 
                           this);				
@@ -506,16 +508,18 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
 
         bp->grid_add_label ("@~");
         GtkWidget *htd_modamp = gtk_combo_box_text_new ();
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0", "5.0 V");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "1", "2.5 V");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "2", "1.25 V");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "3", "0.625 V");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "4", "310 mV");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "5", "160 mV");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "6", "80 mV");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "7", "40 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0", "40 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "1", "80 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "2", "160 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "3", "310 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "4", "625 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "5", "1.25 V");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "6", "2.5 V");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "7", "5 V");
         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "8", "20 mV");
         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "9", "10 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "10", "5 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "11", "TEST");
         g_signal_connect (G_OBJECT (htd_modamp), "changed",
                           G_CALLBACK (RPspmc_pacpll::htd_kv_modamp), 
                           this);				
@@ -546,6 +550,8 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         gtk_combo_box_set_active_id (GTK_COMBO_BOX (htdcbrotab), "0");
         bp->grid_add_widget (htdcbrotab);
 
+        bp->grid_add_check_button ( N_("Unwrapping"), "Always unwrap phase/auto unwrap only if controller is enabled", 2,
+                                    G_CALLBACK (RPspmc_pacpll::htd_phase_unwrapping_always), this);
 
         // =======================================
         bp->pop_grid ();
@@ -1307,11 +1313,12 @@ void RPspmc_pacpll::dfreq_ctrl_parameter_changed (Param_Control* pcs, gpointer u
 
 void RPspmc_pacpll::htd_ctrl_parameter_changed (Param_Control* pcs, gpointer user_data){
         RPspmc_pacpll *self = (RPspmc_pacpll *)user_data;
+        self->write_parameter ("HTD_KV_FREQ", self->parameters.htd_kv_freq);
         self->write_parameter ("HTD_PACTAU", self->parameters.htd_pactau);
         self->write_parameter ("HTD_FB_SETPOINT", self->parameters.htd_fb_setpoint);
         self->write_parameter ("HTD_FB_UPPER", self->parameters.htd_fb_upper);
         self->write_parameter ("HTD_FB_LOWER", self->parameters.htd_fb_lower);
-        self->write_parameter ("HTD_KV_MODGAINSHR", self->parameters.htd_kv_modgainshr);
+        self->write_parameter ("HTD_KV_MOD_GAIN", self->parameters.htd_kv_mod_gain);
 }
 
 void RPspmc_pacpll::htd_gain_changed (Param_Control* pcs, gpointer user_data){
@@ -1329,16 +1336,32 @@ void RPspmc_pacpll::htd_controller_invert (GtkWidget *widget, RPspmc_pacpll *sel
 }
 
 void RPspmc_pacpll::htd_controller (GtkWidget *widget, RPspmc_pacpll *self){
-        self->write_parameter ("HTD_KV_CONTROL", gtk_check_button_get_active (GTK_CHECK_BUTTON (widget)));
-        self->parameters.htd_kv_control = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
+        self->parameters.htd_kv_controller_on = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
+        self->write_parameter ("HTD_KV_CONTROL", self->parameters.htd_kv_controller_on? 1:0 | self->parameters.htd_kv_controller_uw ? 4:0);
+        self->parameters.htd_kv_control = self->parameters.htd_kv_controller_on? 1:0 | self->parameters.htd_kv_controller_uw ? 4:0;
 }
 
 void RPspmc_pacpll::htd_rot_ab (GtkWidget *widget, RPspmc_pacpll *self){
         self->write_parameter ("HTD_PAC_ROT_AB", gtk_combo_box_get_active (GTK_COMBO_BOX (widget)));
 }
 
+void RPspmc_pacpll::htd_phase_unwrapping_always (GtkWidget *widget, RPspmc_pacpll *self){
+        self->parameters.htd_kv_controller_uw = gtk_check_button_get_active (GTK_CHECK_BUTTON (widget));
+        self->write_parameter ("HTD_KV_CONTROL", self->parameters.htd_kv_controller_on? 1:0 | self->parameters.htd_kv_controller_uw? 4:0);
+        self->parameters.htd_kv_control = self->parameters.htd_kv_controller_on? 1:0 | self->parameters.htd_kv_controller_uw ? 4:0;
+}
+
+
 void RPspmc_pacpll::htd_kv_modamp (GtkWidget *widget, RPspmc_pacpll *self){
-        self->write_parameter ("HTD_KV_MODGAINSHR", gtk_combo_box_get_active (GTK_COMBO_BOX (widget)));
+        int pos=gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
+        if (pos == 11)
+                self->write_parameter ("HTD_KV_MOD_GAIN", 128);
+        else{
+                if (pos < 8)
+                        self->write_parameter ("HTD_KV_MOD_GAIN", self->parameters.htd_kv_mod_gain = pos);
+                if (pos >= 8)
+                        self->write_parameter ("HTD_KV_MOD_GAIN", self->parameters.htd_kv_mod_gain = (pos-8)<<8);
+        }
 }
 
 void RPspmc_pacpll::htd_kv_mode (GtkWidget *widget, RPspmc_pacpll *self){

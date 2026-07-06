@@ -124,7 +124,7 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "HTD_KV_FREQ", &pacpll_parameters.htd_kv_freq, false, "Hz" },
         { "HTD_KV_CONTROL", &pacpll_parameters.htd_kv_control, false, "1" },
         { "HTD_KV_MODE", &pacpll_parameters.htd_kv_mode, false, "1" },
-        { "HTD_KV_MODGAINSHR", &pacpll_parameters.htd_kv_modgainshr, false, "2" },
+        { "HTD_KV_MOD_GAIN", &pacpll_parameters.htd_kv_mod_gain, false, "2" },
         { "HTD_KV_VALUE_MONITOR", &pacpll_parameters.htd_kv_value_monitor, false, "V" },
         { "HTD_KV_PHASE_MONITOR", &pacpll_parameters.htd_kv_phase_monitor, false, "deg" },
         { "HTD_KV_AMPL_MONITOR", &pacpll_parameters.htd_kv_ampl_monitor, false, "V" },

@@ -147,11 +147,13 @@ struct PACPLL_parameters {
         double htd_kv_freq;
         double htd_kv_control;
         double htd_kv_mode;
-        double htd_kv_modgainshr;
+        double htd_kv_mod_gain;
         double htd_kv_value_monitor;
         double htd_kv_phase_monitor;
         double htd_kv_ampl_monitor;
-        
+        int htd_kv_controller_on;
+        int htd_kv_controller_uw;
+
         // RP-PAC-PLL / extra PLL signal phase aligned pulse former
         double pulse_form_bias0, pulse_form_bias1;
         double pulse_form_phase0, pulse_form_phase1;
