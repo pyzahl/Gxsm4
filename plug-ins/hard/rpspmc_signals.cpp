@@ -138,7 +138,7 @@ SOURCE_SIGNAL_DEF rpspmc_swappable_signals[] = {                                
         //{ 0x00000012, "18-GVP-AM",         " ", "V", "V", SPMC_AD5791_to_volts,                      -1, -1 },   // GVP-AM
         //{ 0x00000013, "19-GVP-FM",         " ", "V", "V", SPMC_AD5791_to_volts,                      -1, -1 },   // GVP-FM
 
-        { 0x00000011, "17-HTD-Amplitude",  " ", "mV1", "mV", (1000.0/((1L<<RP_FPGA_QSQRT)-1)),       -1, -1 },   // HTD-KV PAC Amplitude
+        { 0x00000011, "17-HTD-Amplitude",  " ", "mV1", "mV", (1000.0/((1L<<RP_FPGA_QEXEC)-1)),       -1, -1 },   // HTD-KV PAC Amplitude
         { 0x00000012, "18-HTD-UKelvin",    " ", "V", "V", SPMC_AD5791_to_volts,                      -1, -1 },   // HTD-KV PAC U Kelvin Control Value
         { 0x00000013, "19-HTD-Phase",      " ", "deg", UTF8_DEGREE, (180.0/(M_PI*((1L<<RP_FPGA_QATAN)-1))), -1, -1 }, // HTD-KV PAC Phase
 
