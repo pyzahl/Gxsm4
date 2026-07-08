@@ -520,10 +520,11 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "9", "10 mV");
         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "10", "5 mV");
         gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "11", "TEST");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "12", "OFF");
         g_signal_connect (G_OBJECT (htd_modamp), "changed",
                           G_CALLBACK (RPspmc_pacpll::htd_kv_modamp), 
                           this);				
-        gtk_combo_box_set_active_id (GTK_COMBO_BOX (htd_modamp), "3");
+        gtk_combo_box_set_active_id (GTK_COMBO_BOX (htd_modamp), "12");
         bp->grid_add_widget (htd_modamp);
         
         EC_R_list = g_slist_prepend( EC_R_list, bp->ec);
@@ -1354,7 +1355,9 @@ void RPspmc_pacpll::htd_phase_unwrapping_always (GtkWidget *widget, RPspmc_pacpl
 
 void RPspmc_pacpll::htd_kv_modamp (GtkWidget *widget, RPspmc_pacpll *self){
         int pos=gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
-        if (pos == 11)
+        if (pos == 12)
+                self->write_parameter ("HTD_KV_MOD_GAIN", 24 << 8);
+        else if (pos == 11)
                 self->write_parameter ("HTD_KV_MOD_GAIN", 128);
         else{
                 if (pos < 8)

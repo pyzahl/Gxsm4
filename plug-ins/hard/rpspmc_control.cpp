@@ -1752,7 +1752,8 @@ void RPSPMC_Control::create_folder (){
         
         //
         bp->pop_grid (); bp->set_xy (4,2);
- 	bp->new_grid_with_frame ("Z Servo Input BiQuad Filter");
+ 	//bp->new_grid_with_frame ("Z Servo Input BiQuad Filter");
+ 	bp->new_grid_with_frame ("Input Filter");
 
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::zs_input_filter_adjust_callback, this);
        
@@ -3708,6 +3709,9 @@ void RPSPMC_Control::bq_filter_adjust_callback(Param_Control* pcs, RPSPMC_Contro
 }
 
 void RPSPMC_Control::delayed_zsfilter_update (){
+        // LockIn Input Filter
+        configure_filter (5, spmc_parameters.sc_zs_bqmode, spmc_parameters.sc_zs_bq_coef, 50); // ZS / Notch DECIMATION
+        // ZS potch Filter (obsoleted)
         configure_filter (10, spmc_parameters.sc_zs_bqmode, spmc_parameters.sc_zs_bq_coef, 50); // ZS / Notch DECIMATION
         delayed_zsfilter_update_timer_id = 0; // done.
 }
