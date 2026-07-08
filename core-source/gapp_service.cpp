@@ -1744,6 +1744,7 @@ void AppBase::LoadGeometry(){
 
         if (window_geometry[WGEO_SHOW]){
                 //g_message ("Scheduling: wm set geometry for %s", window_key);
+                while (g_main_context_iteration(NULL, FALSE));
                 wm_attempt_count = 0;
                 if (strncmp (main_title_buffer, "Ch", 2) == 0)
                         g_timeout_add (1500, GSourceFunc (position_retry_idle_callback), this); // try wm positioning later again, may fail early :(
