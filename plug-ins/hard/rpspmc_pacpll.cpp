@@ -508,23 +508,31 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
 
         bp->grid_add_label ("@~");
         GtkWidget *htd_modamp = gtk_combo_box_text_new ();
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0", "40 mV");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "1", "80 mV");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "2", "160 mV");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "3", "310 mV");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "4", "625 mV");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "5", "1.25 V");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "6", "2.5 V");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "7", "5 V");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "8", "20 mV");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "9", "10 mV");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "10", "5 mV");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "11", "TEST");
-        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "12", "OFF");
+
+        // for (i=0; i<18; ++i) printf ("R%d L%d %g\n",i-7,7-i,5/(1<<i))
+
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x1800", "OFF");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0800", "150 μV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0700", "300 μV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0600", "610 μV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0500", "1.2 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0400", "2.5 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0300", "5 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0200", "10 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0100", "20 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0000", "40 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0001", "80 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0002", "160 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0003", "310 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0004", "625 mV");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0005", "1.25 V");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0006", "2.5 V");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0007", "5 V");
+        gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (htd_modamp), "0x0080", "TEST");
         g_signal_connect (G_OBJECT (htd_modamp), "changed",
                           G_CALLBACK (RPspmc_pacpll::htd_kv_modamp), 
                           this);				
-        gtk_combo_box_set_active_id (GTK_COMBO_BOX (htd_modamp), "12");
+        gtk_combo_box_set_active_id (GTK_COMBO_BOX (htd_modamp), "0x1800");
         bp->grid_add_widget (htd_modamp);
         
         EC_R_list = g_slist_prepend( EC_R_list, bp->ec);
@@ -1355,16 +1363,22 @@ void RPspmc_pacpll::htd_phase_unwrapping_always (GtkWidget *widget, RPspmc_pacpl
 
 void RPspmc_pacpll::htd_kv_modamp (GtkWidget *widget, RPspmc_pacpll *self){
         int pos=gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
+        gchar *id=gtk_combo_box_get_active_id(GTK_COMBO_BOX (widget));
+        int rrll = strtol(id, NULL, 16);
+        g_message ("HTD_KV_MODAMP %04x from %d %s %s", rrll, pos, id, gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT (widget)));
+        self->write_parameter ("HTD_KV_MOD_GAIN", rrll);
+#if 0
         if (pos == 12)
-                self->write_parameter ("HTD_KV_MOD_GAIN", 24 << 8);
+                self->write_parameter ("HTD_KV_MOD_GAIN", 24 << 8); // OFF (shift all bit out = 0)
         else if (pos == 11)
                 self->write_parameter ("HTD_KV_MOD_GAIN", 128);
         else{
-                if (pos < 8)
+                if (pos < 8) // 0=40mV,1=80mV, ... 7=5V
                         self->write_parameter ("HTD_KV_MOD_GAIN", self->parameters.htd_kv_mod_gain = pos);
-                if (pos >= 8)
+                if (pos >= 8) // 1<<8=20 mV, 2<<8=10mV... 
                         self->write_parameter ("HTD_KV_MOD_GAIN", self->parameters.htd_kv_mod_gain = (pos-8)<<8);
         }
+#endif
 }
 
 void RPspmc_pacpll::htd_kv_mode (GtkWidget *widget, RPspmc_pacpll *self){

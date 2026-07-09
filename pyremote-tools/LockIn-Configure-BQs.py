@@ -14,7 +14,9 @@ import matplotlib as mpl
 
 freq_lck = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
 
-fc = 0.9*freq_lck # Hz
+fc  = 0.9*freq_lck # Hz Magnitude Low Pass IIR BQ 4th
+fhp = 0.1*freq_lck # Hz Signal Input High Pass IIR 1st dec (fixed) + BQ2nd
+
 
 # Ellip filter characteristics
 stop_attn_db = 50
@@ -51,10 +53,19 @@ def dds_phaseinc (freq):
 
 def Fs():
 	freq = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
-	print ('Lck Freq: {} Hz'.format(freq))
 	n2 = round (math.log2(dds_phaseinc (freq)))
 	lck_decimation_factor = (1 << (44 - DECII - n2)) - 1.
+	print ('Lck Freq: {} Hz --> decf: {}'.format(freq, lck_decimation_factor))
 	return 125e6 / (lck_decimation_factor)  # pre-deciamtion to 1024 samples per lockin ref period
+
+def FSignalIn_HPN(fhp):
+	freq = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
+	nacks = float(gxsm.get("dsp-LCK-ACLK-MONITOR")) ## 59
+	fhpnorm = fhp / (125e6/nacks)
+	print ('Lck Freq: {} Hz --> f HighPass set to : {} Hz, Fn={} @nacks={}'.format(freq, fhp, fhpnorm, nacks))
+	return fhpnorm
+
+
 
 print ('Fs LockIn is ', Fs (), ' Hz')
 
@@ -212,7 +223,7 @@ if 0: # SOS ellipt cascaded BiQ type
 
 if 1:
 	print ('INPUT HIGHPASS:')
-	sos, b, a = ellipt_hi_filter(order=2, cutoff=fc_norm/4, sa=stop_attn_db, rp=ripple_db)
+	sos, b, a = ellipt_hi_filter(order=2, cutoff= FSignalIn_HPN(fhp), sa=stop_attn_db, rp=ripple_db)
 	print ('fCut_norm=', fc_norm/4, ' fc=', fc/4, ' Hz')
 	print (' b=',b,' a=',a)
 	print (' sos=',sos)
