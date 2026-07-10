@@ -744,7 +744,9 @@ ProfileControl::ProfileControl (Gxsm4app *app, const gchar *filename, const gcha
 
 	UpdateArea ();
 	show();
-	
+
+        while(g_main_context_pending (NULL)) g_main_context_iteration(NULL, FALSE); // CHECK MAIN EVENTS, wait for all been setup!
+
 	XSM_DEBUG (DBG_L3, "ProfileControl::ProfileControl from file done." );
 }
 
@@ -893,7 +895,7 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
 
         
 	Yticn=8;
-	Xticn=8;
+	Xticn=4;
 
 	Xtics   = new cairo_item*[PC_XTN];
 	Ytics   = new cairo_item*[PC_YTN];
