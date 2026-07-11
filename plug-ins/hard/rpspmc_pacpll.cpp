@@ -456,7 +456,7 @@ RPspmc_pacpll::RPspmc_pacpll (Gxsm4app *app):AppBase(app),RP_JSON_talk(){
         parameters.htd_fb_ci_db = -184.;
         parameters.htd_fb_upper = 1.;
         parameters.htd_fb_lower = -1.;
-        parameters.htd_kv_mod_gain = 0.;
+        parameters.htd_kv_mod_gain = 0x1800;
         bp->set_input_nx (1);
         bp->grid_add_ec ("Readings PH", Deg, &parameters.htd_kv_phase_monitor, -180.0, 180.0, "g", 1., 10., "HTD-PHASE-MONITOR");
         EC_R_list = g_slist_prepend( EC_R_list, bp->ec);
@@ -1327,7 +1327,6 @@ void RPspmc_pacpll::htd_ctrl_parameter_changed (Param_Control* pcs, gpointer use
         self->write_parameter ("HTD_FB_SETPOINT", self->parameters.htd_fb_setpoint);
         self->write_parameter ("HTD_FB_UPPER", self->parameters.htd_fb_upper);
         self->write_parameter ("HTD_FB_LOWER", self->parameters.htd_fb_lower);
-        self->write_parameter ("HTD_KV_MOD_GAIN", self->parameters.htd_kv_mod_gain);
 }
 
 void RPspmc_pacpll::htd_gain_changed (Param_Control* pcs, gpointer user_data){
@@ -1367,18 +1366,8 @@ void RPspmc_pacpll::htd_kv_modamp (GtkWidget *widget, RPspmc_pacpll *self){
         int rrll = strtol(id, NULL, 16);
         g_message ("HTD_KV_MODAMP %04x from %d %s %s", rrll, pos, id, gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT (widget)));
         self->write_parameter ("HTD_KV_MOD_GAIN", rrll);
-#if 0
-        if (pos == 12)
-                self->write_parameter ("HTD_KV_MOD_GAIN", 24 << 8); // OFF (shift all bit out = 0)
-        else if (pos == 11)
-                self->write_parameter ("HTD_KV_MOD_GAIN", 128);
-        else{
-                if (pos < 8) // 0=40mV,1=80mV, ... 7=5V
-                        self->write_parameter ("HTD_KV_MOD_GAIN", self->parameters.htd_kv_mod_gain = pos);
-                if (pos >= 8) // 1<<8=20 mV, 2<<8=10mV... 
-                        self->write_parameter ("HTD_KV_MOD_GAIN", self->parameters.htd_kv_mod_gain = (pos-8)<<8);
-        }
-#endif
+        self->parameters.htd_kv_mod_gain = rrll;
+
 }
 
 void RPspmc_pacpll::htd_kv_mode (GtkWidget *widget, RPspmc_pacpll *self){
@@ -1678,7 +1667,11 @@ void RPspmc_pacpll::send_all_parameters (){
         dfreq_ctrl_parameter_changed (NULL, this);
         dfreq_gain_changed (NULL, this);
 
+        // HTD PAC KV
         htd_ctrl_parameter_changed (NULL, this);
+        write_parameter ("HTD_KV_MOD_GAIN", 0x1800); // OFF
+        write_parameter ("HTD_KV_MODE", false); // OFF
+
         htd_gain_changed (NULL, this);
 }
 
