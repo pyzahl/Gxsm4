@@ -2257,7 +2257,8 @@ void RPspmc_pacpll::on_connect_actions(){
         }
         
         status_append (" * RedPitaya SPM Control, PAC-PLL normal operation, set to data streaming mode.\n");
-        for (int i=0; i<25; ++i){
+
+        for (int i=0; i<250; ++i){
                 while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
                 usleep(20000);
         }
@@ -2273,6 +2274,21 @@ void RPspmc_pacpll::on_connect_actions(){
  
         int i=0;
         
+        while ( spmc_parameters.rpspmc_version == 0 && ++i < 100){
+                if (i==1) rpspmc_hwi->status_append ("Waiting ");
+                while (g_main_context_iteration(NULL, FALSE));
+
+                usleep(50000);
+                rpspmc_hwi->status_append (".");
+                g_warning ("[%d] WAITING FOR VALID RPSPMC DATA. RPVer=%08x D=%08x FPGA=%08x", i, spmc_parameters.rpspmc_version, spmc_parameters.rpspmc_date,spmc_parameters.rpspmc_fpgaimpl);
+        }
+        if (i>0) rpspmc_hwi->status_append ("\n");
+        if (i>99){
+                rpspmc_hwi->status_append ("WARNING/TIMEOUT WHILE WAITING FOR VALID RPSPMC DATA.\n");
+                g_warning ("WARNING/TIMEOUT WHILE WAITING FOR VALID RPSPMC DATA. V=%08x", spmc_parameters.rpspmc_version);
+        }
+        i=0;
+                
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC Version.....: 0x%08x\n", (int)spmc_parameters.rpspmc_version); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC VDate.......: 0x%08x\n", (int)spmc_parameters.rpspmc_date); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
         { gchar *tmp = g_strdup_printf (" * RedPitaya SPM RPSPMC FPGAIMPL....: 0x%08x\n", (int)spmc_parameters.rpspmc_fpgaimpl); status_append (tmp);  rpspmc_hwi->info_append (tmp); g_free (tmp); }
@@ -3196,6 +3212,7 @@ void RPspmc_pacpll::dynamic_graph_draw_function (GtkDrawingArea *area, cairo_t *
 
 // called on Parameter Updates via Soup Socket
 void RPspmc_pacpll::on_new_data (){ // Class: RPspmc_pacpll : public AppBase, public RP_JSON_talk{
+
         update_monitoring_parameters();
         
         update_shm_monitors ();

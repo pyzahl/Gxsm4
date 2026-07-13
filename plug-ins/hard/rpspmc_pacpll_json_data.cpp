@@ -37,6 +37,14 @@ SPMC_parameters spmc_parameters;
 
 
 JSON_parameter PACPLL_JSON_parameters[] = {
+        // ID                        DATA                             ReadOnly  Unit
+        { "RPSPMC_SERVER_VERSION",   &spmc_parameters.rpspmc_version, true, "hex" },
+        { "RPSPMC_SERVER_DATE",      &spmc_parameters.rpspmc_date, true, "hex" },
+        { "RPSPMC_FPGAIMPL_VERSION", &spmc_parameters.rpspmc_fpgaimpl, true, "hex" },
+        { "RPSPMC_FPGAIMPL_DATE",    &spmc_parameters.rpspmc_fpgaimpl_date, true, "hex" },
+        { "RPSPMC_FPGA_STARTUP",     &spmc_parameters.rpspmc_fpgastartup, true, "1" },
+        { "RPSPMC_FPGA_STARTUPCNT",  &spmc_parameters.rpspmc_fpgastartupcnt, true, "1" },
+
         { "DC_OFFSET", &pacpll_parameters.dc_offset, true, "mV" },
         { "CPU_LOAD", &pacpll_parameters.cpu_load, true, "PC" },
         { "COUNTER", &pacpll_parameters.counter, true, "1" },
@@ -297,13 +305,6 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         { "SPMC_LCK_ILEN_MONITOR",  &spmc_parameters.lck_ilen_monitor, false, "1" },
         { "SPMC_LCK_DECII_MONITOR", &spmc_parameters.lck_decii_monitor, false, "1" },
         
-        { "RPSPMC_SERVER_VERSION",   &spmc_parameters.rpspmc_version, false, "hex" },
-        { "RPSPMC_SERVER_DATE",      &spmc_parameters.rpspmc_date, false, "hex" },
-        { "RPSPMC_FPGAIMPL_VERSION", &spmc_parameters.rpspmc_fpgaimpl, false, "hex" },
-        { "RPSPMC_FPGAIMPL_DATE",    &spmc_parameters.rpspmc_fpgaimpl_date, false, "hex" },
-        { "RPSPMC_FPGA_STARTUP",     &spmc_parameters.rpspmc_fpgastartup, false, "1" },
-        { "RPSPMC_FPGA_STARTUPCNT",  &spmc_parameters.rpspmc_fpgastartupcnt, false, "1" },
-
         { "RPSPMC_INITITAL_TRANSFER_ACK",  &spmc_parameters.rpspmc_initial_transfer_ack, false, "1" },
 
         { "SPMC_AD5791_GLC_CH",  &spmc_parameters.rpspmc_ad5791_glc_ch, false, "1" },  // PMOD# / DAC Channel
