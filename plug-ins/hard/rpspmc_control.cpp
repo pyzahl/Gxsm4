@@ -3060,6 +3060,7 @@ int RPSPMC_Control::choice_scansource_callback (GtkWidget *widget, RPSPMC_Contro
         main_get_gapp()->channelselector->SetModeChannelSignal(13+channel,
                                                                rpspmc_swappable_signals[selection].label,
                                                                rpspmc_swappable_signals[selection].label,
+                                                               1<<(channel+8), // SWP**00 [channel=0] mask=0x00000100, 0x0200, ... 0x2000
                                                                rpspmc_swappable_signals[selection].unit,
                                                                1.0 //rpspmc_swappable_signals[selection].scale_factor // ** data is scaled to unit at transfer time
                                                                );

@@ -4697,20 +4697,24 @@ int DSPControl::choice_mixsource_callback (GtkWidget *widget, DSPControl *dspc){
 	if (!strncmp (sranger_common_hwi->dsp_signal_lookup_managed[signal].label, "In ", 3))
 		scale_extra = 256.*256; // In 0..7 are scaled up for MIXER0-3, else raw 32bit number.
 
+        guint64 mask=0; // ***!!*** fix-me if required
+        
 	if (mix_ch == 0){
                 gchar *tmp = g_strdup_printf ("Mix-%s-ITunnel", sranger_common_hwi->dsp_signal_lookup_managed[signal].label);
               PI_DEBUG_GP (DBG_L3, "MIX[0] =>> %s\n", tmp);
 	      main_get_gapp()->channelselector->SetModeChannelSignal (6+3, tmp, tmp, // "nA", 1.);  //-- fix ??? -- adjusting signal lookup at startup now!
-                                                           sranger_common_hwi->dsp_signal_lookup_managed[signal].unit,
-                                                           sranger_common_hwi->dsp_signal_lookup_managed[signal].scale*scale_extra);
+                                                                      mask,
+                                                                      sranger_common_hwi->dsp_signal_lookup_managed[signal].unit,
+                                                                      sranger_common_hwi->dsp_signal_lookup_managed[signal].scale*scale_extra);
 	      g_free (tmp);
 	} else {
 	      gchar *tmp = g_strdup_printf ("Mix-%s", sranger_common_hwi->dsp_signal_lookup_managed[signal].label);
               PI_DEBUG_GP (DBG_L3, "MIX[%d) ->> >> %s\n", mix_ch, tmp);
 	      main_get_gapp()->channelselector->SetModeChannelSignal (6+mix_ch-1, tmp, tmp,
-                                                           sranger_common_hwi->dsp_signal_lookup_managed[signal].unit,
-                                                           sranger_common_hwi->dsp_signal_lookup_managed[signal].scale*scale_extra
-                                                           );
+                                                                      mask,
+                                                                      sranger_common_hwi->dsp_signal_lookup_managed[signal].unit,
+                                                                      sranger_common_hwi->dsp_signal_lookup_managed[signal].scale*scale_extra
+                                                                      );
 	      g_free (tmp);
 	}
         return 0;
@@ -4740,6 +4744,8 @@ void DSPControl::update_sourcesignals_from_DSP_callback (){
 		if (!strncmp (sranger_common_hwi->lookup_dsp_signal_managed (si)->label, "In ", 3))
 			scale_extra = 256.*256; // In 0..7 are scaled up for MIXER0-3, else raw 32bit number.
 
+                guint64 mask=0; // ***!!*** fix-me if required
+
 		if (i == 0){
                         g_message ("UPDATE SigSrc DSP: [%d] >%s< in (%s) x %g x se=%g {%g}",
                                    si,
@@ -4751,16 +4757,18 @@ void DSPControl::update_sourcesignals_from_DSP_callback (){
                                    );
 		        gchar *tmp = g_strdup_printf ("Mix-%s-ITunnel", sranger_common_hwi->lookup_dsp_signal_managed (si)->label);
 			main_get_gapp()->channelselector->SetModeChannelSignal(6+3, tmp, tmp, // fix: ?? "nA", 1. ); // now adjusted for IN0 at startup in DSP signal table
-								    sranger_common_hwi->lookup_dsp_signal_managed (si)->unit,
-								    sranger_common_hwi->lookup_dsp_signal_managed (si)->scale*scale_extra
-								    );
+                                                                               mask,
+                                                                               sranger_common_hwi->lookup_dsp_signal_managed (si)->unit,
+                                                                               sranger_common_hwi->lookup_dsp_signal_managed (si)->scale*scale_extra
+                                                                               );
 			g_free (tmp);
 		} else {
 		        gchar *tmp = g_strdup_printf ("Mix-%s", sranger_common_hwi->lookup_dsp_signal_managed (si)->label);
 			main_get_gapp()->channelselector->SetModeChannelSignal(6+i-1, tmp, tmp,
-								    sranger_common_hwi->lookup_dsp_signal_managed (si)->unit,
-								    sranger_common_hwi->lookup_dsp_signal_managed (si)->scale*scale_extra
-								    );
+                                                                               mask,
+                                                                               sranger_common_hwi->lookup_dsp_signal_managed (si)->unit,
+                                                                               sranger_common_hwi->lookup_dsp_signal_managed (si)->scale*scale_extra
+                                                                               );
 			g_free (tmp);
 		}
 	}
@@ -4770,6 +4778,7 @@ void DSPControl::update_sourcesignals_from_DSP_callback (){
 		// Channelselector
 		const gchar *vjfixedlab[] = { "Counter 0", "Counter 1", "NULL", "NULL" };
 		int si = sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID+i);
+                guint64 mask=0;
 		if (sranger_common_hwi->lookup_dsp_signal_managed (si)->index >= 0){ // so far ONLY "VP SecV" signal is vector!
 			int vi=sranger_common_hwi->lookup_dsp_signal_managed (si)->index/8;
 			int vj=sranger_common_hwi->lookup_dsp_signal_managed (si)->index - 8*vi;
@@ -4780,9 +4789,10 @@ void DSPControl::update_sourcesignals_from_DSP_callback (){
 						     : vjfixedlab[vj-4]
 						     );
 			main_get_gapp()->channelselector->SetModeChannelSignal(17+i, tmp, tmp, 
-								    sranger_common_hwi->dsp_signal_lookup_managed[sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_VECPROBE0_INPUT_ID+vj)].unit,
-								    sranger_common_hwi->dsp_signal_lookup_managed[sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_VECPROBE0_INPUT_ID+vj)].scale
-								    );
+                                                                               mask,
+                                                                               sranger_common_hwi->dsp_signal_lookup_managed[sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_VECPROBE0_INPUT_ID+vj)].unit,
+                                                                               sranger_common_hwi->dsp_signal_lookup_managed[sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_VECPROBE0_INPUT_ID+vj)].scale
+                                                                               );
 			
 			// Scan Input Source Selection update
 
@@ -4807,11 +4817,12 @@ void DSPControl::update_sourcesignals_from_DSP_callback (){
 			g_free(tmp);
 		} else
 			main_get_gapp()->channelselector->SetModeChannelSignal(17+i,
-								    sranger_common_hwi->lookup_dsp_signal_managed (si)->label,
-								    sranger_common_hwi->lookup_dsp_signal_managed (si)->label,
-								    sranger_common_hwi->lookup_dsp_signal_managed (si)->unit,
-								    sranger_common_hwi->lookup_dsp_signal_managed (si)->scale
-								    );
+                                                                               sranger_common_hwi->lookup_dsp_signal_managed (si)->label,
+                                                                               sranger_common_hwi->lookup_dsp_signal_managed (si)->label,
+                                                                               mask,
+                                                                               sranger_common_hwi->lookup_dsp_signal_managed (si)->unit,
+                                                                               sranger_common_hwi->lookup_dsp_signal_managed (si)->scale
+                                                                               );
 	}
 	// VPsig selection menu -- OK, no dependency.
 }
@@ -4839,6 +4850,8 @@ int DSPControl::choice_scansource_callback (GtkWidget *widget, DSPControl *dspc)
 	// verify and update:
 	int si = sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_SCAN_CHANNEL_MAP0_ID+channel);
 
+        guint64 mask=0;
+        
 	if (sranger_common_hwi->lookup_dsp_signal_managed (si)->index >= 0){
 		const gchar *vjfixedlab[] = { "Counter 0", "Counter 1", "NULL", "NULL" };
 		int vi=sranger_common_hwi->lookup_dsp_signal_managed (si)->index/8;
@@ -4849,10 +4862,11 @@ int DSPControl::choice_scansource_callback (GtkWidget *widget, DSPControl *dspc)
 					     ? sranger_common_hwi->dsp_signal_lookup_managed[sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_VECPROBE0_INPUT_ID+vj)].label
 					     : vjfixedlab[vj-4]
 					     );
-		main_get_gapp()->channelselector->SetModeChannelSignal(17+channel, tmp, tmp, 
-							    sranger_common_hwi->dsp_signal_lookup_managed[sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_VECPROBE0_INPUT_ID+vj)].unit,
-							    sranger_common_hwi->dsp_signal_lookup_managed[sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_VECPROBE0_INPUT_ID+vj)].scale
-							    );
+		main_get_gapp()->channelselector->SetModeChannelSignal(17+channel, tmp, tmp,
+                                                                       mask,
+                                                                       sranger_common_hwi->dsp_signal_lookup_managed[sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_VECPROBE0_INPUT_ID+vj)].unit,
+                                                                       sranger_common_hwi->dsp_signal_lookup_managed[sranger_common_hwi->query_module_signal_input(DSP_SIGNAL_VECPROBE0_INPUT_ID+vj)].scale
+                                                                       );
 
 		// ****		gtk_combo_box_set_label (GTK_COMBO_BOX (widget), si, tmp);
 
@@ -4875,11 +4889,12 @@ int DSPControl::choice_scansource_callback (GtkWidget *widget, DSPControl *dspc)
 		g_free(tmp);
 	} else
 	        main_get_gapp()->channelselector->SetModeChannelSignal(17+channel, 
-							    sranger_common_hwi->lookup_dsp_signal_managed (si)->label,
-							    sranger_common_hwi->lookup_dsp_signal_managed (si)->label,
-							    sranger_common_hwi->lookup_dsp_signal_managed (si)->unit,
-							    sranger_common_hwi->lookup_dsp_signal_managed (si)->scale
-							    );
+                                                                       sranger_common_hwi->lookup_dsp_signal_managed (si)->label,
+                                                                       sranger_common_hwi->lookup_dsp_signal_managed (si)->label,
+                                                                       mask,
+                                                                       sranger_common_hwi->lookup_dsp_signal_managed (si)->unit,
+                                                                       sranger_common_hwi->lookup_dsp_signal_managed (si)->scale
+                                                                       );
         return 0;
 }
 

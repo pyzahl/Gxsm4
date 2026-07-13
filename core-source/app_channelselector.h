@@ -57,7 +57,7 @@ public:
         void SetView(int Channel, int View);
         void SetInfo(int Channel, const gchar *info);
 
-        void SetModeChannelSignal(int mode_id, const gchar* signal_name, const gchar* signal_label, const gchar *signal_unit, double d2unit = 1.0);
+        void SetModeChannelSignal(int mode_id, const gchar* signal_name, const gchar* signal_label, guint64 msk, const gchar *signal_unit, double d2unit = 1.0);
 
         // position is a running nummer of data sources from 0 .. //*** 15 0..3 => PIDSRC, 4..11 => DAQSRC (historic grouping)
         void ConfigureHardwareMapping(int position, const gchar* signal_name, guint64 msk, const gchar* signal_label, const gchar *signal_unit, double d2unit);

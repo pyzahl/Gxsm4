@@ -107,7 +107,7 @@ public:
                 lock = false;
                 source_mask = msk;
                 scale_to_unit = s;
-                position=0;
+                position=-1;
 
                 XSM_DEBUG_GP (DBG_L1, "New Data_Source: %20s %20s X%016x in x%g %s\n", Sname, Slabel, source_mask, scale_to_unit, SunitID);
         };
@@ -118,7 +118,8 @@ public:
                 g_free (Stype);
         };
 
-        void update (gchar *label, const gchar *unitID=NULL, guint64 msk=0, double s=0.){
+        void update (gchar *name, gchar *label, const gchar *unitID=NULL, guint64 msk=0, double s=0.){
+                //XSM_DEBUG_GP (DBG_L2, "Update *[%s]* Data_Source: %s %s X%016x in x%g %s\n", position, Sname, Slabel, source_mask, scale_to_unit, SunitID);
                 if (unitID){
                         g_free (SunitID);
                         SunitID = g_strdup (unitID);
@@ -126,6 +127,10 @@ public:
                 if (label){
                         g_free (Slabel);
                         Slabel  = g_strdup (label);
+                }
+                if (name){
+                        g_free (Sname);
+                        Sname  = g_strdup (name);
                 }
                 if (msk)
                         source_mask = msk;

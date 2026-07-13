@@ -457,8 +457,9 @@ void ChannelSelector::SetInfo(int Channel, const gchar *info){
 }
 
 // mode_id: combobox item position index
-void ChannelSelector::SetModeChannelSignal(int mode_id, const gchar* signal_name, const gchar* signal_label, const gchar *signal_unit, double d2unit){
+void ChannelSelector::SetModeChannelSignal(int mode_id, const gchar* signal_name, const gchar* signal_label,  guint64 msk, const gchar *signal_unit, double d2unit){
 	int k,l;
+        XSM_DEBUG_GP(DBG_L1, "ChannelSelector::SetModeChannelSignal %d %s\n", mode_id, signal_name);
 
         while (!alife){
                 XSM_DEBUG(DBG_EVER, "GXSM FATAL: not ready, FIX GAPP/HwI STARTUP ORDER !!!!!!!!!!!");
@@ -470,7 +471,7 @@ void ChannelSelector::SetModeChannelSignal(int mode_id, const gchar* signal_name
 		return;
 	}
 
-        XSM_DEBUG(DBG_L2, "Signal: " << signal_name << " mode_id=" << mode_id << " label=" << signal_label);
+        XSM_DEBUG(DBG_L3, "Signal: " << signal_name << " mode_id=" << mode_id << " label=" << signal_label);
 
 	for (int i=0; i<NumCh; ++i){
                 int current_id=-1;
@@ -488,12 +489,21 @@ void ChannelSelector::SetModeChannelSignal(int mode_id, const gchar* signal_name
                                 gtk_combo_box_set_active (GTK_COMBO_BOX (ChModeWidget[i]), current_id);
                 }
 	}
+
+        int position = mode_id-(ID_CH_M_LAST-1);
+        if (position >= 8){
+                Data_Source *ch_data_src=find_data_source_by_position (position);
+                if (ch_data_src){
+                        ch_data_src -> update (signal_name, signal_label, signal_unit, msk, d2unit);
+                        ReportHardwareMappings();
+                }
+        }
 }
 
 // position is a running nummer of data sources from 0 ..
 
 void ChannelSelector::ConfigureHardwareMapping(int position, const gchar* signal_name, guint64 msk, const gchar* signal_label, const gchar *signal_unit, double d2unit = 1.0){
-        XSM_DEBUG_GP (DBG_L2, "ChannelSelector::ConfigureHardwareMapping for %32s, 0x%08x at scale %g for %s", signal_name, msk, d2unit, signal_unit);
+        XSM_DEBUG_GP (DBG_L2, "ChannelSelector::ConfigureHardwareMapping for %32s, 0x%08x at scale %g for %s\n", signal_name, msk, d2unit, signal_unit);
 
         Data_Source *ch_data_src=find_data_source_by_name (signal_name);
         
@@ -501,10 +511,10 @@ void ChannelSelector::ConfigureHardwareMapping(int position, const gchar* signal
                 ch_data_src = new Data_Source (signal_name, signal_label, signal_unit, msk, d2unit);
                 DataSourceList = g_slist_append (DataSourceList, ch_data_src);
         } else // adjust source
-                ch_data_src -> update (signal_label, signal_unit, msk, d2unit);
+                ch_data_src -> update (signal_name, signal_label, signal_unit, msk, d2unit);
 
         ch_data_src -> set_position (position);
-        SetModeChannelSignal (position+ID_CH_M_LAST-1, signal_name, signal_label, signal_unit, d2unit);
+        SetModeChannelSignal (position+ID_CH_M_LAST-1, signal_name, signal_label, msk, signal_unit, d2unit);
         
 }
 
