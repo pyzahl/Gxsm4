@@ -495,7 +495,7 @@ void ChannelSelector::SetModeChannelSignal(int mode_id, const gchar* signal_name
                 Data_Source *ch_data_src=find_data_source_by_position (position);
                 if (ch_data_src){
                         ch_data_src -> update (signal_name, signal_label, signal_unit, msk, d2unit);
-                        ReportHardwareMappings();
+                        //ReportHardwareMappings();
                 }
         }
 }

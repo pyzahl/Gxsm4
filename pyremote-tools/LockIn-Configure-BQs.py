@@ -14,13 +14,13 @@ import matplotlib as mpl
 
 freq_lck = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
 
-fc  = 0.9*freq_lck # Hz Magnitude Low Pass IIR BQ 4th
-fhp = 0.1*freq_lck # Hz Signal Input High Pass IIR 1st dec (fixed) + BQ2nd
+fc  = 10*freq_lck # Hz Magnitude Low Pass IIR BQ 4th
+fhp = 0.5*freq_lck # Hz Signal Input High Pass IIR 1st dec (fixed) + BQ2nd
 
 
 # Ellip filter characteristics
-stop_attn_db = 50
-ripple_db=1
+stop_attn_db = 40
+ripple_db = 5
 
 
 # ******** Lck Settings internal
@@ -208,7 +208,7 @@ if 0: # AB type
 
 cQ = (1<<28)-1
 ### USE THIS
-if 0: # SOS ellipt cascaded BiQ type
+if 1: # SOS ellipt cascaded BiQ type
 	for s in range (0,2):
 		bqp = "};"
 		for i in range (0,6):
