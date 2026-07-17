@@ -1237,7 +1237,6 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 #endif
 
                 gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
-                SetTitle (title, sub_title);
 
                 v_grid = gtk_grid_new ();
                 gtk_window_set_child (GTK_WINDOW (window), v_grid);
@@ -1245,6 +1244,7 @@ void ProfileControl::AppWindowInit(const gchar *title, const gchar *sub_title){
                 pc_grid = v_grid;
 
                 gtk_window_present (GTK_WINDOW (window));
+                SetTitle (title, sub_title);
         }
 
         g_signal_connect (G_OBJECT (pc_grid), "destroy", G_CALLBACK (gtk_window_destroy), &pc_grid);

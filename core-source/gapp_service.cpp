@@ -1251,6 +1251,13 @@ int AppBase::resize_auto (){
 
 gboolean AppBase::position_retry_idle_callback (AppBase *self) {
         XSM_DEBUG_GM(DBG_L3, "position_retry_idle_callback for %s", self->window_key);
+
+        if (strncmp (self->window_key, "view-gvp", 8) == 0 && self->wm_attempt_count++ > 3){
+                g_message ("EE position_retry_idle_callback: giving up, permanent fail for %s", self->window_key);
+                self->wm_attempt_count=0;
+                return G_SOURCE_REMOVE;
+        }
+
         
         if (self->wm_attempt_count++ > 100){
                 g_message ("EE position_retry_idle_callback: giving up, permanent fail for %s", self->window_key);
@@ -1749,7 +1756,10 @@ void AppBase::LoadGeometry(){
                 if (strncmp (main_title_buffer, "Ch", 2) == 0)
                         g_timeout_add (1500, GSourceFunc (position_retry_idle_callback), this); // try wm positioning later again, may fail early :(
                 else
-                        g_timeout_add (50, GSourceFunc (position_retry_idle_callback), this); // try wm positioning later again, may fail early :(
+                        if (strncmp (window_key, "view-gvp", 8) == 0)
+                                g_timeout_add (2000, GSourceFunc (position_retry_idle_callback), this); // try wm positioning later again, may fail early :(
+                        else
+                                g_timeout_add (50, GSourceFunc (position_retry_idle_callback), this); // try wm positioning later again, may fail early :(
         }
 
         if (strcmp (window_key, "Gxsm4") || strcmp (window_key, "gxsm4"))
