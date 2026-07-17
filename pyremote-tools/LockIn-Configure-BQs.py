@@ -14,13 +14,13 @@ import matplotlib as mpl
 
 freq_lck = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
 
-fc  = 10*freq_lck # Hz Magnitude Low Pass IIR BQ 4th
+fc  = 1*freq_lck # Hz Magnitude Low Pass IIR BQ 4th
 fhp = 0.5*freq_lck # Hz Signal Input High Pass IIR 1st dec (fixed) + BQ2nd
 
 
 # Ellip filter characteristics
 stop_attn_db = 40
-ripple_db = 5
+ripple_db = 0.1	
 
 
 # ******** Lck Settings internal

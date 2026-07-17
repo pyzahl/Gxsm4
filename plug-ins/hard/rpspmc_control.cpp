@@ -1617,7 +1617,10 @@ void RPSPMC_Control::create_folder (){
 
         LCK_unit = new UnitAutoMag ("V","V");
         LCK_unit->add_ref ();
+        // direct Magnitude Monitor
         bp->grid_add_ec ("Magnitude Reading", LCK_unit, &spmc_parameters.lck1_bq2_mag_monitor, -10.0, 10.0, ".03g", 0.1, 1., "LCK-MAG-MONITOR");
+        // currently computed at RP level
+        //bp->grid_add_ec ("Magnitude Reading", LCK_unit, &lck_reading_w_gain, -10.0, 10.0, ".03g", 0.1, 1., "LCK-MAG-MONITOR");
         LCK_Reading = bp->ec;
         EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
@@ -3746,6 +3749,22 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
 
                 int decii2_max = 12;
 
+
+                /*
+                  int decii2_max   = 12;
+                  int max_gain_out = 10;
+                  int gain_in  =  gain      & 0xff; // 1x : == decii2
+                  int gain_out = (gain>>8)  & 0xff; // 1x : == 
+                  
+                  gain_in  = gain_in  > decii2 ? 0 : decii2-gain_in;
+                  gain_out = gain_out > max_gain_out ? max_gain_out : gain_out;
+                  
+                  lck_gain_setting = (1 << gain_in) * (1 << gain_out);
+                */
+
+
+
+                
                 // calculate decii2
                 while (fn > 20. && decii2 < decii2_max){
                         decii2++;
@@ -3794,12 +3813,14 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                         int gain_out=0;
 
         
-                        if (gain_out == 0 && gain_in > decii2)
-                                gain_out = gain_in - decii2;
+                        if (gain_out == 0 && gain_in > decii2){
+                                gain_out = gain_in - decii2; // sqrt(a*a*2^2n) = sqrt(a*a)*2^n => gain_out := 2n
+                                gain_out *= 2;
+                        }
 
-                        self->lck_gain = (1<<gain_in) * (1<<gain_out);
+                        self->lck_gain = gain_in > decii2 ? 1 : (1 << gain_in) * gain_out > 1? (1 << (gain_out-1)) : 1; // IN<<gain_in * sqrt(AM2<<gain_out)
                         self->LCK_unit->set_gain (1./(double)((1<<gain_in) * (1<<gain_out)));
-                        gchar *tmp = g_strdup_printf ("[%d x %d] %d", 1<<gain_in, 1<<gain_out, (1<<gain_in) * (1<<gain_out));
+                        gchar *tmp = g_strdup_printf ("[%d x S%d] %g", 1<<gain_in, 1<<gain_out, self->lck_gain);
                         self->LCK_Sens->set_info (tmp);
                         self->LCK_Sens->Put_Value ();
                         g_free (tmp);
@@ -3972,7 +3993,11 @@ void RPSPMC_Control::on_new_data (){
         GVP_XYZ_mon_AA[0] = main_get_gapp()->xsm->Inst->Volt2XA (spmc_parameters.xs_monitor);
         GVP_XYZ_mon_AA[1] = main_get_gapp()->xsm->Inst->Volt2YA (spmc_parameters.ys_monitor);
         GVP_XYZ_mon_AA[2] = main_get_gapp()->xsm->Inst->Volt2ZA (spmc_parameters.z0_monitor);
-                
+
+        // currently computed at RP level
+        // lck_reading_w_gain = spmc_parameters.lck1_bq2_mag_monitor * self->lck_gain;
+
+        
         // RPSPM-Monitors: Lck, GVP
         if (G_IS_OBJECT (window))
                 g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "SPMC_MONITORS_list"),
