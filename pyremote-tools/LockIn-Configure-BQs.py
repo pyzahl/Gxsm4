@@ -17,6 +17,9 @@ freq_lck = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
 fc  = 1*freq_lck # Hz Magnitude Low Pass IIR BQ 4th
 fhp = 0.5*freq_lck # Hz Signal Input High Pass IIR 1st dec (fixed) + BQ2nd
 
+fc  = 1e3/(20)  # ms -- Magnitude Low Pass IIR BQ 4th
+fhp = 1e3/(100) # ms -- Hz Signal Input High Pass IIR 1st dec (fixed) + BQ2nd
+
 
 # Ellip filter characteristics
 stop_attn_db = 40
@@ -51,12 +54,17 @@ def dds_phaseinc (freq):
 	fclk = 125e6
 	return (1<<44)*freq/fclk
 
+# effective Lock-In frequ after auto adaptive decimation
 def Fs():
-	freq = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
-	n2 = round (math.log2(dds_phaseinc (freq)))
-	lck_decimation_factor = (1 << (44 - DECII - n2)) - 1.
-	print ('Lck Freq: {} Hz --> decf: {}'.format(freq, lck_decimation_factor))
-	return 125e6 / (lck_decimation_factor)  # pre-deciamtion to 1024 samples per lockin ref period
+	lckfreq  = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
+	nacks    = float(gxsm.get("dsp-LCK-ACLK-MONITOR")) ## 59
+	lckdecii = float(gxsm.get("dsp-LCK-DECII-MONITOR")) ## 7679 @ 977 Hz
+	#n2 = round (math.log2(dds_phaseinc (freq)))
+	#lck_decimation_factor = (1 << (44 - DECII - n2)) - 1.
+	#print ('Lck Freq: {} Hz --> decf: {}'.format(lckfreq, lck_decimation_factor))
+	#return 125e6 / (lck_decimation_factor)  # pre-deciamtion to 1024 samples per lockin ref period
+	print ('Lck Freq: {} Hz, Decii: {}  @ Nacks {}'.format(lckfreq, lckdecii, nacks))
+	return 125e6 / (nacks*lckdecii)  # effective Lock-In sampling after internal decimations
 
 def FSignalIn_HPN(fhp):
 	freq = float(gxsm.get("dsp-SPMC-LCK-FREQ"))

@@ -45,28 +45,42 @@ void RP_JSON_talk::json_talk_connect_cb (gboolean connect, gboolean restart){
         debug_log (get_rp_address ());
 
         if (connect){
+                GInputStream *istream = NULL;
                 status_append (NULL); // clear
-                status_append ("Connecting to RedPitaya...\n");
-                update_health ("Connecting...");
+                int retry = 4;
+                do {
+                        status_append ("Connecting to RedPitaya...\n");
+                        update_health ("Connecting...");
+                        if (error != NULL) {
+                                g_clear_object (&client);
+                                g_clear_error (&client_error);
+                                g_clear_error (&error);
+                        }
+                        // new soup session
+                        session = soup_session_new ();
 
-                // new soup session
-                session = soup_session_new ();
+                        gchar *urlstart = NULL;
+                        if (restart){
+                                // request to fire up RedPitaya PACPLLL NGNIX server
+                                urlstart = g_strdup_printf ("http://%s/bazaar?start=rpspmc", get_rp_address ());
+                                status_append ("1. Requesting NGNIX RedPitaya RPSPMC-PACPLL Server Startup and full FPGA reload/reset:");
+                        } else {
+                                urlstart = g_strdup_printf ("http://%s/bazaar?start=rpspmcrc", get_rp_address ());
+                                status_append ("1. Requesting NGNIX RedPitaya RPSPMC-PACPLL Server Startup and reconnect to running FPGA:");
+                        }
 
-                gchar *urlstart = NULL;
-                if (restart){
-                        // request to fire up RedPitaya PACPLLL NGNIX server
-                        urlstart = g_strdup_printf ("http://%s/bazaar?start=rpspmc", get_rp_address ());
-                        status_append ("1. Requesting NGNIX RedPitaya RPSPMC-PACPLL Server Startup and full FPGA reload/reset:");
-                } else {
-                        urlstart = g_strdup_printf ("http://%s/bazaar?start=rpspmcrc", get_rp_address ());
-                        status_append ("1. Requesting NGNIX RedPitaya RPSPMC-PACPLL Server Startup and reconnect to running FPGA:");
-                }
+                        status_append (urlstart);
+                        status_append ("\n");
+                        msg = soup_message_new ("GET", urlstart);
+                        g_free (urlstart);
+                        istream = soup_session_send (session, msg, NULL, &error);
 
-                status_append (urlstart);
-                status_append ("\n");
-                msg = soup_message_new ("GET", urlstart);
-                g_free (urlstart);
-                GInputStream *istream = soup_session_send (session, msg, NULL, &error);
+                        if (error != NULL && retry) {
+                                status_append (error->message);
+                                status_append (" ... retrying in 1s\n");
+                                usleep (1000000);
+                        }
+                } while (error != NULL && retry--);
 
                 if (error != NULL) {
                         g_warning ("%s", error->message);

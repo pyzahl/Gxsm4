@@ -818,6 +818,7 @@ public:
         Param_Control *LCK_Sens;
         Param_Control *LCK_Reading;
         double lck_gain;
+        double lck_reading_w_gain;
         
         int BQ_decimation;
 

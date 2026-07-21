@@ -3811,16 +3811,16 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                         int  gain_in = gl2 <= decii2_max ? gl2 : decii2_max;
                         PI_DEBUG_GP (DBG_L1, "LCK Gain request: %g -> shift#: %d ", g, gain_in);
                         int gain_out=0;
-
         
                         if (gain_out == 0 && gain_in > decii2){
                                 gain_out = gain_in - decii2; // sqrt(a*a*2^2n) = sqrt(a*a)*2^n => gain_out := 2n
                                 gain_out *= 2;
+                                // ** gain_in => shift 0 norm of decii sum is max i.e. decii2. after that am2 is less normalized (gain_out)
                         }
 
                         self->lck_gain = gain_in > decii2 ? 1 : (1 << gain_in) * gain_out > 1? (1 << (gain_out-1)) : 1; // IN<<gain_in * sqrt(AM2<<gain_out)
                         self->LCK_unit->set_gain (1./(double)((1<<gain_in) * (1<<gain_out)));
-                        gchar *tmp = g_strdup_printf ("[%d x S%d] %g", 1<<gain_in, 1<<gain_out, self->lck_gain);
+                        gchar *tmp = g_strdup_printf ("[%d x S%d] x%g", 1<<gain_in, 1<<gain_out, self->lck_gain);
                         self->LCK_Sens->set_info (tmp);
                         self->LCK_Sens->Put_Value ();
                         g_free (tmp);
