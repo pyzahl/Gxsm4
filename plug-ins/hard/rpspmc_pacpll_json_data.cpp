@@ -276,13 +276,15 @@ JSON_parameter PACPLL_JSON_parameters[] = {
         // RP SPMC Lock-In
         { "SPMC_LCK_MODE",      &spmc_parameters._lck_mode, false, "1" },      // digital Lck & RF Gen mode
         { "SPMC_LCK_FREQUENCY", &spmc_parameters.lck_frequency, false, "Hz" }, // manual/tune frequency
-        { "SPMC_LCK_VOLUME",    &spmc_parameters.lck_volume, false, "V" },    // amplitude
-        { "SPMC_LCK_TARGET",    &spmc_parameters.lck_target, false, "1" },    // mixing to target
-        { "SPMC_LCK_GAIN",      &spmc_parameters.lck_gain, false, "1" },     // LCK gain
+        { "SPMC_LCK_PHASE",     &spmc_parameters.lck_phase, false, "deg" },    // manual/auto lck phase adjust (delay)
+        { "SPMC_LCK_VOLUME",    &spmc_parameters.lck_volume, false, "V" },     // amplitude
+        { "SPMC_LCK_TARGET",    &spmc_parameters.lck_target, false, "1" },     // mixing to target
+        { "SPMC_LCK_GAIN",      &spmc_parameters.lck_gain, false, "1" },       // LCK gain
 
         { "SPMC_LCK1_BQ2_MAG_MONITOR",  &spmc_parameters.lck1_bq2_mag_monitor, false, "V" },  // Monitor Lck1 magnitude
-        { "SPMC_LCK1_BQ2_PH_MONITOR",   &spmc_parameters.lck1_bq2_ph_monitor, false, "deg" },  // Monitor Lck1 phase
-        
+        { "SPMC_LCK1_BQ2_PHASE_MONITOR",&spmc_parameters.lck1_bq2_ph_monitor, false, "deg" },  // Monitor Lck1 phase
+        { "SPMC_LCK1_X_MONITOR",   &spmc_parameters.lck1_X_monitor, false, "mV" },  // Monitor Lck1 X
+        { "SPMC_LCK1_Y_MONITOR",   &spmc_parameters.lck1_Y_monitor, false, "mV" },  // Monitor Lck1 Y
 
         // RF-GEN
         { "SPMC_RF_GEN_MODE",      &spmc_parameters._rf_gen_mode, false, "X" },      // digital Lck & RF Gen mode

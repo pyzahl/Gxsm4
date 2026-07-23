@@ -642,6 +642,12 @@
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-FREQ', Default/U:     987 Hz    , Adjustment PCS Name: 'dsp-SPMC-LCK-FREQ' </description>
     </key>
 
+    <key name="dsp-spmc-lck-phase" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-PHASE', Default/U: 0 deg     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-PHASE', Default/U:     0 deg    , Adjustment PCS Name: 'dsp-SPMC-LCK-PHASE' </description>
+    </key>
+
     <key name="dsp-spmc-rf-gen-freq" type="d">
       <default>1e6</default>
       <summary>PCS Remote-ID: 'dsp-SPMC-RF-GEN-FREQ', Default/U:     1e6 Hz     </summary>

@@ -17,13 +17,13 @@ freq_lck = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
 fc  = 1*freq_lck # Hz Magnitude Low Pass IIR BQ 4th
 fhp = 0.5*freq_lck # Hz Signal Input High Pass IIR 1st dec (fixed) + BQ2nd
 
-fc  = 1e3/(20)  # ms -- Magnitude Low Pass IIR BQ 4th
+fc  = 1e3/(50)  # ms -- Magnitude Low Pass IIR BQ 4th
 fhp = 1e3/(100) # ms -- Hz Signal Input High Pass IIR 1st dec (fixed) + BQ2nd
 
 
 # Ellip filter characteristics
 stop_attn_db = 40
-ripple_db = 0.1	
+ripple_db = 1
 
 
 # ******** Lck Settings internal
@@ -59,12 +59,13 @@ def Fs():
 	lckfreq  = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
 	nacks    = float(gxsm.get("dsp-LCK-ACLK-MONITOR")) ## 59
 	lckdecii = float(gxsm.get("dsp-LCK-DECII-MONITOR")) ## 7679 @ 977 Hz
+	cicdecii = float(gxsm.get("dsp-LCK-BQDEC-MONITOR")) ## 7679 @ 977 Hz
 	#n2 = round (math.log2(dds_phaseinc (freq)))
 	#lck_decimation_factor = (1 << (44 - DECII - n2)) - 1.
 	#print ('Lck Freq: {} Hz --> decf: {}'.format(lckfreq, lck_decimation_factor))
 	#return 125e6 / (lck_decimation_factor)  # pre-deciamtion to 1024 samples per lockin ref period
 	print ('Lck Freq: {} Hz, Decii: {}  @ Nacks {}'.format(lckfreq, lckdecii, nacks))
-	return 125e6 / (nacks*lckdecii)  # effective Lock-In sampling after internal decimations
+	return 125e6 / (lckdecii*cicdecii)  # effective Lock-In sampling after internal decimations
 
 def FSignalIn_HPN(fhp):
 	freq = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
@@ -145,7 +146,9 @@ def run_sosfilt_Q24(sos, x):
 # Design a lowpass elliptic filter
 # rp: Passband ripple in dB
 # sa: Stopband attenuation in dB
-def ellipt_filter(order=4, cutoff=0.2, sa=50, rp=0.5, filter_type='lowpass', fs=1.0):
+## 2x BiQuad: 4th
+## 1x BiQuad: 2nd
+def ellipt_filter(order=2, cutoff=0.2, sa=50, rp=0.5, filter_type='lowpass', fs=1.0):
     nyquist = 0.5 * fs  # Nyquist frequency
     normal_cutoff = cutoff / nyquist
     sos = ellip(order, rp, sa, cutoff, btype=filter_type, output='sos')

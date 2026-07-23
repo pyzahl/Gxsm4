@@ -450,6 +450,7 @@ public:
         
         static int callback_change_LCK_mode (GtkWidget *widget, RPSPMC_Control *self);
         static int callback_change_RF_mode (GtkWidget *widget, RPSPMC_Control *self);
+	static int callback_auto_LCK_phase(GtkWidget *widget, RPSPMC_Control *self);
 
         static int callback_change_GVP_vpc_option_flags (GtkWidget *widget, RPSPMC_Control *self);
 	static int callback_update_GVP_vpc_option_checkbox (GtkWidget *widget, RPSPMC_Control *self);
@@ -815,6 +816,7 @@ public:
 	double    LCK_Volume[LCK_NUM_TARGETS];
         GtkWidget *LCK_VolumeEntry[LCK_NUM_TARGETS];
         Param_Control *LCK_ModFrq;
+        Param_Control *LCK_Phase;
         Param_Control *LCK_Sens;
         Param_Control *LCK_Reading;
         double lck_gain;

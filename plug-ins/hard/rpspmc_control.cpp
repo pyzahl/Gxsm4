@@ -1672,11 +1672,20 @@ void RPSPMC_Control::create_folder (){
         }
 
         bp->new_line ();
+
         lck_gain=1.;
 	bp->grid_add_ec ("Lck Sens.", new UnitObj("mV","mV"), &spmc_parameters.lck_sens, 0.001, 5000., "5g", 1.0, 10.0, "SPMC-LCK-SENS");
         LCK_Sens = bp->ec;
         bp->new_line ();
-        bp->grid_add_check_button ("CorrS PH Aligned", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Lock-In Corr Phase Aligned","dsp-lck-phaligned"), 1,
+	bp->grid_add_ec ("Phase", Deg, &spmc_parameters.lck_phase, 0.0, 90.0, "5g", 1.0, 100.0, "SPMC-LCK-PHASE");
+        LCK_Phase = bp->ec;
+        bp->new_line ();
+        
+        bp->grid_add_button ("Auto Phase" );
+	g_signal_connect (G_OBJECT (bp->button), "clicked",
+                          GCallback (RPSPMC_Control::callback_auto_LCK_phase), this);
+
+        bp->grid_add_check_button ("Integrate & Dump Mode", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Lock-In Corr Phase Aligned","dsp-lck-phaligned"), 1,
                                    GCallback (callback_change_LCK_mode), this,
                                    &spmc_parameters.lck_mode, 4);
 
@@ -3367,6 +3376,45 @@ int RPSPMC_Control::callback_change_LCK_mode (GtkWidget *widget, RPSPMC_Control 
         return 0;
 }
 
+int RPSPMC_Control::callback_auto_LCK_phase(GtkWidget *widget, RPSPMC_Control *self){
+        PI_DEBUG_GP (DBG_L1, "RPSPMC_Control::callback_auto_LCK_phase");
+        // Set Phase 0
+        spmc_parameters.lck_phase = 0.;
+        self->LCK_Phase->Put_Value ();
+
+        //rpspmc_pacpll->write_parameter ("SPMC_LCK_PHASE", 0);
+
+        // non blocking wait
+        for (int i=0; i<10; ++i){
+                while (g_main_context_iteration(NULL, FALSE));
+                usleep (100000);
+        }
+
+        // a few blocking readings
+        // Read Phase, interprete, move to 0..90
+        double phase = spmc_parameters.lck1_bq2_ph_monitor;
+        PI_DEBUG_GP (DBG_L1, "RPSPMC_Control::callback_auto_LCK_phase phase readings with phase=0: %g", phase);
+        int n=1;
+        for (int i=0; i<10; ++i){
+                while (g_main_context_iteration(NULL, FALSE));
+                usleep (100000);
+                phase += spmc_parameters.lck1_bq2_ph_monitor; ++n;
+        }
+        phase /= n;
+
+        while (phase < 0.)
+                phase += 360.;
+        while (phase > 90.)
+                phase -= 90.;
+        
+        // Set Phase
+        spmc_parameters.lck_phase = phase;
+        //rpspmc_pacpll->write_parameter ("SPMC_LCK_PHASE", phase);
+        self->LCK_Phase->Put_Value ();
+        
+        PI_DEBUG_GP (DBG_L1, "RPSPMC_Control::callback_auto_LCK_phase done.");
+}
+
 int RPSPMC_Control::callback_change_RF_mode (GtkWidget *widget, RPSPMC_Control *self){
         //        PI_DEBUG_GP (DBG_L3, "%s \n",__FUNCTION__);
 	guint64 msk = (guint64) GPOINTER_TO_UINT (g_object_get_data (G_OBJECT(widget), "Bit_Mask"));
@@ -3694,7 +3742,7 @@ static guint RPSPMC_Control::delayed_filter_update_callback (RPSPMC_Control *sel
 }
 
 void RPSPMC_Control::bq_filter_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
-        self->BQ_decimation = 128; //1 + (int)round(8 * 5000. / spmc_parameters.lck_frequency);
+        self->BQ_decimation = 128; // FIXED
         spmc_parameters.lck_bq_dec_monitor = self->BQ_decimation;
         PI_DEBUG_GP (DBG_L1, "BQ Filter Deciamtion: #%d",  self->BQ_decimation);
         //self->configure_filter (1, spmc_parameters.sc_bq1mode, spmc_parameters.sc_bq1_coef, decimation);
@@ -3772,70 +3820,52 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                 }
 
                 PI_DEBUG_GP (DBG_L1, "LCK Adjust Calc: RP-Fs: %g Hz, AD-NACLKs: %d, FLCK/BQ: %g Hz, Fnorm: %g @ decii2: %d", rp_fs, naclks, rp_fs/naclks/(1<<decii2), fn, decii2);
-
                 
                 const gchar *SPMC_LCK_COMPONENTS[] = {
                         "SPMC_LCK_MODE",      // INT
                         "SPMC_LCK_GAIN",      // INT (SHIFT) IN, OUT
                         "SPMC_LCK_FREQUENCY",
+                        "SPMC_LCK_PHASE",
                         "SPMC_LCK_VOLUME",
                         NULL };
                 int jdata_i[2];
-                double jdata[2];
+                double jdata[3];
                 jdata_i[0] = spmc_parameters.lck_mode;
                 if (spmc_parameters.lck_sens <= 0.){
                         PI_DEBUG_GP (DBG_L1, "LCK Gain defaulting to 1x (0)");
                         jdata_i[1] = 0;
                 } else {
-                        /* on RP:
-                          int decii2_max   = 12;
-                          int max_gain_out = 10;
-                          int gain_in  =  gain      & 0xff; // 1x : == decii2
-                          int gain_out = (gain>>8)  & 0xff; // 1x : == 
-                          
-                          gain_in  = gain_in  > decii2 ? 0 : decii2-gain_in;
-                          gain_out = gain_out > max_gain_out ? max_gain_out : gain_out;
-
-                          on FPGA:
-                          ampl2_norm_shr <= 2*LCK_CORRSUM_Q_WIDTH - AM2_DATA_WIDTH - gain_out[10-1:0];
-                          ... signal     <= signal_dec >>> gain_in[DECII2_MAX-1:0]; // custom reduced norm, MAX, full norm: decii2  ***** correleation producst/sums will overrun for large siganls if not at FULL NORM!!
-                          ... ampl2 <= ab2 >>> ampl2_norm_shr; // Q48 for SQRT:   Norm Square, reduce to AM2 WIDTH
-
-
-                        */
-                        
                         double s = 1e-3*spmc_parameters.lck_sens; // mV to V
                         double g = 5.0/s; // to gain. I.e. gain 1x for 5V (5000mV)
                         if (g < 1.) g=1.;
                         int  gl2 = int(log2(g));
-                        int  gain_in = gl2 <= decii2_max ? gl2 : decii2_max;
+                        int  gain_in  = gl2 <= 8 ? gl2 : 8;
+                        int  gain_out = 0;
                         PI_DEBUG_GP (DBG_L1, "LCK Gain request: %g -> shift#: %d ", g, gain_in);
-                        int gain_out=0;
-        
-                        if (gain_out == 0 && gain_in > decii2){
-                                gain_out = gain_in - decii2; // sqrt(a*a*2^2n) = sqrt(a*a)*2^n => gain_out := 2n
-                                gain_out *= 2;
-                                // ** gain_in => shift 0 norm of decii sum is max i.e. decii2. after that am2 is less normalized (gain_out)
-                        }
 
-                        self->lck_gain = gain_in > decii2 ? 1 : (1 << gain_in) * gain_out > 1? (1 << (gain_out-1)) : 1; // IN<<gain_in * sqrt(AM2<<gain_out)
-                        self->LCK_unit->set_gain (1./(double)((1<<gain_in) * (1<<gain_out)));
-                        gchar *tmp = g_strdup_printf ("[%d x S%d] x%g", 1<<gain_in, 1<<gain_out, self->lck_gain);
+                        self->lck_gain = 1 << gain_in;
+                        self->LCK_unit->set_gain (1./(double)((1<<gain_in)));
+                        gchar *tmp = g_strdup_printf (" x %g", self->lck_gain);
                         self->LCK_Sens->set_info (tmp);
                         self->LCK_Sens->Put_Value ();
                         g_free (tmp);
                         
-                        jdata_i[1] = (decii2<<16) | (gain_out<<8) | gain_in;
+                        jdata_i[1] = (decii2<<16) | (gain_out<<8) | gain_in; // gain_out currently not used
                 }
                 jdata[0] =  spmc_parameters.lck_frequency;
 
+                // Mod Volume
                 if  (self->LCK_Target > 0 && self->LCK_Target < LCK_NUM_TARGETS)
-                        jdata[1] = modulation_targets[self->LCK_Target].scale_factor * self->LCK_Volume[self->LCK_Target]; // => Volts
+                        jdata[2] = modulation_targets[self->LCK_Target].scale_factor * self->LCK_Volume[self->LCK_Target]; // => Volts
                 else
-                        jdata[1] = 0.;
+                        jdata[2] = 0.;
 
-                PI_DEBUG_GP (DBG_L1, "LCK Adjust SENDING UPDATE T#%d M:%d G:<<%x F:%g Hz V: %g {%g} Decii2 requested: %d => fs=%g Hz, fn=%g Hz ", self->LCK_Target, jdata_i[0], jdata_i[1], jdata[0], self->LCK_Volume[self->LCK_Target], jdata[1], decii2, rp_fs/naclks/(1<<decii2), fn);
-                rpspmc_pacpll->write_array (SPMC_LCK_COMPONENTS, 2, jdata_i,  2, jdata);
+                // LCK Set Phase
+                jdata[1] = spmc_parameters.lck_phase;
+                
+                PI_DEBUG_GP (DBG_L1, "LCK Adjust SENDING UPDATE T#%d M:%d G:<<%x F:%g Hz Phase: %g deg V: %g {%g} Decii2 requested: %d => fs=%g Hz, fn=%g Hz ",
+                             self->LCK_Target, jdata_i[0], jdata_i[1], jdata[0], jdata[1], self->LCK_Volume[self->LCK_Target], jdata[2], decii2, rp_fs/naclks/(1<<decii2), fn);
+                rpspmc_pacpll->write_array (SPMC_LCK_COMPONENTS, 2, jdata_i,  3, jdata);
         }
 }
 
@@ -4003,6 +4033,10 @@ void RPSPMC_Control::on_new_data (){
                 g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "SPMC_MONITORS_list"),
                                 (GFunc) App::update_ec, NULL);
 
+        gchar *tmp = g_strdup_printf (" (%g, %g)", spmc_parameters.lck1_X_monitor, spmc_parameters.lck1_Y_monitor);
+        LCK_Reading->set_info (tmp);
+        g_free (tmp);
+        
         update_zpos_readings();
 }
 

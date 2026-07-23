@@ -279,6 +279,8 @@ struct SPMC_parameters {
         // Lock-In
         double lck1_bq2_mag_monitor;
         double lck1_bq2_ph_monitor;
+        double lck1_X_monitor;
+        double lck1_Y_monitor;
         double lck_aclocks_per_sample_monitor;
         double lck_ilen_monitor;
         double lck_decii_monitor;
@@ -286,6 +288,7 @@ struct SPMC_parameters {
         //
         double lck_frequency;
         double lck_volume;
+        double lck_phase;
         double lck_target;
         int    lck_mode;
         double _lck_mode;
