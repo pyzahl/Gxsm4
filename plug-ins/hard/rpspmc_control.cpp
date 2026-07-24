@@ -3377,31 +3377,21 @@ int RPSPMC_Control::callback_change_LCK_mode (GtkWidget *widget, RPSPMC_Control 
 }
 
 int RPSPMC_Control::callback_auto_LCK_phase(GtkWidget *widget, RPSPMC_Control *self){
-        PI_DEBUG_GP (DBG_L1, "RPSPMC_Control::callback_auto_LCK_phase");
-        // Set Phase 0
-        spmc_parameters.lck_phase = 0.;
-        self->LCK_Phase->Put_Value ();
-
-        //rpspmc_pacpll->write_parameter ("SPMC_LCK_PHASE", 0);
-
-        // non blocking wait
-        for (int i=0; i<10; ++i){
-                while (g_main_context_iteration(NULL, FALSE));
-                usleep (100000);
-        }
-
-        // a few blocking readings
+        PI_DEBUG_GP (DBG_L1, "RPSPMC_Control::callback_auto_LCK_phase\n");
+        // get a few readings
         // Read Phase, interprete, move to 0..90
         double phase = spmc_parameters.lck1_bq2_ph_monitor;
-        PI_DEBUG_GP (DBG_L1, "RPSPMC_Control::callback_auto_LCK_phase phase readings with phase=0: %g", phase);
+        PI_DEBUG_GP (DBG_L0, "RPSPMC_Control::callback_auto_LCK_phase phase readings with phase=0: %g\n", phase);
         int n=1;
         for (int i=0; i<10; ++i){
                 while (g_main_context_iteration(NULL, FALSE));
-                usleep (100000);
+                usleep (50000);
                 phase += spmc_parameters.lck1_bq2_ph_monitor; ++n;
         }
         phase /= n;
 
+        phase += spmc_parameters.lck_phase;
+        
         while (phase < 0.)
                 phase += 360.;
         while (phase > 90.)
@@ -3412,7 +3402,8 @@ int RPSPMC_Control::callback_auto_LCK_phase(GtkWidget *widget, RPSPMC_Control *s
         //rpspmc_pacpll->write_parameter ("SPMC_LCK_PHASE", phase);
         self->LCK_Phase->Put_Value ();
         
-        PI_DEBUG_GP (DBG_L1, "RPSPMC_Control::callback_auto_LCK_phase done.");
+        PI_DEBUG_GP (DBG_L1, "RPSPMC_Control::callback_auto_LCK_phase done.\n");
+        return 0;
 }
 
 int RPSPMC_Control::callback_change_RF_mode (GtkWidget *widget, RPSPMC_Control *self){
@@ -3742,7 +3733,7 @@ static guint RPSPMC_Control::delayed_filter_update_callback (RPSPMC_Control *sel
 }
 
 void RPSPMC_Control::bq_filter_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
-        self->BQ_decimation = 128; // FIXED
+        self->BQ_decimation = 1024; //128; // FIXED
         spmc_parameters.lck_bq_dec_monitor = self->BQ_decimation;
         PI_DEBUG_GP (DBG_L1, "BQ Filter Deciamtion: #%d",  self->BQ_decimation);
         //self->configure_filter (1, spmc_parameters.sc_bq1mode, spmc_parameters.sc_bq1_coef, decimation);
@@ -3844,7 +3835,7 @@ void RPSPMC_Control::lockin_adjust_callback(Param_Control* pcs, RPSPMC_Control *
                         PI_DEBUG_GP (DBG_L1, "LCK Gain request: %g -> shift#: %d ", g, gain_in);
 
                         self->lck_gain = 1 << gain_in;
-                        self->LCK_unit->set_gain (1./(double)((1<<gain_in)));
+                        self->LCK_unit->set_gain (1./(double)self->lck_gain);
                         gchar *tmp = g_strdup_printf (" x %g", self->lck_gain);
                         self->LCK_Sens->set_info (tmp);
                         self->LCK_Sens->Put_Value ();
@@ -4033,9 +4024,14 @@ void RPSPMC_Control::on_new_data (){
                 g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "SPMC_MONITORS_list"),
                                 (GFunc) App::update_ec, NULL);
 
-        gchar *tmp = g_strdup_printf (" (%g, %g)", spmc_parameters.lck1_X_monitor, spmc_parameters.lck1_Y_monitor);
+        gchar *tmpx,*tmpy;
+        gchar *tmp = g_strdup_printf (" (%s, %s)",
+                                      tmpx=LCK_unit->UsrString(spmc_parameters.lck1_X_monitor),
+                                      tmpy=LCK_unit->UsrString(spmc_parameters.lck1_Y_monitor));
         LCK_Reading->set_info (tmp);
         g_free (tmp);
+        g_free (tmpx);
+        g_free (tmpy);
         
         update_zpos_readings();
 }
