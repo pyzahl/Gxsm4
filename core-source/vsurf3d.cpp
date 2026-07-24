@@ -39,6 +39,8 @@
 #include <cstdio>
 #include <cstring>
 #include <cassert>
+#include <fstream>
+#include <vector>
 
 // FreeType headers
 #include <ft2build.h>
@@ -122,6 +124,18 @@ std::string getDataDirectory()
 #ifdef __GXSM_PY_DEVEL
         return std::string(GLSL_DEV_DIR);
 #else
+        std::vector<std::string> Candidates;
+        Candidates.push_back(std::string(PACKAGE_GL400_DIR) + "/");
+        Candidates.push_back("./gl-400/");
+        Candidates.push_back("gl-400/");
+        Candidates.push_back("/home/percy/VS/Gxsm4/gl-400/");
+
+        for (std::vector<std::string>::const_iterator It = Candidates.begin(); It != Candidates.end(); ++It){
+                std::ifstream Probe((*It) + "g3d-allshader-uniforms.glsl");
+                if (Probe.good())
+                        return *It;
+        }
+
 	return std::string(PACKAGE_GL400_DIR) + "/";
 #endif
 }
@@ -131,7 +145,7 @@ std::string getBinaryDirectory()
 #ifdef __GXSM_PY_DEVEL
         return std::string(GLSL_DEV_DIR);
 #else
-	return std::string(PACKAGE_GL400_DIR) + "/";
+        return getDataDirectory();
 #endif
 }
 
@@ -157,6 +171,11 @@ namespace
         std::string const S3D_VERTEX_SHADER("s3d-vertex.glsl");
 	std::string const S3D_FRAGMENT_SHADER("s3d-fragment.glsl");
 	GLuint S3D_ProgramName(0);
+
+        // simple surface fallback shaders
+        std::string const SIMPLE_SURFACE_VERTEX_SHADER("simple-surface-vertex.glsl");
+        std::string const SIMPLE_SURFACE_FRAGMENT_SHADER("simple-surface-fragment.glsl");
+        GLuint SimpleSurface_ProgramName(0);
 
         // generic vertex tesselation shaders
 	std::string const ICO_TESS_VERTEX_SHADER("ico-vertex.glsl");
@@ -265,11 +284,15 @@ class base_plane{
 public:
         base_plane (int nx, int ny, int nv, glm::vec4 *displacement_data, glm::vec4 *palette_data, GLsizei num_pal_entries=GXSM_GPU_PALETTE_ENTRIES, int w=128, double aspect=1.0, GLint lod=0){
                 Validated = true;
-                BaseGridW = w;
-                BaseGridH = w; // adjusted by make_plane_vbo using aspect
+                BaseGridW = (w > 1 ? w : 128);
+                BaseGridH = BaseGridW; // adjusted by make_plane_vbo using aspect
                 ArrayBufferName = 0;
                 VertexArrayName = 0;
+                FallbackIndexBufferName = 0;
                 TesselationTextureCount = 0;
+                FallbackIndicesCount = 0;
+                FallbackIndicesObjectSize = 0;
+                FallbackIndices = NULL;
                 numx = nx; numy = ny; numv = nv;
 
                 vertex  = NULL;
@@ -288,7 +311,9 @@ public:
                         glDeleteTextures(TesselationTextureCount, TesselationTextureName);
                         glDeleteVertexArrays(1, &VertexArrayName);
                         glDeleteBuffers(1, &IndexBufferName);
+                        glDeleteBuffers(1, &FallbackIndexBufferName);
                         glDeleteBuffers(1, &ArrayBufferName);
+                        g_free (FallbackIndices);
                         Surf3d::checkError("make_plane::~delete");
                 }
         };
@@ -307,6 +332,13 @@ public:
                 //glBufferData(GL_ELEMENT_ARRAY_BUFFER, IndicesObjectSize, indices, GL_DYNAMIC_DRAW);
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, IndicesObjectSize, indices, GL_STATIC_DRAW);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+                if (FallbackIndicesCount > 0){
+                        glGenBuffers(1, &FallbackIndexBufferName);
+                        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, FallbackIndexBufferName);
+                        glBufferData(GL_ELEMENT_ARRAY_BUFFER, FallbackIndicesObjectSize, FallbackIndices, GL_STATIC_DRAW);
+                        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+                }
 
                 return Validated && Surf3d::checkError("make_plane:: init_buffer");
         };
@@ -429,6 +461,12 @@ public:
         
         gboolean draw (){
 		if (!Validated) return false;
+
+                if (!Tesselation_ProgramName)
+                        return false;
+
+                glUseProgram (Tesselation_ProgramName);
+                Surf3d::checkError("make_plane::draw useprogram");
                 
                 glBindVertexArray (VertexArrayName);
                 glEnableVertexAttribArray (semantic::attr::POSITION);
@@ -446,6 +484,12 @@ public:
                 Surf3d::checkError("make_plane::draw tex2");
                 
                 glDrawElements (GL_PATCHES, IndicesCount, GL_UNSIGNED_INT, 0);
+                if (glGetError() != GL_NO_ERROR && FallbackIndexBufferName && FallbackIndicesCount > 0 && SimpleSurface_ProgramName){
+                        glUseProgram (SimpleSurface_ProgramName);
+                        Surf3d::checkError("make_plane::draw fallback useprogram");
+                        glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, FallbackIndexBufferName);
+                        glDrawElements (GL_TRIANGLES, FallbackIndicesCount, GL_UNSIGNED_INT, 0);
+                }
 
                 glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, 0);
                 glBindBuffer (GL_ARRAY_BUFFER, 0);
@@ -456,8 +500,13 @@ public:
         
         // make plane
         void make_plane_vbo (double aspect=1.0, double oversize = 1.0){
+                if (BaseGridW < 2)
+                        BaseGridW = 128;
+
                 // Surface Object Vertices
                 BaseGridH = (GLuint)round((double)BaseGridW * aspect);
+                if (BaseGridH < 2)
+                        BaseGridH = 2;
                 
                 g_message ("make_plane");
                 VertexCount =  BaseGridW*BaseGridH;
@@ -506,6 +555,30 @@ public:
                         }
                         g_message ("mkplane -- Indices Count=%d of %d", ii, IndicesCount);
                 }
+
+                if (!FallbackIndices){
+                        FallbackIndicesCount = (((BaseGridW-1)*(BaseGridH-1))*6);
+                        FallbackIndicesObjectSize = FallbackIndicesCount * sizeof(GLuint);
+                        FallbackIndices = g_new (GLuint, FallbackIndicesCount);
+
+                        int ii=0;
+                        int i_width = BaseGridW-1;
+                        int i_height = BaseGridH-1;
+                        for (int y=0; y<i_height; ++y){
+                                for (int x=0; x<i_width; ++x){
+                                        int p1 = x+y*BaseGridW;
+                                        int p2 = p1+BaseGridW;
+                                        int p4 = p1+1;
+                                        int p3 = p2+1;
+                                        FallbackIndices[ii++] = p1;
+                                        FallbackIndices[ii++] = p4;
+                                        FallbackIndices[ii++] = p2;
+                                        FallbackIndices[ii++] = p2;
+                                        FallbackIndices[ii++] = p4;
+                                        FallbackIndices[ii++] = p3;
+                                }
+                        }
+                }
         };
 
 private:
@@ -517,12 +590,16 @@ private:
         GLuint BaseGridH;
 	GLuint ArrayBufferName;
 	GLuint IndexBufferName;
+	GLuint FallbackIndexBufferName;
 	GLuint VertexArrayName;
 	GLsizei VertexCount;
 	GLsizei IndicesCount;
+	GLsizei FallbackIndicesCount;
 	GLsizeiptr VertexObjectSize;
 	GLsizeiptr IndicesObjectSize;
+	GLsizeiptr FallbackIndicesObjectSize;
         GLsizei TesselationTextureCount;
+	GLuint *FallbackIndices;
 	GLuint TesselationTextureName[3];
 };
 
@@ -1065,6 +1142,24 @@ private:
 
 		if (Validated){
                         compiler Compiler;
+                        GLuint VertexShader     = Compiler.create (GL_VERTEX_SHADER, getDataDirectory() + SIMPLE_SURFACE_VERTEX_SHADER, CMD_ARGS_FOR_SHADERS);
+                        GLuint FragmentShader   = Compiler.create (GL_FRAGMENT_SHADER, getDataDirectory() + SIMPLE_SURFACE_FRAGMENT_SHADER, CMD_ARGS_FOR_SHADERS);
+
+                        if (!VertexShader || !FragmentShader)
+                                Validated = false;
+                        else {
+                                SimpleSurface_ProgramName = glCreateProgram ();
+                                glAttachShader (SimpleSurface_ProgramName, VertexShader);
+                                glAttachShader (SimpleSurface_ProgramName, FragmentShader);
+                                glLinkProgram (SimpleSurface_ProgramName);
+                        }
+
+			Validated = Validated && Compiler.check();
+			Validated = Validated && Compiler.check_program(SimpleSurface_ProgramName);
+		}
+
+		if (Validated){
+                        compiler Compiler;
                         GLuint VertexShader     = Compiler.create (GL_VERTEX_SHADER, getDataDirectory() + ICO_TESS_VERTEX_SHADER, CMD_ARGS_FOR_SHADERS);
                         GLuint ControlShader    = Compiler.create (GL_TESS_CONTROL_SHADER, getDataDirectory() + ICO_TESS_CONTROL_SHADER, CMD_ARGS_FOR_SHADERS);
                         GLuint EvaluationShader = Compiler.create (GL_TESS_EVALUATION_SHADER, getDataDirectory() + ICO_TESS_EVALUATION_SHADER, CMD_ARGS_FOR_SHADERS);
@@ -1194,15 +1289,23 @@ private:
                 bind_block (S3D_ProgramName, SurfaceGeometry_block, "SurfaceGeometry", sizeof(ubo::uniform_surface_geometry));
                 bind_block (S3D_ProgramName, FragmentShading_block, "FragmentShading", sizeof(ubo::uniform_fragment_shading));
 
+                bind_block (SimpleSurface_ProgramName, ModelViewMat_block, "ModelViewMatrices", sizeof(ubo::uniform_model_view));
+                bind_block (SimpleSurface_ProgramName, SurfaceGeometry_block, "SurfaceGeometry", sizeof(ubo::uniform_surface_geometry));
+                bind_block (SimpleSurface_ProgramName, FragmentShading_block, "FragmentShading", sizeof(ubo::uniform_fragment_shading));
+
                 bind_block (IcoTess_ProgramName, ModelViewMat_block, "ModelViewMatrices", sizeof(ubo::uniform_model_view));
                 bind_block (IcoTess_ProgramName, SurfaceGeometry_block, "SurfaceGeometry", sizeof(ubo::uniform_surface_geometry));
                 bind_block (IcoTess_ProgramName, FragmentShading_block, "FragmentShading", sizeof(ubo::uniform_fragment_shading));
                 
                 // create surface base plane
                 if (numx > 0 && numy > 0 && numv > 0 && Surf3D_Z_Data && Surf3D_Palette){
+                        int plane_grid = (int)s->GLv_data.base_plane_size;
+                        if (plane_grid < 2)
+                                plane_grid = 128;
+
                         surface_plane = new base_plane (numx, numy, numv,
                                                         Surf3D_Z_Data, Surf3D_Palette, s->maxcolors,
-                                                        (int)s->GLv_data.base_plane_size,
+                                                        plane_grid,
                                                         (s->get_scan ())->data.s.ry / (s->get_scan ())->data.s.rx,
                                                         0 // (GLint)s->GLv_data.tex3d_lod
                                                         );
@@ -2152,6 +2255,7 @@ void Surf3d::GLvarinit(){
 	gnome_res_set_auto_apply (v3dControl_pref_dlg, TRUE);
 	gnome_res_set_height (v3dControl_pref_dlg, 700);
 	gnome_res_read_user_config (v3dControl_pref_dlg);
+        GLv_data.Cull = 0;
         main_get_gapp ()->add_configure_object_to_remote_list (v3dControl_pref_dlg);
 }
 

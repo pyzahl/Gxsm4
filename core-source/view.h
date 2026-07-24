@@ -29,6 +29,7 @@
 #define __VIEW_H
 
 #include "config.h"
+#include "glbvars.h"
 
 #if ENABLE_3DVIEW_HAVE_GL_GLEW
 #include <GL/glew.h>
@@ -143,16 +144,16 @@ private:
  *
  * Folgende Viewing-Modelle sind geplant:
  * ========================================
- * 2D Graubild, Darstellungsmode "Quick"/"Direct" über mem2d-Mapping
+ * 2D Graubild, Darstellungsmode "Quick"/"Direct" ï¿½ber mem2d-Mapping
  * class Grey2D    : public View{};
  *
  * Linien-Profil-Dartsellung aus 2D Z Daten
  * class Line      : public View{};
  *
- * Schnelle Profil-Dartsellung aus 2D Z Daten, Höhenprofilen untereinander
+ * Schnelle Profil-Dartsellung aus 2D Z Daten, Hï¿½henprofilen untereinander
  * class Profiles  : public View{};
  *
- * Echte-3D-Dartsellung ... + povray Unterstützung, etc....
+ * Echte-3D-Dartsellung ... + povray Unterstï¿½tzung, etc....
  * class Surface3D : public View{};
  *
  */

@@ -132,7 +132,7 @@ V3dControl::V3dControl (Gxsm4app *app,
 	GtkWidget *statusbar;
 
 	XSM_DEBUG(DBG_L2, "V3dControl::V3dControl" );
-	GnomeAppServiceSetApp (this);
+	/* Legacy GNOME app-service hookup is not available in the GTK4 build path. */
 
 	WheelFkt = &Surf3d::Zoom;
 	scan = sc;
@@ -192,6 +192,10 @@ V3dControl::V3dControl (Gxsm4app *app,
 	statusbar = gtk_statusbar_new ();
 	gtk_grid_attach (GTK_GRID (v_grid), statusbar, 1, 10, 10,1);
 
+        gtk_widget_show (glarea);
+        gtk_widget_show (statusbar);
+        gtk_widget_show (GTK_WIDGET (window));
+
 	g_object_set_data (G_OBJECT (glarea), "vdata", vdata);
 	g_object_set_data (G_OBJECT (glarea), "statusbar", statusbar);
 	g_object_set_data (G_OBJECT (glarea), "Ch", GINT_TO_POINTER (ChNo));
@@ -223,7 +227,7 @@ V3dControl::~V3dControl (){
 
 
 void V3dControl::AppWindowInit(const gchar *title, const gchar *sub_title){
-	XSM_DEBUG (DBG_L1,  "V3dControl::AppWindowInit** <%s : %s>", title, sub_title?sub_title:"N/A");
+	XSM_DEBUG_GM (DBG_L1,  "V3dControl::AppWindowInit** <%s : %s>", title, sub_title?sub_title:"N/A");
 
         app_window = gxsm4_app_window_new (GXSM4_APP (main_get_gapp ()->get_application ()));
         window = GTK_WINDOW (app_window);
@@ -252,6 +256,9 @@ void V3dControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 	v_grid = gtk_grid_new ();
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
 	g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
+
+        gtk_widget_show (header_bar);
+        gtk_widget_show (GTK_WIDGET (v_grid));
 
 	XSM_DEBUG(DBG_L2, "V3dControl::WidgetInit done." );
 }

@@ -35,6 +35,9 @@
 #define WORDS_BIGENDIAN 1   // if not defined for what ever reason, assume BIGENDIAN. Seams to be missing def. for ARM architecture.
 #endif
 
+#define ENABLE_3DVIEW_HAVE_GL_GLEW 1
+
+
 /*
  * Resources
  */

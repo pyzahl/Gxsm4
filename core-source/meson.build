@@ -80,6 +80,7 @@ app_gxsm_sources = [
     'app_profile.cpp',
     'app_spm.cpp',
     'app_view.cpp',
+
     'app_vinfo.cpp',
     'app_vobj.cpp',
     

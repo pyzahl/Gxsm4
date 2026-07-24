@@ -519,7 +519,7 @@ GnomeResEntryInfoType v3dControl_pref_def_const[] = {
 	GNOME_RES_ENTRY_SEPARATOR (N_("Render Opt."), NULL),
 
 	GNOME_RES_ENTRY_OPTION
-	( GNOME_RES_BOOL, "V3dControl.RenderOp/Cull", "true", GET_GLV_OFFSET (&GLvd_offset.Cull),
+	( GNOME_RES_BOOL, "V3dControl.RenderOp/Cull", "false", GET_GLV_OFFSET (&GLvd_offset.Cull),
 	  TrueFalse_OptionsList, N_("Render Opt."), 
 	  N_("enable/disable cull face mode (surface back side as invisible in top view is not drawn!)\n"
 	     "Note: if enabled you will not see your surface,\n"

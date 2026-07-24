@@ -202,6 +202,9 @@ GLuint compiler::create(GLenum Type, std::string const & Filename, std::string c
 	}
 	
 	assert(!PreprocessedSource.empty());
+	if (PreprocessedSource.find("#version") == std::string::npos)
+		PreprocessedSource = "#version 400\n" + PreprocessedSource;
+
 	char const * PreprocessedSourcePointer = PreprocessedSource.c_str();
 
 	fprintf(stdout, "%s\n", PreprocessedSource.c_str());
@@ -209,6 +212,19 @@ GLuint compiler::create(GLenum Type, std::string const & Filename, std::string c
 	GLuint Name = glCreateShader(Type);
 	glShaderSource(Name, 1, &PreprocessedSourcePointer, NULL);
 	glCompileShader(Name);
+
+	GLint CompileStatus = GL_FALSE;
+	glGetShaderiv(Name, GL_COMPILE_STATUS, &CompileStatus);
+	if (CompileStatus != GL_TRUE){
+		GLint InfoLogLength = 0;
+		glGetShaderiv(Name, GL_INFO_LOG_LENGTH, &InfoLogLength);
+		if (InfoLogLength > 0){
+			std::string InfoLog(InfoLogLength, '\0');
+			glGetShaderInfoLog(Name, InfoLogLength, NULL, &InfoLog[0]);
+			fprintf(stderr, "GL shader compile failed for %s:\n%s\n", Filename.c_str(), InfoLog.c_str());
+		}
+		return 0;
+	}
 
 	std::pair<files_map::iterator, bool> ResultFiles = this->ShaderFiles.insert(std::make_pair(Name, Filename));
 	assert(ResultFiles.second);
