@@ -59,7 +59,13 @@ public:
         static void view_GL_Ticks_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data);
         static void view_GL_Smooth_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data);
 
-        static gint glarea_event_cb(GtkWidget *glarea, GdkEvent *event, V3dControl *vc);
+        //static gint glarea_event_cb(GtkWidget *glarea, GdkEvent *event, V3dControl *vc);
+
+        static void on_glarea_pressed_cb(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y, gpointer user_data);
+        static void on_glarea_released_cb(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y, gpointer user_data);
+        static void on_glarea_motion_cb(GtkEventControllerMotion *controller, gdouble x, gdouble y, gpointer user_data);
+        static gboolean on_glarea_scroll_cb(GtkEventControllerScroll *controller, gdouble dx, gdouble dy, gpointer user_data);
+        
         static void Activate_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data);
         static void apply_all_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data);
         static void scene_setup_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data);
@@ -96,6 +102,10 @@ private:
         int chno;
         Scan *scan;
         GtkWidget *glarea;
+
+        gdouble mouse_x;
+        gdouble mouse_y;
+        gboolean dragging;
 };
 
 #endif

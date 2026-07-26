@@ -1646,6 +1646,9 @@ void RPSPMC_Control::create_folder (){
         bp->ec->Freeze ();
         bp->new_line ();
 
+        BQ_decimation = 0; // no BQ internal decimation
+        spmc_parameters.lck_bq_dec_monitor = 1024; // fixed CIC FIR before BQ stage
+
         bp->grid_add_ec ("BQDec#", Unity, &spmc_parameters.lck_bq_dec_monitor, 0.0, 1e6, "6.0f", 0.1, 1., "LCK-BQDEC-MONITOR");
         EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
@@ -1679,15 +1682,19 @@ void RPSPMC_Control::create_folder (){
         bp->new_line ();
 	bp->grid_add_ec ("Phase", Deg, &spmc_parameters.lck_phase, 0.0, 90.0, "5g", 1.0, 100.0, "SPMC-LCK-PHASE");
         LCK_Phase = bp->ec;
+
+        bp->new_line ();
+        bp->grid_add_check_button ("Integrate & Dump Mode", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Lock-In Corr Phase Aligned","dsp-lck-phaligned"), 2,
+                                   GCallback (callback_change_LCK_mode), this,
+                                   &spmc_parameters.lck_mode, 4);
         bp->new_line ();
         
         bp->grid_add_button ("Auto Phase" );
 	g_signal_connect (G_OBJECT (bp->button), "clicked",
                           GCallback (RPSPMC_Control::callback_auto_LCK_phase), this);
-
-        bp->grid_add_check_button ("Integrate & Dump Mode", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Lock-In Corr Phase Aligned","dsp-lck-phaligned"), 1,
+        bp->grid_add_check_button ("Sin/Cos-Ref", bp->PYREMOTE_CHECK_HOOK_KEY_FUNC("Select Sin or Cos Reference","dsp-lck-sincosref"), 1,
                                    GCallback (callback_change_LCK_mode), this,
-                                   &spmc_parameters.lck_mode, 4);
+                                   &spmc_parameters.lck_mode, 1);
 
         // ***
         bp->pop_grid (); bp->set_xy (2,2);
@@ -1697,7 +1704,9 @@ void RPSPMC_Control::create_folder (){
 
         bp->grid_add_label ("Filter type");
 
-        const gchar *filter_types[] = { "None/Pass", "--", "--", "From AB", "Stop", "By-Pass", "Disable", NULL };
+        const gchar *filter_types[] = { "Pass", "AB", "Stop", "By-Pass", "Disable",
+                                        "RFTest-Pass", "RFTest-AB", "RFTest-Stop", "RFTest-By-Pass", "RFTest-Disable",
+                                        NULL };
 
         GtkWidget *combo_bqfilter_type = gtk_combo_box_text_new ();
         for (int jj=0; filter_types[jj]; ++jj){
@@ -1705,7 +1714,7 @@ void RPSPMC_Control::create_folder (){
                 gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (combo_bqfilter_type), id, filter_types[jj]);
                 g_free (id);
         }
-        gtk_combo_box_set_active (GTK_COMBO_BOX (combo_bqfilter_type), 3);
+        gtk_combo_box_set_active (GTK_COMBO_BOX (combo_bqfilter_type), 1);
         update_bq_filterS1_widget = combo_bqfilter_type;
 
         g_object_set_data (G_OBJECT (combo_bqfilter_type), "section", GINT_TO_POINTER (1)); 
@@ -1776,7 +1785,7 @@ void RPSPMC_Control::create_folder (){
                 gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (combo_bqfilter_type), id, filter_types[jj]);
                 g_free (id);
         }
-        gtk_combo_box_set_active (GTK_COMBO_BOX (combo_bqfilter_type), 5);
+        gtk_combo_box_set_active (GTK_COMBO_BOX (combo_bqfilter_type), 3);
         update_bq_filterZS_widget = combo_bqfilter_type;
         g_object_set_data (G_OBJECT (combo_bqfilter_type), "section", GINT_TO_POINTER (3)); 
         g_signal_connect (G_OBJECT (combo_bqfilter_type), "changed",
@@ -3372,6 +3381,8 @@ int RPSPMC_Control::callback_change_LCK_mode (GtkWidget *widget, RPSPMC_Control 
                 spmc_parameters.lck_mode &= ~msk;
 
         PI_DEBUG_GP (DBG_L1, "RPSPMC_Control::callback_change_LCK_mode %d", spmc_parameters.lck_mode);
+
+        self->lockin_adjust_callback(NULL, self);
         
         return 0;
 }
@@ -3401,6 +3412,8 @@ int RPSPMC_Control::callback_auto_LCK_phase(GtkWidget *widget, RPSPMC_Control *s
         spmc_parameters.lck_phase = phase;
         //rpspmc_pacpll->write_parameter ("SPMC_LCK_PHASE", phase);
         self->LCK_Phase->Put_Value ();
+
+        self->lockin_adjust_callback(NULL, self);
         
         PI_DEBUG_GP (DBG_L1, "RPSPMC_Control::callback_auto_LCK_phase done.\n");
         return 0;
@@ -3713,9 +3726,9 @@ void RPSPMC_Control::configure_filter(int id, int mode, double sos[6], int decim
                 "SPMC_SC_BQ_COEF_A2",
                 NULL };
 
-        int jdata_i[2] = { mode & 0xffff | (decimation << 16), id };
+        int jdata_i[2] = { mode & 0xffff | (decimation << 16), id }; // id: mode and test config (msk 0x10)
                 
-        PI_DEBUG_GP (DBG_L1, "Config BQ Filter #%d (SOS AB coef)", id);
+        PI_DEBUG_GP (DBG_L1, "Config BQ Filter #%02x (SOS AB coef)", id);
         rpspmc_pacpll->write_array (SPMC_SET_BQ_COMPONENTS, 2, jdata_i,  6, sos);
 }
 
@@ -3733,12 +3746,9 @@ static guint RPSPMC_Control::delayed_filter_update_callback (RPSPMC_Control *sel
 }
 
 void RPSPMC_Control::bq_filter_adjust_callback(Param_Control* pcs, RPSPMC_Control *self){
-        self->BQ_decimation = 1024; //128; // FIXED
-        spmc_parameters.lck_bq_dec_monitor = self->BQ_decimation;
+        self->BQ_decimation = 0; // no BQ internal dec
+        spmc_parameters.lck_bq_dec_monitor = 1024; // FIXED CIC FIR LENGTH before BQ = 1024
         PI_DEBUG_GP (DBG_L1, "BQ Filter Deciamtion: #%d",  self->BQ_decimation);
-        //self->configure_filter (1, spmc_parameters.sc_bq1mode, spmc_parameters.sc_bq1_coef, decimation);
-        //self->configure_filter (2, spmc_parameters.sc_bq2mode, spmc_parameters.sc_bq2_coef, decimation);
-
         // if not already scheduled, schedule delayed
 
         if (self->delayed_filter_update_timer_id) // if scheduled, remove and reset timeout next
@@ -3899,6 +3909,13 @@ int RPSPMC_Control::choice_BQfilter_type_callback (GtkWidget *widget, RPSPMC_Con
 
         int BQsec = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (widget), "section"))-1;
 
+        if (id > 4){ // TEST MODE?
+                id -= 5;
+                id |= 0x10; // enable TEST MODE bit
+        }
+
+        g_message ("RPSPMC_Control::choice_BQfilter_type_callback: BQSec: %d, mode=%02x", BQsec, id);
+        
         switch (BQsec){
         case 0: spmc_parameters.sc_bq1mode = id;
                 bq_filter_adjust_callback (NULL, self);
@@ -3915,27 +3932,21 @@ int RPSPMC_Control::choice_BQfilter_type_callback (GtkWidget *widget, RPSPMC_Con
 
                 gchar *bqid[] = {"LCK-SEC1", "LCK-SEC2", "ZS-Input" };
                 gchar *wids[3][3] = {{ "IIR1-TC", "BQ1-TC", "BQ1-Q" }, { "IIR2-TC", "BQ2-TC", "BQ2-Q" }, { "IIRZS-TC", "BQZS-TC", "BQZS-Q" }};
-                switch (id){
+                switch (id & 0x0f){
                 case 0:
-                        PI_DEBUG_GP (DBG_L1, "Set %s BQ to ONE, PASS", bqid[BQsec]);
+                        PI_DEBUG_GP (DBG_L1, "Set %s BQ to ONE, PASS. TEST-MODE: %x", bqid[BQsec], id & 0x10);
                         break;
                 case 1:
-                        PI_DEBUG_GP (DBG_L1, "BQ: N/A --- **IIR 1st");
+                        PI_DEBUG_GP (DBG_L1, "Set %s BiQuad SOS from AB-Coef. TEST-MODE: %x", bqid[BQsec], id & 0x10);
                         break;
                 case 2:
-                        PI_DEBUG_GP (DBG_L1, "BQ: N/A --- **BiQuad 2nd");
+                        PI_DEBUG_GP (DBG_L1, "Set %s BiQuad SOS to NULL (STOP). TEST-MODE: %x", bqid[BQsec], id & 0x10);
                         break;
                 case 3:
-                        PI_DEBUG_GP (DBG_L1, "Set %s BiQuad SOS from AB-Coef", bqid[BQsec]);
+                        PI_DEBUG_GP (DBG_L1, "Set %s BiQuad SOS to By-Pass Mode. TEST-MODE: %x", bqid[BQsec], id & 0x10);
                         break;
                 case 4:
-                        PI_DEBUG_GP (DBG_L1, "Set %s BiQuad SOS to NULL (STOP)", bqid[BQsec]); break;
-                        break;
-                case 5:
-                        PI_DEBUG_GP (DBG_L1, "Set %s BiQuad SOS to By-Pass Mode", bqid[BQsec]); break;
-                        break;
-                case 6:
-                        PI_DEBUG_GP (DBG_L1, "Set %s BiQuad SOS to STOP", bqid[BQsec]);
+                        PI_DEBUG_GP (DBG_L1, "Set %s BiQuad SOS to STOP. TEST-MODE: %x", bqid[BQsec], id & 0x10);
                         break;
                 }
         }

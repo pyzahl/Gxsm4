@@ -95,6 +95,38 @@
 
 #endif // HAVE_GLEW
 
+
+#include <iostream>
+#include <GL/glew.h>
+
+GLenum printOpenGLErrors(const char* functionName, int line) {
+        GLenum errorCode;
+        GLenum errorCode0=GL_NO_ERROR;
+        while ((errorCode = glGetError()) != GL_NO_ERROR) {
+                if (errorCode0 == GL_NO_ERROR)
+                        errorCode0 = errorCode; // return first error
+                std::string errorString;
+                switch (errorCode) {
+                case GL_INVALID_ENUM:                  errorString = "GL_INVALID_ENUM"; break;
+                case GL_INVALID_VALUE:                errorString = "GL_INVALID_VALUE"; break;
+                case GL_INVALID_OPERATION:            errorString = "GL_INVALID_OPERATION"; break;
+                case GL_STACK_OVERFLOW:               errorString = "GL_STACK_OVERFLOW"; break;
+                case GL_STACK_UNDERFLOW:              errorString = "GL_STACK_UNDERFLOW"; break;
+                case GL_OUT_OF_MEMORY:                errorString = "GL_OUT_OF_MEMORY"; break;
+                case GL_INVALID_FRAMEBUFFER_OPERATION: errorString = "GL_INVALID_FRAMEBUFFER_OPERATION"; break;
+                default:                              errorString = "UNKNOWN_ERROR"; break;
+                }
+                std::cerr << "OpenGL Error: " << errorString 
+                          << " at " << functionName 
+                          << " (line " << line << ")" << std::endl;
+        }
+        return (errorCode0);
+}
+
+// Helper macro to track file locations easily
+#define CHECK_GL_ERROR() printOpenGLErrors(__FUNCTION__, __LINE__)
+
+
 // ------------------------------------------------------------
 // gschema creator for from internal recources
 // ------------------------------------------------------------
@@ -128,7 +160,6 @@ std::string getDataDirectory()
         Candidates.push_back(std::string(PACKAGE_GL400_DIR) + "/");
         Candidates.push_back("./gl-400/");
         Candidates.push_back("gl-400/");
-        Candidates.push_back("/home/percy/VS/Gxsm4/gl-400/");
 
         for (std::vector<std::string>::const_iterator It = Candidates.begin(); It != Candidates.end(); ++It){
                 std::ifstream Probe((*It) + "g3d-allshader-uniforms.glsl");
@@ -484,13 +515,18 @@ public:
                 Surf3d::checkError("make_plane::draw tex2");
                 
                 glDrawElements (GL_PATCHES, IndicesCount, GL_UNSIGNED_INT, 0);
-                if (glGetError() != GL_NO_ERROR && FallbackIndexBufferName && FallbackIndicesCount > 0 && SimpleSurface_ProgramName){
+
+#if 1
+                GLenum errorCode = printOpenGLErrors(__FUNCTION__, __LINE__);
+                if (errorCode != GL_NO_ERROR && FallbackIndexBufferName && FallbackIndicesCount > 0 && SimpleSurface_ProgramName){
+                        g_warning ("GL-ERROR %d with Shader. Using Fallback to SimpleShader.", glGetError());
+                        CHECK_GL_ERROR();
                         glUseProgram (SimpleSurface_ProgramName);
                         Surf3d::checkError("make_plane::draw fallback useprogram");
                         glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, FallbackIndexBufferName);
                         glDrawElements (GL_TRIANGLES, FallbackIndicesCount, GL_UNSIGNED_INT, 0);
                 }
-
+#endif
                 glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, 0);
                 glBindBuffer (GL_ARRAY_BUFFER, 0);
                 glBindVertexArray (0);
@@ -1067,7 +1103,7 @@ private:
                 }
                 return glm::vec3(0,0,0);
         };
-#if 0
+#if 1
         glm::vec3 modelPosition() const {
                 return glm::vec3(-this->TranslationCurrent.x, 0.0, -this->TranslationCurrent.y);
         };
@@ -1077,17 +1113,17 @@ private:
                 glm::mat4 ModelRotateX = glm::rotate(glm::mat4(1.0f), -this->RotationCurrent.y, glm::vec3(1.f, 0.f, 0.f)); // X
                 glm::mat4 ModelRotateY = glm::rotate(ModelRotateX, this->RotationCurrent.x, glm::vec3(0.f, 0.f, 1.f)); // GL Z is Screen depth = surface Y
                 glm::mat4 ModelRotateZ = glm::rotate(ModelRotateY, this->Rotation3axis.z, glm::vec3(0.f, 1.f, 0.f)); // GL Y is Screen Y = surface Z (I hate it)
-                return ModelRotateZ;
+                //return ModelRotateZ;
                 // then translate
-                //glm::mat4 ModelTranslate = glm::translate(ModelRotateZ,  modelPosition());
+                glm::mat4 ModelTranslate = glm::translate(ModelRotateZ,  modelPosition());
                 // final ModelView
-                //return ModelTranslate;
+                return ModelTranslate;
         };
 
 	bool initProgram() {
 
                 // load and init shader program if not yet created -- only once, may shared!
-#if 0
+#if 1
                 if (Validated && ProgramName_RefCount > 0){
                         g_message ("Shader Program is already initiated.");
                         ++ProgramName_RefCount;

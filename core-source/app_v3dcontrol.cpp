@@ -175,6 +175,26 @@ V3dControl::V3dControl (Gxsm4app *app,
 			  (GCallback) V3dControl::glarea_event_cb,
                           this);
 #endif
+
+        // 1. Click Gesture for button presses and releases
+        GtkGesture *click_gesture = gtk_gesture_click_new();
+        gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click_gesture), 0); // Listen to ALL mouse buttons
+        g_signal_connect(click_gesture, "pressed", G_CALLBACK(on_glarea_pressed_cb), this);
+        g_signal_connect(click_gesture, "released", G_CALLBACK(on_glarea_released_cb), this);
+        gtk_widget_add_controller(glarea, GTK_EVENT_CONTROLLER(click_gesture));
+
+        // 2. Motion Controller for pointer drag/movement
+        GtkEventController *motion_controller = gtk_event_controller_motion_new();
+        g_signal_connect(motion_controller, "motion", G_CALLBACK(on_glarea_motion_cb), this);
+        gtk_widget_add_controller(glarea, motion_controller);
+
+        // 3. Scroll Controller for mouse wheel events
+        GtkEventController *scroll_controller = gtk_event_controller_scroll_new(GTK_EVENT_CONTROLLER_SCROLL_VERTICAL);
+        g_signal_connect(scroll_controller, "scroll", G_CALLBACK(on_glarea_scroll_cb), this);
+        gtk_widget_add_controller(glarea, scroll_controller);
+
+        
+        
         
         g_signal_connect (G_OBJECT (glarea), "realize",
                           G_CALLBACK (realize_event_cb), vdata);
@@ -400,6 +420,115 @@ gint V3dControl::glarea_event_cb(GtkWidget *glarea, GdkEvent *event, V3dControl 
 	return 0;
 }
 #endif
+
+
+// --- MOUSE BUTTON PRESS ---
+void V3dControl::on_glarea_pressed_cb(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y, gpointer user_data) {
+    V3dControl *vc = static_cast<V3dControl*>(user_data);
+    GtkWidget *glarea = gtk_event_controller_get_widget(GTK_EVENT_CONTROLLER(gesture));
+    Surf3d *vdata = static_cast<Surf3d*>(g_object_get_data(G_OBJECT(glarea), "vdata"));
+    
+    guint button = gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture));
+    
+    vc->mouse_x = x;
+    vc->mouse_y = y;
+    XSM_DEBUG(DBG_L2, "V3dControl mouse press: " << x << ", " << y);
+
+    if (vdata && (button == 1 || button == 2 || button == 3)) {
+        vdata->MouseControl('i', x, y); // Init position
+        vc->dragging = true;
+    }
+}
+
+// --- MOUSE BUTTON RELEASE ---
+void V3dControl::on_glarea_released_cb(GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y, gpointer user_data) {
+    V3dControl *vc = static_cast<V3dControl*>(user_data);
+    GtkWidget *glarea = gtk_event_controller_get_widget(GTK_EVENT_CONTROLLER(gesture));
+    Surf3d *vdata = static_cast<Surf3d*>(g_object_get_data(G_OBJECT(glarea), "vdata"));
+    
+    guint button = gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture));
+    
+    vc->mouse_x = x;
+    vc->mouse_y = y;
+    vc->dragging = false;
+
+    if (!vdata) return;
+
+    switch (button) {
+        case 1: vdata->MouseControl('r', x, y); break; // Set current as new reference
+        case 2: vdata->MouseControl('t', x, y); break;
+        case 3: vdata->MouseControl('m', x, y); break;
+    }
+}
+
+// --- MOUSE MOTION / DRAG ---
+void V3dControl::on_glarea_motion_cb(GtkEventControllerMotion *controller, gdouble x, gdouble y, gpointer user_data) {
+    V3dControl *vc = static_cast<V3dControl*>(user_data);
+    GtkWidget *glarea = gtk_event_controller_get_widget(GTK_EVENT_CONTROLLER(controller));
+    Surf3d *vdata = static_cast<Surf3d*>(g_object_get_data(G_OBJECT(glarea), "vdata"));
+    
+    vc->mouse_x = x;
+    vc->mouse_y = y;
+
+    if (vc->dragging && vdata) {
+        // Query modifiers currently held down during motion
+        GdkModifierType state = gtk_event_controller_get_current_event_state(GTK_EVENT_CONTROLLER(controller));
+        
+        if (state & GDK_BUTTON1_MASK) {
+            vdata->MouseControl('R', x, y);
+            gtk_gl_area_queue_render(GTK_GL_AREA(glarea));
+        }
+        else if (state & GDK_BUTTON2_MASK) {
+            vdata->MouseControl('T', x, y);
+            gtk_gl_area_queue_render(GTK_GL_AREA(glarea));
+        }
+        else if (state & GDK_BUTTON3_MASK) {
+            vdata->MouseControl('M', x, y);
+            gtk_gl_area_queue_render(GTK_GL_AREA(glarea));
+        }
+    }
+}
+
+// --- SCROLL WHEEL ---
+gboolean V3dControl::on_glarea_scroll_cb(GtkEventControllerScroll *controller, gdouble dx, gdouble dy, gpointer user_data) {
+    V3dControl *vc = static_cast<V3dControl*>(user_data);
+    GtkWidget *glarea = gtk_event_controller_get_widget(GTK_EVENT_CONTROLLER(controller));
+    Surf3d *vdata = static_cast<Surf3d*>(g_object_get_data(G_OBJECT(glarea), "vdata"));
+    
+    if (!vdata) return FALSE;
+
+    GdkModifierType state = gtk_event_controller_get_current_event_state(GTK_EVENT_CONTROLLER(controller));
+
+    // dy > 0 means scrolling down/towards user, dy < 0 means scrolling up/away from user
+    if (dy < 0) { // Scroll Up
+        g_message("Scroll-Up");
+        if (state & GDK_CONTROL_MASK)
+            vdata->HeightSkl(0.01);
+        else if (state & GDK_SHIFT_MASK)
+            vdata->MouseControl('Z', 1.0, 0.0);
+        else
+            vdata->MouseControl('Z', 0.0, 1.0);
+        
+        gtk_gl_area_queue_render(GTK_GL_AREA(glarea));
+    } 
+    else if (dy > 0) { // Scroll Down
+        g_message("Scroll-Dn");
+        if (state & GDK_CONTROL_MASK)
+            vdata->HeightSkl(-0.01);
+        else if (state & GDK_SHIFT_MASK)
+            vdata->MouseControl('Z', -1.0, 0.0);
+        else
+            vdata->MouseControl('Z', 0.0, -1.0);
+        
+        gtk_gl_area_queue_render(GTK_GL_AREA(glarea));
+    }
+    
+    return TRUE; // Stop event propagation
+}
+
+
+
+
 
 void V3dControl::Activate_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){
         V3dControl *vc = (V3dControl *) user_data;

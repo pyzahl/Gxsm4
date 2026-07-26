@@ -174,7 +174,6 @@ SOURCE_SIGNAL_DEF modulation_targets[] = {
         { 0x00000005, "A",           " ", "V",             "V", 1., 0, 0 },
         { 0x00000006, "B",           " ", "V",             "V", 1., 0, 0 },
         { 0x00000007, "Bias-Aref",   " ", "mV",           "mV", 1e-3/BiasFac, 0, 0 },
-        { 0x00000008, "Filter-Test", " ", "mV",           "mV", 1., 0, 0 },
         { 0x00000016,  NULL, NULL, NULL, NULL, 0.0, 0 }
 };
 

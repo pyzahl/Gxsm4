@@ -1319,13 +1319,16 @@ void gnome_res_run_change_user_config (GnomeResPreferences *self, const gchar *d
                                                     _("_Cancel"), GTK_RESPONSE_CANCEL,
                                                     NULL);
         
-        gtk_window_get_resizable (GTK_WINDOW (self->dialog));
-        
+        //gtk_window_get_resizable (GTK_WINDOW (self->dialog));
+        gtk_window_set_resizable (GTK_WINDOW(self->dialog), TRUE);
+                
         gtk_widget_set_size_request  (self->dialog, PREF_CONFDLG_XSIZE, self->height);
         
         notebook = gtk_notebook_new ();
         gtk_notebook_set_scrollable (GTK_NOTEBOOK (notebook), TRUE);
-
+        gtk_widget_set_hexpand(GTK_WIDGET(notebook), TRUE);
+        gtk_widget_set_vexpand(GTK_WIDGET(notebook), TRUE);
+        
         gtk_box_append (GTK_BOX ( gtk_dialog_get_content_area (GTK_DIALOG (self->dialog))), notebook);
         
         for (res = self->res_def, pageno=0; res->type != GNOME_RES_LAST; ++pageno){
