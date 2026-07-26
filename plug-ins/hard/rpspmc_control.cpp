@@ -1617,6 +1617,14 @@ void RPSPMC_Control::create_folder (){
 
         LCK_unit = new UnitAutoMag ("V","V");
         LCK_unit->add_ref ();
+
+        for (int j=0; j<2; ++j){
+                LCK_ReadingXY[j] = gtk_entry_new();
+                bp->grid_add_widget (LCK_ReadingXY[j]);
+                gtk_widget_set_sensitive (LCK_ReadingXY[j], FALSE);
+                gtk_editable_set_editable (GTK_EDITABLE (LCK_ReadingXY[j]), FALSE);
+        }
+        bp->new_line ();
         // direct Magnitude Monitor
         bp->grid_add_ec ("Magnitude Reading", LCK_unit, &spmc_parameters.lck1_bq2_mag_monitor, -10.0, 10.0, ".03g", 0.1, 1., "LCK-MAG-MONITOR");
         // currently computed at RP level
@@ -1671,6 +1679,7 @@ void RPSPMC_Control::create_folder (){
                 g_free (lab);
                 g_free (id);
                 LCK_VolumeEntry[jj]=bp->input;
+                LCK_VolumeLabel[jj]=bp->label;
                 gtk_widget_set_sensitive (bp->input, false);
         }
 
@@ -2781,17 +2790,17 @@ void RPSPMC_Control::Init_SPMC_on_connect (){
 void RPSPMC_Control::Init_SPMC_after_cold_start (){
         // init filter sections
         if (rpspmc_pacpll && rpspmc_hwi){
-                gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterS1_widget), 0);
+                gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterS1_widget), 1);
                 rpspmc_hwi->status_append (" * INIT-BQS1...\n"); for (int i=0; i<10; ++i){ while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE); usleep(20000); }
-                gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterS1_widget), 3);
+                gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterS1_widget), 1);
                 rpspmc_hwi->status_append (" * INIT-BQS1 to AB.\n"); for (int i=0; i<10; ++i){ while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE); usleep(20000); }
-                gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterS2_widget), 0);
+                gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterS2_widget), 3);
                 rpspmc_hwi->status_append (" * INIT-BQS2...\n"); for (int i=0; i<10; ++i){ while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE); usleep(20000); }
                 gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterS2_widget), 3);
                 rpspmc_hwi->status_append (" * INIT-BQS2 to AB.\n"); for (int i=0; i<10; ++i){ while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE); usleep(20000); }
-                gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterZS_widget), 0);
+                gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterZS_widget), 3);
                 rpspmc_hwi->status_append (" * INIT-BQZS...\n"); for (int i=0; i<10; ++i){ while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE); usleep(20000); }
-                gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterZS_widget), 5);
+                gtk_combo_box_set_active (GTK_COMBO_BOX (update_bq_filterZS_widget), 3);
                 rpspmc_hwi->status_append (" * INIT-BQZS to ByPass.\n"); for (int i=0; i<10; ++i){ while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE); usleep(20000); }
         }
 }
@@ -3893,8 +3902,17 @@ int RPSPMC_Control::choice_mod_target_callback (GtkWidget *widget, RPSPMC_Contro
 
 	self->LCK_Target = gtk_combo_box_get_active (GTK_COMBO_BOX (widget));
         
-        for (int jj=1; modulation_targets[jj].label && jj < LCK_NUM_TARGETS; ++jj) //  ** omit last!
+        for (int jj=1; modulation_targets[jj].label && jj < LCK_NUM_TARGETS; ++jj){ //  ** omit last!
                 gtk_widget_set_sensitive (self->LCK_VolumeEntry[jj], jj == self->LCK_Target);
+                if (jj == self->LCK_Target){
+                        gtk_widget_show (self->LCK_VolumeEntry[jj]);
+                        gtk_widget_show (self->LCK_VolumeLabel[jj]);
+                }
+                else{
+                        gtk_widget_hide (self->LCK_VolumeEntry[jj]);
+                        gtk_widget_hide (self->LCK_VolumeLabel[jj]);
+                }
+        }
         
         if (rpspmc_pacpll){
                 PI_DEBUG_GP (DBG_L1, "Setting LCK TARGET: %d", self->LCK_Target);
@@ -4036,11 +4054,10 @@ void RPSPMC_Control::on_new_data (){
                                 (GFunc) App::update_ec, NULL);
 
         gchar *tmpx,*tmpy;
-        gchar *tmp = g_strdup_printf (" (%s, %s)",
-                                      tmpx=LCK_unit->UsrString(spmc_parameters.lck1_X_monitor),
-                                      tmpy=LCK_unit->UsrString(spmc_parameters.lck1_Y_monitor));
-        LCK_Reading->set_info (tmp);
-        g_free (tmp);
+        tmpx=LCK_unit->UsrString(spmc_parameters.lck1_X_monitor);
+        tmpy=LCK_unit->UsrString(spmc_parameters.lck1_Y_monitor);
+        gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (LCK_ReadingXY[0]))), tmpx, -1);
+        gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (LCK_ReadingXY[1]))), tmpy, -1);
         g_free (tmpx);
         g_free (tmpy);
         

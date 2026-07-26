@@ -815,10 +815,12 @@ public:
         int LCK_Target;
 	double    LCK_Volume[LCK_NUM_TARGETS];
         GtkWidget *LCK_VolumeEntry[LCK_NUM_TARGETS];
+        GtkWidget *LCK_VolumeLabel[LCK_NUM_TARGETS];
         Param_Control *LCK_ModFrq;
         Param_Control *LCK_Phase;
         Param_Control *LCK_Sens;
         Param_Control *LCK_Reading;
+        GtkWidget *LCK_ReadingXY[2];
         double lck_gain;
         double lck_reading_w_gain;
         
