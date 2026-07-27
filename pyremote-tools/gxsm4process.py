@@ -88,6 +88,8 @@ class gxsm_process():
                 self.rpspmc = {
                         'bias':    0.0,    # Volts
                         'current': 0.0, # nA
+                        'htd_am': 0.0,
+                        'htd_fm': 0.0,
                         'gvp' :    { 'x':0.0, 'y':0.0, 'z': 0.0, 'u': 0.0, 'a': 0.0, 'b': 0.0, 'am':0.0, 'fm':0.0 },
                         'pac' :    { 'dds_freq': 0.0, 'ampl': 0.0, 'exec':0.0, 'phase': 0.0, 'freq': 0.0, 'dfreq': 0.0, 'dfreq_ctrl': 0.0 },
                         'zservo':  { 'mode': 0.0, 'setpoint': 0.0, 'cp': 0.0, 'ci': 0.0, 'cp_db': 0.0, 'ci_db': 0.0, 'upper': 0.0, 'lower': 0.0, 'setpoint_cz': 0.0, 'level': 0.0, 'in_offcomp': 0.0, 'src_mux': 0.0 }, # RPSPMC Units (i.e. Volt)
@@ -700,6 +702,8 @@ class gxsm_process():
                         self.debug_print (1, self.XYZ_monitor)
 
                         self.rpspmc['bias']         = float(gxsm_shares[10])
+                        self.rpspmc['htd_am']       = float(gxsm_shares[11])
+                        self.rpspmc['htd_fm']       = float(gxsm_shares[12])
                         self.rpspmc['current']      = float(gxsm_shares[19])
                         self.rpspmc['gvp']['u']     = float(gxsm_shares[13])
                         self.rpspmc['pac']['ampl']  = float(gxsm_shares[44])

@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 import sys
 import time
 
@@ -8,6 +9,55 @@ import time
 import gxsm4process as gxsm4
 
 gxsm = gxsm4.gxsm_process(2)
+
+def plot_life():
+    f0 = 28524.000 # Hz
+
+    f20 = 168000.0 # 181800.0
+    spn = 100.0
+    num = 600
+    
+    fig, ax = plt.subplots()
+    x = np.linspace(f20-spn/2, f20+spn/2, num)
+    am = np.zeros(num)
+    ph = np.zeros(num)
+    am_line, = ax.plot([], [], lw=2)
+    ph_line, = ax.plot([], [], lw=2)
+
+    ax.set_xlim(f20-spn/2, f20+spn/2)
+    ax.set_ylim(-180, 1000.)
+    ax.set_title("Heterodyne KPFM Tune&Expore")
+    ax.set_xlabel("HTD: F2-F0 in Hz")
+    ax.set_ylabel("Am,Ph")
+
+    # 3. Initialization function: sets up the background of each frame
+    def init():
+        am_line.set_data(x, am)
+        ph_line.set_data(x, ph)
+        return am_line, ph_line
+
+    # 4. Animation function: called sequentially to update data
+    def update(frame):
+        # Shift the sine wave slightly based on the current frame index
+        #gxsm.read_status()
+        #am[frame] = gxsm.rpspmc['htd_am']
+        am[frame] = float(gxsm.get('rp-pacpll-HTD-AMPL-MONITOR'))
+        ph[frame] = float(gxsm.get('rp-pacpll-HTD-PHASE-MONITOR'))
+        print (frame, am[frame], ph[frame])
+        gxsm.set('rp-pacpll-HTD-FREQ', f20-spn/2+spn*frame/num)
+        am_line.set_data(x, am)
+        ph_line.set_data(x, ph)
+        return am_line, ph_line
+
+    # 5. Create the animation object
+    # frames=100 defines the length, interval=20 sets the speed (in milliseconds)
+    # blit=True optimizes rendering by only redrawing parts that have changed
+    ani = FuncAnimation(fig, update, init_func=init, frames=num, interval=20, blit=True)
+
+    # 6. Display the animated plot window
+    plt.show()
+
+
 
 def fetch_vpdata_analysis(verbose=True, plot=False, start_idx=600, end_idx=1600):
     """
@@ -109,79 +159,36 @@ def fetch_vpdata_analysis(verbose=True, plot=False, start_idx=600, end_idx=1600)
 
 
 if __name__ == '__main__':
-    # Fetch and analyze data
-    data = fetch_vpdata_analysis(verbose=True, plot=False)
+
+    plot_life()
     
-    if data:
-        print("\n" + "="*60)
-        print("DATA AVAILABLE FOR ANALYSIS")
-        print("="*60)
-        
-        # Example analysis - you can customize this
-        vpdata = data['vpdata']
-        vpunits = data['vpunits']
-        labels = data['labels']
-        
-        print("\nQuick Statistics:")
-        for label in labels:
-            arr = vpdata[label]
-            print(f"{label:15s}: min={arr.min():12.6f}, max={arr.max():12.6f}, "
-                  f"mean={arr.mean():12.6f}, std={arr.std():12.6f} [{vpunits[label]}]")
-        
-        print("\n" + "="*60)
-        print("Accessing data from Python:")
-        print("  data['vpdata']['Current']  -> numpy array of current values")
-        print("  data['vpunits']['Current'] -> units string")
-        print("  data['xy']                 -> position [x, y, ix, iy]")
-        print("  data['columns']            -> raw array (all points)")
-        print("="*60)
+    # Fetch and analyze data
+    if 0:
+        data = fetch_vpdata_analysis(verbose=True, plot=False)
+    
+        if data:
+            print("\n" + "="*60)
+            print("DATA AVAILABLE FOR ANALYSIS")
+            print("="*60)
+
+            # Example analysis - you can customize this
+            vpdata = data['vpdata']
+            vpunits = data['vpunits']
+            labels = data['labels']
+
+            print("\nQuick Statistics:")
+            for label in labels:
+                arr = vpdata[label]
+                print(f"{label:15s}: min={arr.min():12.6f}, max={arr.max():12.6f}, "
+                      f"mean={arr.mean():12.6f}, std={arr.std():12.6f} [{vpunits[label]}]")
+
+            print("\n" + "="*60)
+            print("Accessing data from Python:")
+            print("  data['vpdata']['Current']  -> numpy array of current values")
+            print("  data['vpunits']['Current'] -> units string")
+            print("  data['xy']                 -> position [x, y, ix, iy]")
+            print("  data['columns']            -> raw array (all points)")
+            print("="*60)
 
 
-
-if 0:
-
-    #gxsm.action('DSP_VP_VP_EXECUTE')
-
-    # wait to complete
-    #time.sleep(4) 
-
-    ch = 0
-    # fetch vpdata of last probe -- if exists, else error
-    print ('*** Getting last vpdata set from master scan in ch=',ch)
-    print( gxsm.get_probe_event(ch,-1) )  # ch=1, -1: get last VPdata set
-    columns, labels, units, xy = gxsm.get_probe_event(ch,-1)  # ch=1, get last VPdata set
-    # zip together for convenient data access
-    #vpdata  = dict (zip (labels, columns[:,600:1600])) ## cut off points 0..100 (initial ramp points)
-    vpdata  = dict (zip (labels, columns)) ## cut off points 0..100 (initial ramp points)
-    vpunits = dict (zip (labels, units))
-
-    # we got:
-    print ('VP Data     @XY:', xy)
-    print ('VP Units[Sets] :', vpunits)
-    print ('Set Size       :', vpdata[labels[0]].shape)
-    #print ('VPData         :', vpdata)
-
-    #VP Units[Sets] : {'ZS-Topo': 'Å', 'Current': 'nA', 'dFrequency': 'Hz', 'Time-Mon': 'ms'}
-
-    # setup what to print
-    x='Zmon'
-    #x='Time'
-    #x='ZS-Topo'
-    #y='dFrequency'
-    #y='Current'
-    y='McBSP_Freq'
-
-    # Create VPDATA plot
-    plt.figure(figsize=(6, 4))
-    plt.title('VP-Data Plot')
-    plt.plot (vpdata[x], vpdata[y], '-', alpha=0.8, label=y)
-    plt.xlabel('{} in {}'.format(x, vpunits[x]))
-    plt.ylabel('{} in {}'.format(y, vpunits[y]))
-
-    #plt.ylim (-1, 1)
-    #plt.xlim (-0.1, 0.2)
-    plt.legend()
-    plt.grid()
-    plt.show()
-    #plt.savefig('/tmp/vpdata-plot-demo.png')
 

@@ -17,13 +17,13 @@ freq_lck = float(gxsm.get("dsp-SPMC-LCK-FREQ"))
 fc  = 1*freq_lck # Hz Magnitude Low Pass IIR BQ 4th
 fhp = 0.5*freq_lck # Hz Signal Input High Pass IIR 1st dec (fixed) + BQ2nd
 
-fc  = 1e3/(50)  # ms -- Magnitude Low Pass IIR BQ 4th
+fc  = 1e3/(20)  # ms -- Magnitude Low Pass IIR BQ 4th
 fhp = 1e3/(100) # ms -- Hz Signal Input High Pass IIR 1st dec (fixed) + BQ2nd
 
 
 # Ellip filter characteristics
-stop_attn_db = 40
-ripple_db = 1
+stop_attn_db = 30
+ripple_db = 1	
 
 
 # ******** Lck Settings internal
