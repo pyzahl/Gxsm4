@@ -254,15 +254,16 @@ GtkWidget* GUI_Builder::grid_add_modulation_target_options (gint channel, gint p
                 gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, modulation_targets[jj].label); g_free (id);
         }
 
+        g_signal_connect (G_OBJECT (cbtxt), "changed",	
+                          G_CALLBACK (RPSPMC_Control::choice_mod_target_callback), 
+                          ref);				
+        grid_add_widget (cbtxt);
+
         if (preset >= 0)
                 gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), preset); 
         else
                 gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), 4); // NULL SIGNAL [TESTING FALLBACK for -1/error]
                 
-        g_signal_connect (G_OBJECT (cbtxt), "changed",	
-                          G_CALLBACK (RPSPMC_Control::choice_mod_target_callback), 
-                          ref);				
-        grid_add_widget (cbtxt);
         return cbtxt;
 };
 
