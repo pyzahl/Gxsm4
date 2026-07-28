@@ -820,7 +820,7 @@ public:
         Param_Control *LCK_Phase;
         Param_Control *LCK_Sens;
         Param_Control *LCK_Reading;
-        GtkWidget *LCK_ReadingXY[2];
+        Param_Control *LCK_ReadingXY[2];
         double lck_gain;
         double lck_reading_w_gain;
         

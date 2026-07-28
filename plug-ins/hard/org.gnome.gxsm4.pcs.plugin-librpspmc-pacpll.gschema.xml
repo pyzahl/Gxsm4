@@ -606,6 +606,18 @@
       <description>pcs0000, PCS Remote-ID: 'dsp-LCK-MAG-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-LCK-MAG-MONITOR' </description>
     </key>
 
+    <key name="dsp-lck-x-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-LCK-X-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-LCK-X-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-LCK-X-MONITOR' </description>
+    </key>
+
+    <key name="dsp-lck-y-monitor" type="d">
+      <default>0</default>
+      <summary>PCS Remote-ID: 'dsp-LCK-Y-MONITOR', Default/U: 0 V     </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-LCK-Y-MONITOR', Default/U: 0 V    , Adjustment PCS Name: 'dsp-LCK-Y-MONITOR' </description>
+    </key>
+
     <key name="dsp-lck-ph-monitor" type="d">
       <default>0</default>
       <summary>PCS Remote-ID: 'dsp-LCK-PH-MONITOR', Default/U: 0 V     </summary>

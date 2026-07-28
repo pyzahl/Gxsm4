@@ -1614,20 +1614,26 @@ void RPSPMC_Control::create_folder (){
         bp->start_notebook_tab (notebook, "Lock-In", "rpspmc-tab-lockin", hwi_settings);
 
         bp->set_default_ec_change_notice_fkt (RPSPMC_Control::lockin_adjust_callback, this);
- 	bp->new_grid_with_frame ("Lock-In Control and Routing");
+ 	bp->new_grid_with_frame ("Lock-In Readings and Setup");
 
         LCK_unit = new UnitAutoMag ("V","V");
         LCK_unit->add_ref ();
 
-        for (int j=0; j<2; ++j){
-                LCK_ReadingXY[j] = gtk_entry_new();
-                bp->grid_add_widget (LCK_ReadingXY[j]);
-                gtk_widget_set_sensitive (LCK_ReadingXY[j], FALSE);
-                gtk_editable_set_editable (GTK_EDITABLE (LCK_ReadingXY[j]), FALSE);
-        }
         bp->new_line ();
-        // direct Magnitude Monitor
-        bp->grid_add_ec ("Magnitude Reading", LCK_unit, &spmc_parameters.lck1_bq2_mag_monitor, -10.0, 10.0, ".03g", 0.1, 1., "LCK-MAG-MONITOR");
+        // XY Monitor
+        bp->grid_add_ec ("X", LCK_unit, &spmc_parameters.lck1_X_monitor, -10.0, 10.0, ".03g", 0.1, 1., "LCK-X-MONITOR");
+        LCK_ReadingXY[0] = bp->ec;
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->new_line ();
+
+        bp->grid_add_ec ("Y", LCK_unit, &spmc_parameters.lck1_Y_monitor, -10.0, 10.0, ".03g", 0.1, 1., "LCK-Y-MONITOR");
+        LCK_ReadingXY[1] = bp->ec;
+        EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
+        bp->ec->Freeze ();
+        bp->new_line ();
+        // Magnitude Monitor
+        bp->grid_add_ec ("Magnitude", LCK_unit, &spmc_parameters.lck1_bq2_mag_monitor, -10.0, 10.0, ".03g", 0.1, 1., "LCK-MAG-MONITOR");
         // currently computed at RP level
         //bp->grid_add_ec ("Magnitude Reading", LCK_unit, &lck_reading_w_gain, -10.0, 10.0, ".03g", 0.1, 1., "LCK-MAG-MONITOR");
         LCK_Reading = bp->ec;
@@ -1635,7 +1641,7 @@ void RPSPMC_Control::create_folder (){
         bp->ec->Freeze ();
         bp->new_line ();
 
-        bp->grid_add_ec ("Phase Reading", Deg, &spmc_parameters.lck1_bq2_ph_monitor, -180.0, 180.0, ".03g", 0.1, 1., "LCK-PH-MONITOR");
+        bp->grid_add_ec ("Phase", Deg, &spmc_parameters.lck1_bq2_ph_monitor, -180.0, 180.0, ".03g", 0.1, 1., "LCK-PH-MONITOR");
         EC_MONITORS_list = g_slist_prepend( EC_MONITORS_list, bp->ec);
         bp->ec->Freeze ();
         bp->new_line ();
@@ -1663,11 +1669,11 @@ void RPSPMC_Control::create_folder (){
         bp->ec->Freeze ();
         bp->new_line ();
 
-	bp->grid_add_ec ("Modulation Frequency", new UnitObj("Hz","Hz"), &spmc_parameters.lck_frequency, 0.0, 10e6, "5g", 1.0, 100.0, "SPMC-LCK-FREQ");
+	bp->grid_add_ec ("Ref. Frequency", new UnitObj("Hz","Hz"), &spmc_parameters.lck_frequency, 0.0, 10e6, "5g", 1.0, 100.0, "SPMC-LCK-FREQ");
         LCK_ModFrq = bp->ec;
         
         bp->new_line ();
-        bp->grid_add_label ("Modulation on");
+        bp->grid_add_label ("Modulate");
         bp->grid_add_modulation_target_options (0, (int)spmc_parameters.lck_target, this);
 
         LCK_Volume[0]=0.0; // #0 is not used
@@ -1714,8 +1720,8 @@ void RPSPMC_Control::create_folder (){
 
         bp->grid_add_label ("Filter type");
 
-        const gchar *filter_types[] = { "Pass", "AB", "Stop", "By-Pass", "Disable",
-                                        "RFTest-Pass", "RFTest-AB", "RFTest-Stop", "RFTest-By-Pass", "RFTest-Disable",
+        const gchar *filter_types[] = { "Pass", "BiQuad-AB", "Stop", "By-Pass", "Disable",
+                                        "RFTest-Pass", "RFTest-BiQ-AB", "RFTest-Stop", "RFTest-By-Pass", "RFTest-Disable",
                                         NULL };
 
         GtkWidget *combo_bqfilter_type = gtk_combo_box_text_new ();
@@ -4054,14 +4060,6 @@ void RPSPMC_Control::on_new_data (){
                 g_slist_foreach((GSList*)g_object_get_data( G_OBJECT (window), "SPMC_MONITORS_list"),
                                 (GFunc) App::update_ec, NULL);
 
-        gchar *tmpx,*tmpy;
-        tmpx=LCK_unit->UsrString(spmc_parameters.lck1_X_monitor);
-        tmpy=LCK_unit->UsrString(spmc_parameters.lck1_Y_monitor);
-        gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (LCK_ReadingXY[0]))), tmpx, -1);
-        gtk_entry_buffer_set_text (GTK_ENTRY_BUFFER (gtk_entry_get_buffer (GTK_ENTRY (LCK_ReadingXY[1]))), tmpy, -1);
-        g_free (tmpx);
-        g_free (tmpy);
-        
         update_zpos_readings();
 }
 
