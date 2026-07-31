@@ -249,14 +249,10 @@ GtkWidget* GUI_Builder::grid_add_modulation_target_options (gint channel, gint p
         gtk_widget_set_size_request (cbtxt, 50, -1); 
         g_object_set_data(G_OBJECT (cbtxt), "mod_channel", GINT_TO_POINTER (channel)); 
 
-
         for (int jj=0;  modulation_targets[jj].label; ++jj){
                 gchar *id = g_strdup_printf ("%d", jj); gtk_combo_box_text_append (GTK_COMBO_BOX_TEXT (cbtxt), id, modulation_targets[jj].label); g_free (id);
         }
 
-        g_signal_connect (G_OBJECT (cbtxt), "changed",	
-                          G_CALLBACK (RPSPMC_Control::choice_mod_target_callback), 
-                          ref);				
         grid_add_widget (cbtxt);
 
         if (preset >= 0)
@@ -264,6 +260,12 @@ GtkWidget* GUI_Builder::grid_add_modulation_target_options (gint channel, gint p
         else
                 gtk_combo_box_set_active (GTK_COMBO_BOX (cbtxt), 4); // NULL SIGNAL [TESTING FALLBACK for -1/error]
                 
+
+        g_signal_connect (G_OBJECT (cbtxt), "changed",	
+                          G_CALLBACK (RPSPMC_Control::choice_mod_target_callback), 
+                          ref);				
+
+
         return cbtxt;
 };
 
@@ -610,6 +612,13 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
         double *GVPd[] = { GVP_du, GVP_dx, GVP_dy, GVP_dz, GVP_da, GVP_db, GVP_dam, GVP_dfm, GVP_ts, NULL };
         gint32 *GVPi[] = { GVP_points, GVP_opt, GVP_vnrep, GVP_vpcjr, NULL };
         gint32 vp_program_length=0;
+
+
+        while (g_main_context_pending (NULL)){
+                g_message (" RPSPMC_Control::GVP_restore_vp -- waiting for SPM Control window ready.");
+                g_main_context_iteration (NULL, FALSE);
+        }
+
         
         for (int i=0; vckey_i[i]; ++i){
                 gchar *m_vckey = g_strdup_printf ("%s-%s", vckey_i[i], key);
@@ -679,13 +688,15 @@ void RPSPMC_Control::GVP_restore_vp (const gchar *key){
 
         Source = GVP_glock_data[0]; XSource = GVP_glock_data[1]; PSource = GVP_glock_data[2]; XJoin = GVP_glock_data[3]; PlotAvg = GVP_glock_data[4];  PlotSec = GVP_glock_data[5];
         // update Graphs
-        for (int i=0; graphs_matrix[0][i]; ++i)
+        for (int i=0; i < 32 && graphs_matrix[0][i]; ++i)
                 if (graphs_matrix[0][i]){
+                        g_message ("Restore Graphs [%d]", i);
                         gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[0][i]),  Source & rpspmc_source_signals[i].mask?true:false);
                         gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[1][i]), XSource & rpspmc_source_signals[i].mask?true:false);
                         gtk_check_button_set_active (GTK_CHECK_BUTTON (graphs_matrix[2][i]), PSource & rpspmc_source_signals[i].mask?true:false);
                         // ..
                  }
+                else g_message ("Not available/valid ** Restore Graphs [%d]", i);
 
 
         
@@ -2481,7 +2492,6 @@ void RPSPMC_Control::create_folder (){
         gint y = bp->y;
         gint mm=0;
 
-        for (int i=0; i<32; ++i) for (int j=0; j<5; ++j) graphs_matrix[j][i]=NULL;
         restore_graphs_values ();
 
         int ii=0;

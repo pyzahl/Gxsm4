@@ -1,7 +1,6 @@
 <schemalist>
   <schema id="org.gnome.gxsm4.pcsadjustments.plugin-librpspmc-pacpll" path="/org/gnome/gxsm4/pcsadjustments/plugin-librpspmc-rpspmc-pacpll/">
 
-
     <key name="rp-pacpll-dc-offset" type="ad">
       <default>[1000, -1000, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'rpspmc-dc-offset' </summary>
@@ -348,7 +347,6 @@
       <description>Configuration for GXSM Entry with ID 'rpspmc-dfreq-control-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-
     <key name="rp-pacpll-htd-phase-monitor" type="ad">
       <default>[180, -180, 1e+111, -1e+111, 1e+111, 1e+111, 1, 10, 100, 0,  0, 0      ]      </default>
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive/Adj-mode, 0,0] for 'rp-pacpll-htd-phase-monitor' </summary>
@@ -408,9 +406,6 @@
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive/Adj-mode, 0,0] for 'rp-pacpll-htd-kv-monitor' </summary>
       <description>Configuration for GXSM Entry with ID 'rp-pacpll-htd-kv-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
-    
-
-    
     
     <key name="rp-pacpll-scope-width" type="ad">
       <default>[4096, 128, 1e+111, -1e+111, 1e+111, 1e+111, 1, 1, 10, 0,  0, 0      ]      </default>
@@ -671,8 +666,6 @@
       <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-iv-recover-delay' </summary>
       <description>Configuration for GXSM Entry with ID 'dsp-iv-recover-delay'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
-
-
     
     <key name="dsp-fbs-scan-ldc-dx" type="ad">
       <default>[100, -100, 1e+111, -1e+111, 1e+111, 1e+111, 0.001, 0.01, 0.1, 0,  0, 0      ]      </default>
@@ -705,17 +698,6 @@
       <description>Configuration for GXSM Entry with ID 'dsp-lck-y-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
     </key>
 
-    <key name="dsp-lck-x-monitor" type="ad">
-      <default>[10, -10, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
-      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-x-monitor' </summary>
-      <description>Configuration for GXSM Entry with ID 'dsp-lck-x-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
-    </key>
-
-    <key name="dsp-lck-y-monitor" type="ad">
-      <default>[10, -10, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>
-      <summary>Array of [Adjustments Absolute Limits: Max, -Min,  Warning Bounds: Max, -Min,  Exclude Range: Lo, -Hi, Spin: Step, Page, Page10, Progressive-mode, 0,0] for 'dsp-lck-y-monitor' </summary>
-      <description>Configuration for GXSM Entry with ID 'dsp-lck-y-monitor'. Setup of Min/Max Range (warnign: not checked for validity), Warning Bonds, Exclude Range and Spin Step/Page behavior. </description>
-    </key>
 
     <key name="dsp-lck-mag-monitor" type="ad">
       <default>[10, -10, 1e+111, -1e+111, 1e+111, 1e+111, 0.1, 1, 10, 0,  0, 0      ]      </default>

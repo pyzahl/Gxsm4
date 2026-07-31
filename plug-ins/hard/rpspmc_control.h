@@ -171,6 +171,10 @@ public:
                 zpos_ref = 0;
                 zpos_mon = 0;
 
+                for (int i=0; i<32; ++i)
+                        for (int j=0; j<5; ++j)
+                                graphs_matrix[j][i]=NULL;
+
                 for (int i=0; i<6; ++i){
                         scan_source[i]  = i;
                         probe_source[i] = i;
@@ -326,8 +330,10 @@ public:
                 DSP_vpdata_ij[1]=0;
 
                 memset (&program_vector, 0, sizeof(program_vector));
-
+                
+                g_message ("RPSPMC_Control::RPSPMC_Control ** Building Control Window ** ");
                 create_folder ();
+                g_message ("RPSPMC_Control::RPSPMC_Control ** Building Control Window ** DONE ");
         };
 	virtual ~RPSPMC_Control() {
                 delete Unity;
