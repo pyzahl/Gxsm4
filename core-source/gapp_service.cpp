@@ -743,7 +743,7 @@ void AppBase::AppWindowInit(const gchar *title, const gchar *sub_title){
 	g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
         gtk_window_set_child (GTK_WINDOW (window), v_grid);
 
-        //gtk_window_present(GTK_WINDOW(window));
+        gtk_window_present(GTK_WINDOW(window));
 }
 
 gboolean AppBase::window_close_callback (GtkWidget *widget, AppBase *self){
@@ -756,7 +756,7 @@ gboolean AppBase::window_close_callback (GtkWidget *widget, AppBase *self){
 void AppBase::window_action_callback (GSimpleAction *simple, GVariant *parameter, gpointer user_data){
         AppBase *app_w = (AppBase *)user_data;
         XSM_DEBUG_GM (DBG_L1, "AppBase::window_action_callback");
-        //app_w->show ();
+        app_w->show ();
 }
 
 GMenuModel *AppBase::find_extension_point_section (GMenuModel  *model,
@@ -924,6 +924,7 @@ void AppBase::hide (){
 void AppBase::show (){
 	XSM_DEBUG_GM (DBG_L2, "AppBase::show ****** Show Window ** %s **", window_key );
         if (window) {
+                gtk_window_present(GTK_WINDOW(window));
                 gtk_widget_show (GTK_WIDGET (window));
         } else
                 XSM_DEBUG_GM (DBG_L2, "AppBase::show WINDOW INVALID ** %s **", window_key );
