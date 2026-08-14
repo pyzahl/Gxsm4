@@ -113,6 +113,74 @@ gpointer FifoReadThread3 (void *ptr_sr);
 gpointer ProbeFifoReadThread3 (void *ptr_sr);
 gpointer ProbeFifoReadFunction3 (void *ptr_sr, int dspdev);
 
+// must be out of .h sranger_mk23common_hwi.h
+
+void sranger_common_hwi_dev::hwi_init_overrides(){
+
+        // define and add hardware data sources
+        SOURCE_SIGNAL_DEF SRA810_source_signals[] = {
+                { 0x00000001, "ZS-Topo",      " ", "AA", UTF8_ANGSTROEM, 1.0, 1,  1 },
+                { 0x00000002, "Mix1",         " ",  "V",            "V", 1.0, 2,  2 },
+                { 0x00000004, "Mix2",         " ",  "V",            "V", 1.0, 3,  3 },
+                { 0x00000008, "Mix3",         " ",  "V",            "V", 1.0, 4,  4 },
+                { 0x00000010, "ADC0-I-Tunnel"," ", "nA",           "nA", 1.0, 5,  5 },
+                { 0x00000020, "ADC1",         " ",  "V",            "V", 1.0, 6,  6 },
+                { 0x00000040, "ADC2",         " ",  "V",            "V", 1.0, 7,  7 },
+                { 0x00000080, "ADC3",         " ",  "V",            "V", 1.0, 8,  8 },
+                { 0x00000100, "ADC4",         " ",  "V",            "V", 1.0, 9,  9 },
+                { 0x00000200, "ADC5",         " ",  "V",            "V", 1.0, 10,  10 },
+                { 0x00000400, "ADC6",         " ",  "V",            "V", 1.0, 11,  11 },
+                { 0x00000800, "ADC7",         " ",  "V",            "V", 1.0, 12,  12 },
+                { 0x00001000, "dIdV",         " ",  "1",            "1", 1.0, 13,  13 },
+                { 0x00002000, "ddIdV",        " ",  "1",            "1", 1.0, 14,  14 },
+                { 0x00004000, "I-Avg",        " ",  "1",            "1", 1.0, 15,  15 },
+                { 0x00008000, "Counter",      " ",  "1",            "1", 1.0, 16,  16 },
+                { 0x10000000, "DataMap0",     " ",  "Xu",          "Xu",-1.0, 0,   17  },
+                { 0x10000000, "DataMap1",     " ",  "Xu",          "Xu",-1.0, 0,   18  },
+                { 0x10000000, "DataMap2",     " ",  "Xu",          "Xu",-1.0, 0,   19  },
+                { 0x10000000, "DataMap3",     " ",  "Xu",          "Xu",-1.0, 0,   20  },
+                { 0x10000000, "DataMap4",     " ",  "Xu",          "Xu",-1.0, 0,   21  },
+                { 0x10000000, "DataMap5",     " ",  "Xu",          "Xu",-1.0, 0,   22  },
+                { 0x10000000, "DataMap6",     " ",  "Xu",          "Xu",-1.0, 0,   23  },
+                { 0x10000000, "DataMap7",     " ",  "Xu",          "Xu",-1.0, 0,   24  },
+                { 0x00000000, NULL, NULL, NULL, NULL, 0.0, 0 }
+        };
+
+        main_get_gapp()->xsm->Inst->override_dig_range (1<<16);    // gxsm does precision sanity checks and trys to round to best fit grid
+        main_get_gapp()->xsm->Inst->override_volt_in_range (10.0);  // FOR AD4630-24 24bit
+        main_get_gapp()->xsm->Inst->override_volt_out_range (10.0); // PMODs AD5791-20 20bit
+
+        //EXTCHMAX <-DATAMAP->
+        //                      Name           Unit  Type      Label     Scale
+        //setup_scan (ch, "X+", "Map-PrbSrc#", "Xu", "DOUBLE", "EXTMAP", -1.0); // needs further setup!
+               
+        for (int i=0; SRA810_source_signals[i].label; ++i){ // name
+                g_message ("Reading SOURCE_SIGNALS[%d]",i);
+                g_message ("Reading SOURCE_SIGNALS[%d].mask %x",i,SRA810_source_signals[i].mask);
+                g_message ("Reading SOURCE_SIGNALS[%d].label >%s<",i,SRA810_source_signals[i].label);
+                if (SRA810_source_signals[i].scan_source_pos > 0){
+                        main_get_gapp()->channelselector->ConfigureHardwareMapping (SRA810_source_signals[i].scan_source_pos-1,
+                                                                                    SRA810_source_signals[i].label, SRA810_source_signals[i].mask, // name
+                                                                                    SRA810_source_signals[i].label,
+                                                                                    SRA810_source_signals[i].unit,
+                                                                                    SRA810_source_signals[i].scale_factor);
+                        if (SRA810_source_signals[i].scale_factor < 0.){ // adjust EXTMAP's
+                                Data_Source *ds = main_get_gapp()->channelselector->find_data_source_by_position (SRA810_source_signals[i].scan_source_pos-1);
+                                if (ds){
+                                        ds->set_type("DOUBLE");
+                                        ds->set_label("EXTMAP");
+                                }
+                        }
+                                
+                        g_message ("SOURCE_SIGNAL_DEF %02d for %s mask: 0x%08x L: %s U: %s  x %g [to V] x %g [to %s]",
+                                   SRA810_source_signals[i].scan_source_pos-1,
+                                   SRA810_source_signals[i].label, SRA810_source_signals[i].mask, // name
+                                   SRA810_source_signals[i].label, SRA810_source_signals[i].unit, SRA810_source_signals[i].scale_factor,  SRA810_source_signals[i].scale_factor, SRA810_source_signals[i].unit);
+                }
+        }
+}
+
+
 
 
 /* Construktor for Gxsm sranger support base class
@@ -2365,6 +2433,7 @@ void sranger_mk3_hwi_dev::write_dsp_analog (double bias[4], double motor){
 
 	// from DSP to PC
 	conv_dsp_analog ();
+
 }
 
 void sranger_mk3_hwi_dev::conv_dsp_scan (){

@@ -202,6 +202,16 @@ gint sranger_mk3_hwi_spm::RTQuery (const gchar *property, double &val1, double &
 		ok=TRUE;
 		return TRUE;
         }
+
+	if (*property == 'B'){
+#define CONST_DSP_F16 65536.
+		val1 =  dsp_analog.bias[0]/CONST_DSP_F16/main_get_gapp()->xsm->Inst->VoltOut2Dig (main_get_gapp()->xsm->Inst->BiasV2Vabs (1.));
+		val2 =  dsp_analog.bias[1]/CONST_DSP_F16/main_get_gapp()->xsm->Inst->VoltOut2Dig (main_get_gapp()->xsm->Inst->BiasV2Vabs (1.));
+		val3 =  dsp_analog.bias[2]/CONST_DSP_F16/main_get_gapp()->xsm->Inst->VoltOut2Dig (main_get_gapp()->xsm->Inst->BiasV2Vabs (1.));
+		ok=TRUE;
+		return TRUE;
+        }
+
         
         if (*property == 'm'){
                 int monitor_index=0;
