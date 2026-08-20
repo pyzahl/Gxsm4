@@ -1,4 +1,4 @@
-project('gxsm4', ['c','cpp'], version : '4.4.1')
+project('gxsm4', ['c','cpp'], version : '4.4.1', meson_version: '>=1.1')
 version_name = 'Warp Speed Gxsm4RPSPMC'
 
 as_version = meson.project_version() # set in project() below
@@ -115,7 +115,7 @@ popt = dependency('popt', required : true)
 json = dependency('json-glib-1.0', required : true)
 gio  = dependency('gio-2.0', required : true)
 gtk  = dependency('gtk4', version : '>= 4.1')
-soup = dependency('libsoup-2.4', version : '>= 2.24')
+soup = dependency('libsoup-3.0', version : '>= 3.0')
 websocketpp = dependency('websocketpp', required : false) ## apt install libwebsocketpp-dev
 cairo = dependency('cairo-gobject', required : true)
 #cairo = dependency('cairo', required : true)
@@ -249,9 +249,9 @@ absolute_plugin_dir = get_option('prefix') / get_option('libdir') / 'gxsm4-plugi
 gxsm_lib_includes = 'core-source'
 
 ## grab some info -- not essential, can defined const
-today    = run_command('sh', '-c', 'date').stdout().strip()
-user     = run_command('sh', '-c', 'echo $USER').stdout().strip()
-hostname = run_command('sh', '-c', 'echo $HOSTNAME').stdout().strip()
+today    = run_command('sh', '-c', 'date', check: false).stdout().strip()
+user     = run_command('sh', '-c', 'echo $USER', check: false).stdout().strip()
+hostname = run_command('sh', '-c', 'echo $HOSTNAME', check: false).stdout().strip()
 
 ## Build config.h
 ################################################################################

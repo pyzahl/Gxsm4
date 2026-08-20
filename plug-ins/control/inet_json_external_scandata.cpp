@@ -1832,9 +1832,12 @@ void Inet_Json_External_Scandata::connect_cb (GtkWidget *widget, Inet_Json_Exter
                 self->msg = soup_message_new ("GET", url);
                 g_free (url);
                 // g_message ("soup_message_new - OK");
-                soup_session_websocket_connect_async (self->session, self->msg, // SoupSession *session, SoupMessage *msg,
-                                                      NULL, NULL, // const char *origin, char **protocols,
-                                                      NULL, Inet_Json_External_Scandata::got_client_connection, self); // GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data
+                soup_session_websocket_connect_async (self->session, self->msg,   // SoupSession *session, SoupMessage *msg,
+                                                      NULL,  NULL, // const char *origin, char **protocols,
+                                                      -10,  // int io_priority ** 0 : Default ** NEW in Soup V 3.0
+                                                      NULL, // GCancellable* cancellable,
+                                                      Inet_Json_External_Scandata::got_client_connection, // GAsyncReadyCallback callback,
+                                                      self); // GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data
                 //g_message ("soup_session_websocket_connect_async - OK");
         } else {
                 // tear down connection
