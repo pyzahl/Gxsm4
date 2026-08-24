@@ -110,6 +110,7 @@ static GActionEntry win_v3d_gxsm_action_entries[] = {
 	{ "view3d-gl-smooth", V3dControl::view_GL_Smooth_callback, NULL, "true", NULL },
 	{ "view3d-gl-ticks", V3dControl::view_GL_Ticks_callback, NULL, "true", NULL },
 	{ "view3d-gl-n-zp", V3dControl::view_GL_nZP_callback, NULL, "false", NULL },
+        { "view3d-gl-force-fallback", V3dControl::view_GL_force_fallback_callback, NULL, "false", NULL },
 	{ "view3d-configure-scene", V3dControl::scene_setup_callback, NULL, NULL, NULL },
 	{ "view3d-open", V3dControl::view_file_openhere_callback, NULL, NULL, NULL },
 	{ "view3d-save-auto", V3dControl::view_file_save_callback, NULL, NULL, NULL },
@@ -706,6 +707,19 @@ void V3dControl::view_GL_Smooth_callback (GSimpleAction *action, GVariant *param
 
         ((Surf3d*)g_object_get_data (G_OBJECT (vc->glarea), "vdata"))->
 		GLModes(ID_GL_Smooth, g_variant_get_boolean (new_state));
+}
+
+void V3dControl::view_GL_force_fallback_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){
+        V3dControl *vc = (V3dControl *) user_data;
+        GVariant *old_state = g_action_get_state (G_ACTION (action));
+        GVariant *new_state = g_variant_new_boolean (!g_variant_get_boolean (old_state));
+
+        g_simple_action_set_state (action, new_state);
+        g_variant_unref (old_state);
+
+        Surf3d *s = (Surf3d*)g_object_get_data (G_OBJECT (vc->glarea), "vdata");
+        if (s)
+                s->set_force_fallback (g_variant_get_boolean (new_state));
 }
 
 void V3dControl::view_GL_nZP_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data){

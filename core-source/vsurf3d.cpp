@@ -438,6 +438,8 @@ public:
                 glGenerateMipmap (GL_TEXTURE_1D);
                 glUniform1i (glGetUniformLocation (Tesselation_ProgramName, "GXSM_Palette"), 1);
 
+                // Keep sampler types on distinct texture units for single-layer surfaces too.
+                glUniform1i (glGetUniformLocation (Tesselation_ProgramName, "Volume3D_Z_Data"), 2);
                 if (numv > 1){
                         // sampler3D Volume3D_Z-Data vec4[][]
                         glActiveTexture (GL_TEXTURE2);
@@ -455,10 +457,15 @@ public:
                         glTexParameteri (GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
                         glTexParameteri (GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                         glGenerateMipmap (GL_TEXTURE_3D);
-                        glUniform1i (glGetUniformLocation (Tesselation_ProgramName, "Volume3D_Z_Data"), 2);
                 }
                 // unbind
+                glActiveTexture (GL_TEXTURE0);
                 glBindTexture (GL_TEXTURE_2D, 0);
+                glActiveTexture (GL_TEXTURE1);
+                glBindTexture (GL_TEXTURE_1D, 0);
+                glActiveTexture (GL_TEXTURE2);
+                if (numv <= 1)
+                        glBindTexture (GL_TEXTURE_3D, 0);
 
                 return Validated && Surf3d::checkError("make_plane::init_textures");
         };
@@ -490,11 +497,31 @@ public:
 		return Surf3d::checkError("make_plane::update_texture palette");
         };
         
-        gboolean draw (){
+        gboolean draw (bool force_fallback=false){
 		if (!Validated) return false;
 
-                if (!Tesselation_ProgramName)
+                if (!Tesselation_ProgramName || !SimpleSurface_ProgramName)
                         return false;
+
+                if (force_fallback) {
+                        g_message ("base_plane draw: forcing SimpleSurface shader");
+                        glUseProgram (SimpleSurface_ProgramName);
+                        glActiveTexture (GL_TEXTURE0);
+                        glBindTexture (GL_TEXTURE_2D, TesselationTextureName[0]);
+                        glBindVertexArray (VertexArrayName);
+                        glEnableVertexAttribArray (semantic::attr::POSITION);
+                        glBindBuffer (GL_ARRAY_BUFFER, ArrayBufferName);
+                        glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, FallbackIndexBufferName);
+                        g_message ("base_plane forced fallback state: program=%u vao=%u vertex_buffer=%u element_buffer=%u texture=%u indices=%d",
+                                   SimpleSurface_ProgramName, VertexArrayName, ArrayBufferName,
+                                   FallbackIndexBufferName, TesselationTextureName[0], FallbackIndicesCount);
+                        glDrawElements (GL_TRIANGLES, FallbackIndicesCount, GL_UNSIGNED_INT, 0);
+                        Surf3d::checkError ("make_plane::draw forced fallback");
+                        glBindBuffer (GL_ARRAY_BUFFER, 0);
+                        glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, 0);
+                        glBindVertexArray (0);
+                        return true;
+                }
 
                 glUseProgram (Tesselation_ProgramName);
                 Surf3d::checkError("make_plane::draw useprogram");
@@ -507,20 +534,35 @@ public:
                 glPatchParameteri (GL_PATCH_VERTICES, 4);
                 Surf3d::checkError("make_plane::draw bindbuff");
 
+                glActiveTexture (GL_TEXTURE0);
                 glBindTexture (GL_TEXTURE_2D, TesselationTextureName[0]);
+                glActiveTexture (GL_TEXTURE1);
                 glBindTexture (GL_TEXTURE_1D, TesselationTextureName[1]);
                 Surf3d::checkError("make_plane::draw tex0,1");
-                if (numv>1)
+                if (numv>1) {
+                        glActiveTexture (GL_TEXTURE2);
                         glBindTexture(GL_TEXTURE_3D, TesselationTextureName[2]);
+                }
                 Surf3d::checkError("make_plane::draw tex2");
+
+                GLint current_program = 0;
+                GLint current_vao = 0;
+                GLint current_element_buffer = 0;
+                GLint patch_vertices = 0;
+                glGetIntegerv (GL_CURRENT_PROGRAM, &current_program);
+                glGetIntegerv (GL_VERTEX_ARRAY_BINDING, &current_vao);
+                glGetIntegerv (GL_ELEMENT_ARRAY_BUFFER_BINDING, &current_element_buffer);
+                glGetIntegerv (GL_PATCH_VERTICES, &patch_vertices);
+                g_message ("base_plane draw state: program=%d vao=%d element_buffer=%d patches=%d indices=%d vao_expected=%u index_expected=%u",
+                           current_program, current_vao, current_element_buffer, patch_vertices,
+                           IndicesCount, VertexArrayName, IndexBufferName);
                 
                 glDrawElements (GL_PATCHES, IndicesCount, GL_UNSIGNED_INT, 0);
 
 #if 1
                 GLenum errorCode = printOpenGLErrors(__FUNCTION__, __LINE__);
                 if (errorCode != GL_NO_ERROR && FallbackIndexBufferName && FallbackIndicesCount > 0 && SimpleSurface_ProgramName){
-                        g_warning ("GL-ERROR %d with Shader. Using Fallback to SimpleShader.", glGetError());
-                        CHECK_GL_ERROR();
+                        g_warning ("GL-ERROR 0x%x with tessellation shader. Using fallback SimpleSurface shader.", errorCode);
                         glUseProgram (SimpleSurface_ProgramName);
                         Surf3d::checkError("make_plane::draw fallback useprogram");
                         glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, FallbackIndexBufferName);
@@ -1071,6 +1113,7 @@ public:
                 surface_plane = NULL;
                 text_vao = NULL;
                 ico_vao = NULL;
+                force_fallback = false;
         };
         ~gl_400_3D_visualization(){
                 //end(); // too late, glarea reference is gone! 
@@ -1691,7 +1734,7 @@ public:
                         Uniform_evaluation_setup[2] = Uniform_evaluation_vertex_ZYplane;
                         glUniformSubroutinesuiv (GL_VERTEX_SHADER, 1, Uniform_vertex_setup);
                         glUniformSubroutinesuiv (GL_TESS_EVALUATION_SHADER, 3, Uniform_evaluation_setup);
-                        surface_plane->draw ();
+                        surface_plane->draw (force_fallback);
                         break;
                 case 'Y':
                         Uniform_vertex_setup[0] = Uniform_vertex_plane_at;
@@ -1700,7 +1743,7 @@ public:
                         Uniform_evaluation_setup[2] = Uniform_evaluation_vertex_XYplane;
                         glUniformSubroutinesuiv (GL_VERTEX_SHADER, 1, Uniform_vertex_setup);
                         glUniformSubroutinesuiv (GL_TESS_EVALUATION_SHADER, 3, Uniform_evaluation_setup);
-                        surface_plane->draw ();
+                        surface_plane->draw (force_fallback);
                         break;
                 case 'S':
                         Uniform_vertex_setup[0] = Uniform_vertex_plane_at;
@@ -1725,7 +1768,7 @@ public:
                                         break;
                                 }
                                 glUniformSubroutinesuiv (GL_TESS_EVALUATION_SHADER, 3, Uniform_evaluation_setup);
-                                surface_plane->draw ();
+                                surface_plane->draw (force_fallback);
                         }
                         break;
 
@@ -1758,7 +1801,7 @@ public:
                                         //if (s->GLv_data.slice_plane_index[0]);
                                         Uniform_evaluation_setup[2] = Uniform_evaluation_vertex_Mplane;
                                         glUniformSubroutinesuiv (GL_TESS_EVALUATION_SHADER, 3, Uniform_evaluation_setup);
-                                        surface_plane->draw ();
+                                        surface_plane->draw (force_fallback);
                                 }
 
                                 glEnable (GL_DEPTH_TEST);
@@ -1767,7 +1810,7 @@ public:
                 case 'Z':
                 default:
                         glUniformSubroutinesuiv (GL_VERTEX_SHADER, 1, Uniform_vertex_setup);
-                        surface_plane->draw ();
+                        surface_plane->draw (force_fallback);
                         break;
                 }
 
@@ -1917,11 +1960,11 @@ public:
 
                         Uniform_evaluation_setup[2] = Uniform_evaluation_vertex_XZplane;
                         glUniformSubroutinesuiv (GL_TESS_EVALUATION_SHADER, 3, Uniform_evaluation_setup);
-                        surface_plane->draw ();
+                        surface_plane->draw (force_fallback);
 
                         Uniform_evaluation_setup[2] = Uniform_evaluation_vertex_XYplane;
                         glUniformSubroutinesuiv (GL_TESS_EVALUATION_SHADER, 3, Uniform_evaluation_setup);
-                        surface_plane->draw ();
+                        surface_plane->draw (force_fallback);
 
                         Uniform_evaluation_setup[2] = Uniform_evaluation_vertex_ZYplane;
                         glUniformSubroutinesuiv (GL_TESS_EVALUATION_SHADER, 3, Uniform_evaluation_setup);
@@ -1933,6 +1976,11 @@ public:
 
         void resize (gint w, gint h){
                 WindowSize  = glm::ivec2(w, h);
+        };
+
+        void set_force_fallback(bool force){
+                force_fallback = force;
+                g_message ("3D shader mode: %s", force ? "SimpleSurface fallback" : "tessellation");
         };
 
         void cursorPositionCallback(int mouse, double x, double y){
@@ -2005,6 +2053,7 @@ public:
 
 private:
         bool Validated;
+        bool force_fallback;
         Surf3d *s;
         GtkGLArea *glarea;
         int Major, Minor; // minimal version needed
@@ -2596,6 +2645,13 @@ void Surf3d::GLModes(int n, int m){
 	}  
 	if (v3dcontrol)
                 v3dcontrol->rerender_scene ();
+}
+
+void Surf3d::set_force_fallback(bool force_fallback){
+        if (gl_tess)
+                gl_tess->set_force_fallback(force_fallback);
+        if (v3dcontrol)
+                v3dcontrol->rerender_scene();
 }
 
 

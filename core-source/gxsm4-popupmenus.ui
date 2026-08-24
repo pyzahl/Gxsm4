@@ -875,6 +875,10 @@
 	    <attribute name="action">win.view3d-gl-mesh</attribute>
 	  </item>
 	  <item>
+	    <attribute name="label" translatable="yes">Force simple surface shader</attribute>
+	    <attribute name="action">win.view3d-gl-force-fallback</attribute>
+	  </item>
+	  <item>
 	    <attribute name="label" translatable="yes">Show Zero Plane</attribute>
 	    <attribute name="action">win.view3d-gl-n-zp</attribute>
 	  </item>

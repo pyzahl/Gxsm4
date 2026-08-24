@@ -342,6 +342,7 @@ public:
 
         void ColorSrc();
         void GLModes(int n, int m);
+        void set_force_fallback(bool force_fallback);
 
         void preferences();
         gboolean is_ready() { return (size > 0 && QuenchFac > 0 && scan != NULL && XPM_x > 1 && XPM_y > 1);  };

@@ -58,6 +58,7 @@ public:
         static void view_GL_Mesh_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data);
         static void view_GL_Ticks_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data);
         static void view_GL_Smooth_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data);
+        static void view_GL_force_fallback_callback (GSimpleAction *action, GVariant *parameter, gpointer user_data);
 
         //static gint glarea_event_cb(GtkWidget *glarea, GdkEvent *event, V3dControl *vc);
 
