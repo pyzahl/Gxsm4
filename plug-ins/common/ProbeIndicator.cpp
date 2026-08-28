@@ -1185,6 +1185,9 @@ gint ProbeIndicator::refresh(){
 
                                 // CH Scale Info
                                 if (modes & SCOPE_INFOPLUS){
+                                        double a,b,c;
+                                        main_get_gapp()->xsm->hardware->RTQuery ("S", a, b, c); // Print DSP RTE Status if available
+
                                         static double lasts=0.;
                                         chinfoflag=1;
                                         double s=fabs(xr/8.0); // scale / DIV   // 8 DIV is full scale screen

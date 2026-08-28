@@ -883,7 +883,7 @@ void PanView :: tip_refresh()
                 double gamc,gfmc,gdum;
 		main_get_gapp()->xsm->hardware->RTQuery ("F", gamc, gfmc, gdum); // GVP-AMC, FMC
                 double s1,s2,s3;
-                main_get_gapp()->xsm->hardware->RTQuery ("S", s1, s2, s3); // Status
+                main_get_gapp()->xsm->hardware->RTQuery ("s", s1, s2, s3); // Status "S" : Print RTE Info to terminal
                 double mv=1.; gchar *mvp="";
                 if (fabs(u) < 0.1) { mv=1e3; mvp="m"; }
                 if (fabs(y) < 0.00025) // I display in atto amp
