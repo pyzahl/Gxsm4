@@ -53,8 +53,8 @@ extern int debug_level;
 /* startup with build in GXSM configuration defaults */
 extern int force_gxsm_defaults;
 
-#define PREF_CONFDLG_XSIZE   500
-#define PREF_CONFDLG_YSIZE   400
+#define PREF_CONFDLG_XSIZE   600
+#define PREF_CONFDLG_YSIZE   500
 #define PREF_VAR_PADDING     4
 #define PREF_VAR_USIZE       150
 #define PREF_OPT_USIZE       150

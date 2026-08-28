@@ -639,8 +639,9 @@ void GnomeAppService::alert(const gchar *s1, const gchar *s2, const gchar *s3, i
 
         // FIX-ME GTK4 ??
         // wait here on response
-        while (response == GTK_RESPONSE_NONE)
-                while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
+        if (c >= 0)
+                while (response == GTK_RESPONSE_NONE)
+                        while(g_main_context_pending (NULL)) g_main_context_iteration (NULL, FALSE);
 
 }
 

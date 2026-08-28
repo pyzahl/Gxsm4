@@ -162,7 +162,8 @@ sranger_mk2_hwi_dev::sranger_mk2_hwi_dev(){
 						   "Use 'gxsm4 -h no' to skip hardware loading or reconfigure Hardware/Card to 'no'.\n"
                                                    "Note: Launching Gxsm now without hardware connection.",
 						   xsmres.DSPDev);
-			main_get_gapp()->alert (N_("No Hardware"), N_("Open Device failed."), productid, 1);
+			main_get_gapp()->alert (N_("No Hardware"), N_("Open Device failed."), productid, -1);
+                        main_get_gapp()->monitorcontrol->LogEvent (N_("No Hardware"), N_("Open Device failed."));
 			dsp = 0;
 			return;
 		}
@@ -174,7 +175,7 @@ sranger_mk2_hwi_dev::sranger_mk2_hwi_dev(){
 					      << "Device: " << xsmres.DSPDev);
 				g_free (productid);
 				productid=g_strdup_printf ("Device used: %s\n Start 'gxsm4 -h no' to correct the problem.", xsmres.DSPDev);
-				main_get_gapp()->alert (N_("Unkonwn Hardware"), N_("Query Vendor ID failed."), productid, 1);
+				main_get_gapp()->alert (N_("Unkonwn Hardware"), N_("Query Vendor ID failed."), productid, -1);
 				PI_DEBUG_GM (DBG_L1, "HWI-DEV-MK2-E02-- unkown hardware, vendor ID mismatch.");
 				close (dsp);
 				dsp = 0;
@@ -189,7 +190,7 @@ sranger_mk2_hwi_dev::sranger_mk2_hwi_dev(){
 					      << "Device: " << xsmres.DSPDev);
 				g_free (productid);
 				productid=g_strdup_printf ("Device used: %s\n Start 'gxsm4 -h no' to correct the problem.", xsmres.DSPDev);
-				main_get_gapp()->alert (N_("Unkonwn Hardware"), N_("Query Product ID failed."), productid, 1);
+				main_get_gapp()->alert (N_("Unkonwn Hardware"), N_("Query Product ID failed."), productid, -1);
 				PI_DEBUG_GM (DBG_L1, "HWI-DEV-MK2-E03-- unkown hardware, product ID mismatch.");
 				close (dsp);
 				dsp = 0;
@@ -199,7 +200,7 @@ sranger_mk2_hwi_dev::sranger_mk2_hwi_dev(){
 			        g_free (productid);
 				if (vendor == 0x0a59 && product == 0x0101){
 				        productid=g_strdup ("Vendor/Product: B.Paillard, Signal Ranger STD");
-					main_get_gapp()->alert (N_("Wrong Hardware detected"), N_("No MK2 found."), productid, 1);
+					main_get_gapp()->alert (N_("Wrong Hardware detected"), N_("No MK2 found."), productid, -1);
 					PI_DEBUG_GM (DBG_L1, "HWI-DEV-MK2-E04-- wrong hardware: SR-STD, please use SR-SP2/STD HwI.");
 					target = SR_HWI_TARGET_C54;
 					close (dsp);
@@ -236,7 +237,7 @@ sranger_mk2_hwi_dev::sranger_mk2_hwi_dev(){
 					return;
 				}else{
 				        productid=g_strdup ("Vendor/Product: B.Paillard, unkown version!");
-					main_get_gapp()->alert (N_("Unkonwn Hardware detected"), N_("No Signal Ranger found."), productid, 1);
+					main_get_gapp()->alert (N_("Unkonwn Hardware detected"), N_("No Signal Ranger found."), productid, -1);
 					PI_DEBUG_GM (DBG_L1, "HWI-DEV-MK2-E06-- SR-MK?? 1612:%s found -- not supported.", productid);
 					close (dsp);
 					dsp=0;
@@ -278,7 +279,7 @@ sranger_mk2_hwi_dev::sranger_mk2_hwi_dev(){
 						productid=g_strdup_printf ("Bad Magic: %04x\n"
 									   "Please launch the correct DSP software before restarting GXSM.",
 									   magic_data.magic);
-						main_get_gapp()->alert (N_("Wrong DSP magic"), N_("DSP software was not identified.\nContinue searching..."), productid, 1);
+						main_get_gapp()->alert (N_("Wrong DSP magic"), N_("DSP software was not identified.\nContinue searching..."), productid, -1);
 						std::cout << "Wrong DSP magic: DSP SPM software was not identified." << productid << std::endl;
 						std::cout << 
 						  "* Please Load/Flash the correct SPM code into the MK2-A810 and try again.\n"
@@ -358,7 +359,7 @@ sranger_mk2_hwi_dev::sranger_mk2_hwi_dev(){
 
 
 
-					main_get_gapp()->alert (N_("Warning"), N_("Signal Ranger FB_SPM software version mismatch detected!"), details, 1);
+					main_get_gapp()->alert (N_("Warning"), N_("Signal Ranger FB_SPM software version mismatch detected!"), details, -1);
 					PI_DEBUG_GM (DBG_L1, "HWI-DEV-MK2-VE01-- old magic -- DSP software version mismatch.");
 					g_free (details);
 					close (dsp);
@@ -383,7 +384,7 @@ sranger_mk2_hwi_dev::sranger_mk2_hwi_dev(){
 									 FB_SPM_VERSION & 0xff,
 									 swap_flg, target);
 					PI_DEBUG_GM (DBG_L1, "HWI-DEV-MK2-VW01-- DSP software version mismatch warning.%s\n", details);
-					main_get_gapp()->alert (N_("Warning"), N_("Signal Ranger FB_SPM software version mismatch detected!"), details, 1);
+					main_get_gapp()->alert (N_("Warning"), N_("Signal Ranger FB_SPM software version mismatch detected!"), details, -1);
 					g_free (details);
 				}
 				

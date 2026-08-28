@@ -1330,10 +1330,12 @@ void App::GxsmSplash(gdouble progress, const gchar *info, const gchar* text){
                 }
                 gtk_widget_queue_draw (splash_darea);
 
+                g_message ("*** App::GxsmSplash Update [%g, %d ms, %s]", progress, (guint)g_variant_get_double (splash_timeout), run? "RUN":"FIN");
                 if (progress >= 1.0 && run){
                         run = false;
+                        g_message ("*** App::GxsmSplash Update [%g] -- schedule remove in %d ms", progress, (guint)g_variant_get_double (splash_timeout));
                         XSM_DEBUG_GM (DBG_L2, "App::GxsmSplash Update [%g] -- schedule remove in %d ms", progress, (guint)g_variant_get_double (splash_timeout));
-                        g_timeout_add (500, // (guint)g_variant_get_double (splash_timeout), 
+                        g_timeout_add ((guint)g_variant_get_double (splash_timeout), 
                                        (GSourceFunc) App::GxsmSplashRemove,
                                        this);
                 }

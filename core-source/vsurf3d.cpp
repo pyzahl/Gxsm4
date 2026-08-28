@@ -259,6 +259,7 @@ namespace
         GLuint Uniform_vertex_setup[1];
         GLuint Uniform_vertexFlat(0);
         GLuint Uniform_vertexDirect(0);
+        GLuint Uniform_vertexSimpleZ(0);
         GLuint Uniform_vertexViewMode(0);
         GLuint Uniform_vertexY(0);
         GLuint Uniform_vertexXChannel(0);
@@ -268,6 +269,7 @@ namespace
         GLuint Uniform_evaluation_setup[3];
         GLuint Uniform_evaluationVertexFlat(0); // Vertex == match Vertex Mode above 
         GLuint Uniform_evaluationVertexDirect(0);
+        GLuint Uniform_evaluationVertexSimpleZ(0);
         GLuint Uniform_evaluationVertexViewMode(0);
         GLuint Uniform_evaluationVertexY(0);
         GLuint Uniform_evaluationVertexXChannel(0);
@@ -415,6 +417,10 @@ public:
                 
                 glGenTextures (TesselationTextureCount, TesselationTextureName);
 
+                glUseProgram (SimpleSurface_ProgramName);
+                glUniform1i (glGetUniformLocation (SimpleSurface_ProgramName, "Surf3D_Z_Data"), 0);
+                glUseProgram (Tesselation_ProgramName);
+
                 // sampler2D Surf3D_Z-Data vec4[][]
                 glActiveTexture (GL_TEXTURE0);
                 glBindTexture (GL_TEXTURE_2D, TesselationTextureName[0]);
@@ -512,6 +518,12 @@ public:
                         glEnableVertexAttribArray (semantic::attr::POSITION);
                         glBindBuffer (GL_ARRAY_BUFFER, ArrayBufferName);
                         glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, FallbackIndexBufferName);
+                        GLint simple_linked = GL_FALSE;
+                        glGetProgramiv (SimpleSurface_ProgramName, GL_LINK_STATUS, &simple_linked);
+                        if (simple_linked != GL_TRUE) {
+                                g_warning ("SimpleSurface shader program %u is not linked", SimpleSurface_ProgramName);
+                                return false;
+                        }
                         g_message ("base_plane forced fallback state: program=%u vao=%u vertex_buffer=%u element_buffer=%u texture=%u indices=%d",
                                    SimpleSurface_ProgramName, VertexArrayName, ArrayBufferName,
                                    FallbackIndexBufferName, TesselationTextureName[0], FallbackIndicesCount);
@@ -1286,6 +1298,7 @@ private:
 
                         Uniform_vertexFlat        = glGetSubroutineIndex (Tesselation_ProgramName, GL_VERTEX_SHADER, "vertex_height_flat" );
                         Uniform_vertexDirect      = glGetSubroutineIndex (Tesselation_ProgramName, GL_VERTEX_SHADER, "vertex_height_direct" );
+                        Uniform_vertexSimpleZ    = glGetSubroutineIndex (Tesselation_ProgramName, GL_VERTEX_SHADER, "vertex_height_simple_z" );
                         Uniform_vertexViewMode    = glGetSubroutineIndex (Tesselation_ProgramName, GL_VERTEX_SHADER, "vertex_height_z" );
                         Uniform_vertexY           = glGetSubroutineIndex (Tesselation_ProgramName, GL_VERTEX_SHADER, "vertex_height_y" );
                         Uniform_vertexXChannel    = glGetSubroutineIndex (Tesselation_ProgramName, GL_VERTEX_SHADER, "vertex_height_x" );
@@ -1293,6 +1306,7 @@ private:
 
                         Uniform_evaluationVertexFlat      = glGetSubroutineIndex (Tesselation_ProgramName, GL_TESS_EVALUATION_SHADER, "height_flat" );
                         Uniform_evaluationVertexDirect    = glGetSubroutineIndex (Tesselation_ProgramName, GL_TESS_EVALUATION_SHADER, "height_direct" );
+                        Uniform_evaluationVertexSimpleZ   = glGetSubroutineIndex (Tesselation_ProgramName, GL_TESS_EVALUATION_SHADER, "height_simple_z" );
                         Uniform_evaluationVertexXChannel  = glGetSubroutineIndex (Tesselation_ProgramName, GL_TESS_EVALUATION_SHADER, "height_z" );
                         Uniform_evaluationVertexY         = glGetSubroutineIndex (Tesselation_ProgramName, GL_TESS_EVALUATION_SHADER, "height_y" );
                         Uniform_evaluationVertexViewMode  = glGetSubroutineIndex (Tesselation_ProgramName, GL_TESS_EVALUATION_SHADER, "height_x" );
@@ -1305,7 +1319,7 @@ private:
                         Uniform_evaluation_vertex_XZplane = glGetSubroutineIndex (Tesselation_ProgramName, GL_TESS_EVALUATION_SHADER, "eval_vertex_XZ_plane" );
                         Uniform_evaluation_vertex_XYplane = glGetSubroutineIndex (Tesselation_ProgramName, GL_TESS_EVALUATION_SHADER, "eval_vertex_XY_plane" );
                         Uniform_evaluation_vertex_ZYplane = glGetSubroutineIndex (Tesselation_ProgramName, GL_TESS_EVALUATION_SHADER, "eval_vertex_ZY_plane" );
-                        Uniform_evaluation_vertex_Mplane = glGetSubroutineIndex (Tesselation_ProgramName, GL_TESS_EVALUATION_SHADER, "eval_vertex_M_plane" );
+                        Uniform_evaluation_vertex_Mplane  = glGetSubroutineIndex (Tesselation_ProgramName, GL_TESS_EVALUATION_SHADER, "eval_vertex_M_plane" );
 
                         Uniform_shadeTerrain      = glGetSubroutineIndex (Tesselation_ProgramName, GL_FRAGMENT_SHADER, "shadeTerrain" );
                         Uniform_shadeDebugMode    = glGetSubroutineIndex (Tesselation_ProgramName, GL_FRAGMENT_SHADER, "shadeDebugMode" );
@@ -1667,6 +1681,10 @@ public:
                 case 'D': // Direct Vertex Height .a
                         Uniform_vertex_setup[0]     = Uniform_vertexDirect;
                         Uniform_evaluation_setup[0] = Uniform_evaluationVertexDirect;
+                        break;
+                case 'T': // Test: same raw Z source as simple-surface-vertex.glsl
+                        Uniform_vertex_setup[0]     = Uniform_vertexSimpleZ;
+                        Uniform_evaluation_setup[0] = Uniform_evaluationVertexSimpleZ;
                         break;
                 case 'M': // View Mode Vertex Height .z
                         Uniform_vertex_setup[0]     = Uniform_vertexViewMode;
@@ -2338,7 +2356,7 @@ void Surf3d::GLvarinit(){
 	gnome_res_set_apply_callback (v3dControl_pref_dlg, GLupdate, (gpointer)this);
 	gnome_res_set_destroy_on_close (v3dControl_pref_dlg, FALSE);
 	gnome_res_set_auto_apply (v3dControl_pref_dlg, TRUE);
-	gnome_res_set_height (v3dControl_pref_dlg, 700);
+	gnome_res_set_height (v3dControl_pref_dlg, 800);
 	gnome_res_read_user_config (v3dControl_pref_dlg);
         GLv_data.Cull = 0;
         main_get_gapp ()->add_configure_object_to_remote_list (v3dControl_pref_dlg);

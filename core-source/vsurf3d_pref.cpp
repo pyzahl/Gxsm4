@@ -34,7 +34,7 @@ const gchar *OnOff_OptionsList[]      = { "On", "Off", NULL };
 const gchar *ViewPreset_OptionsList[] = { "Manual", "Top", "Front", "Left", "Right", "Areal View Front", "Scan: Auto Tip View", NULL };
 const gchar *LookAt_OptionsList[]     = { "Manual", "Tip", "Center", NULL };
 
-const gchar *VertexSrc_OptionsList[]  = { "Flat", "Direct Height", "Mode View Height", "Channel-X", "y-data",
+const gchar *VertexSrc_OptionsList[]  = { "Flat", "Direct Height", "Mode View Height", "Channel-X", "y-data", "Test Simple Shader Z",
 					  "X-Slice", "Y-Slice", "Z-Slice",
 					  "Volume", "Scatter",
 					  NULL };

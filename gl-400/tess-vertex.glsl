@@ -42,6 +42,13 @@ float vertex_height_direct(vec2 position)
 }
 
 subroutine( vertexModelType )
+float vertex_height_simple_z(vec2 position)
+{
+        vec4 zz = texture (Surf3D_Z_Data, terraincoord(position));
+        return height_transform (zz.a);
+}
+
+subroutine( vertexModelType )
 float vertex_height_x(vec2 position)
 {
         return height_transform (texture (Surf3D_Z_Data, terraincoord(position)).x);

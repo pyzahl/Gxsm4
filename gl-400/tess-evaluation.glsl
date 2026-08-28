@@ -61,6 +61,12 @@ float height_direct(vec4 zz)
 }
 
 subroutine( eval_vertexModelType )
+float height_simple_z(vec4 zz)
+{
+        return height_transform (zz.a);
+}
+
+subroutine( eval_vertexModelType )
 float height_x(vec4 zz)
 {
         return height_transform (zz.x);
@@ -84,31 +90,31 @@ float height_z(vec4 zz)
 subroutine( colorModelType )
 vec4 colorFlat(vec4 zz)
 {
-        return texture (GXSM_Palette, 0.5);
+        return textureLod (GXSM_Palette, 0.5, 0.0);
 }
 
 subroutine( colorModelType )
 vec4 colorDirect(vec4 zz)
 {
-        return texture (GXSM_Palette, color_offset.x+color_offset.y*zz.a);
+        return textureLod (GXSM_Palette, color_offset.x+color_offset.y*zz.a, 0.0);
 }
 
 subroutine( colorModelType )
 vec4 colorViewMode(vec4 zz)
 {
-        return texture (GXSM_Palette, color_offset.x+color_offset.y*zz.z);
+        return textureLod (GXSM_Palette, color_offset.x+color_offset.y*zz.z, 0.0);
 }
 
 subroutine( colorModelType )
 vec4 colorXChannel(vec4 zz)
 {
-        return texture (GXSM_Palette, color_offset.x+color_offset.y*zz.x);
+        return textureLod (GXSM_Palette, color_offset.x+color_offset.y*zz.x, 0.0);
 }
 
 subroutine( colorModelType )
 vec4 colorY(vec4 zz)
 {
-        return texture (GXSM_Palette, color_offset.x+color_offset.y*zz.y);
+        return textureLod (GXSM_Palette, color_offset.x+color_offset.y*zz.y, 0.0);
 }
 
 
@@ -141,7 +147,7 @@ vec3 eval_vertex_M_plane(vec3 pos)
 float height_at_delta(vec2 delta)
 {
         vec2 tc = terraincoord (delta);
-        vec4 zz = texture (Surf3D_Z_Data, tc);
+        vec4 zz = textureLod (Surf3D_Z_Data, tc, 0.0);
         return eval_vertexModel (zz);
 }
 
@@ -154,7 +160,7 @@ void main()
 	vec4 b = mix(gl_in[2].gl_Position, gl_in[3].gl_Position, u);
 	vec4 position = mix(a, b, v);
         vec2 tc = terraincoord (position.xz);
-        vec4 zz = texture (Surf3D_Z_Data, tc);
+        vec4 zz = textureLod (Surf3D_Z_Data, tc, 0.0);
         position.y = eval_vertexModel (zz);
 
         // calculate normal from neightbor heights

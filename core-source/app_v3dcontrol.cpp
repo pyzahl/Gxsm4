@@ -160,23 +160,6 @@ V3dControl::V3dControl (Gxsm4app *app,
         gtk_widget_set_hexpand (glarea, TRUE);
         gtk_widget_set_vexpand (glarea, TRUE);
 
-#if 0
-        gtk_widget_add_events (glarea,
-                               GDK_BUTTON1_MOTION_MASK    |
-                               GDK_BUTTON2_MOTION_MASK    |
-                               GDK_BUTTON3_MOTION_MASK    |
-                               GDK_SCROLL_MASK            |
-                               GDK_SHIFT_MASK            |
-                               GDK_CONTROL_MASK            |
-                               GDK_BUTTON_PRESS_MASK      |
-                               GDK_BUTTON_RELEASE_MASK    |
-                               GDK_VISIBILITY_NOTIFY_MASK);
-
-	g_signal_connect (G_OBJECT (glarea), "event",
-			  (GCallback) V3dControl::glarea_event_cb,
-                          this);
-#endif
-
         // 1. Click Gesture for button presses and releases
         GtkGesture *click_gesture = gtk_gesture_click_new();
         gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click_gesture), 0); // Listen to ALL mouse buttons
@@ -194,8 +177,6 @@ V3dControl::V3dControl (Gxsm4app *app,
         g_signal_connect(scroll_controller, "scroll", G_CALLBACK(on_glarea_scroll_cb), this);
         gtk_widget_add_controller(glarea, scroll_controller);
 
-        
-        
         
         g_signal_connect (G_OBJECT (glarea), "realize",
                           G_CALLBACK (realize_event_cb), vdata);

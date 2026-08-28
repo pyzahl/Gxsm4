@@ -1924,7 +1924,7 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
 						      outconfig
 						      );
 
-			main_get_gapp()->alert (N_("Warning"), N_("GXSM4->InstSPM Offset settings verification with DSP settings failed"), msg, 1);
+			main_get_gapp()->alert (N_("Warning"), N_("GXSM4->InstSPM Offset settings verification with DSP settings failed"), msg, -1);
                         main_get_gapp()->monitorcontrol->LogEvent ("GXSM4 startup MK3 DSP signal verification", "WARNING SITUATION FOUND!");
                         main_get_gapp()->monitorcontrol->LogEvent ("WARNING", msg);
 			g_free (msg);
@@ -1947,7 +1947,7 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
 					      "\nelse set GXSM4 Preferences as desired..",
 					      main_get_gapp()->xsm->Inst->OffsetMode() == OFM_ANALOG_OFFSET_ADDING ? "Analog via DAC0/1":"digital (DSP), offset outputs not used!",
 					      dsp_state_mode & MD_OFFSETADDING ? "digital adding":"external/analog adding of ADC0/1_o to ADC3/4_s" );
-		main_get_gapp()->alert (N_("Warning"), N_("GXSM4->InstSPM Offset settings verification with DSP settings failed"), msg, 1);
+		main_get_gapp()->alert (N_("Warning"), N_("GXSM4->InstSPM Offset settings verification with DSP settings failed"), msg, -1);
                 main_get_gapp()->monitorcontrol->LogEvent ("GXSM4 startup MK2 DSP configuration verification", "WARNING SITUATION FOUND!");
                 main_get_gapp()->monitorcontrol->LogEvent ("WARNING", msg);
 		g_free (msg);

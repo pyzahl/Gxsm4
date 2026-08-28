@@ -248,7 +248,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 						   "Use 'gxsm4 -h no' to skip hardware loading or reconfigure Hardware/Card to 'no'.\n"
                                                    "Note: Launching Gxsm now without hardware connection.",
 						   xsmres.DSPDev);
-			main_get_gapp()->alert (N_("No Hardware"), N_("Open Device failed."), productid, 1);
+			main_get_gapp()->alert (N_("No Hardware"), N_("Open Device failed."), productid, -1);
                         main_get_gapp()->monitorcontrol->LogEvent (N_("No Hardware"), N_("Open Device failed."));
 			// exit (-1);
 			return;
@@ -265,7 +265,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
                                                       << "Device: " << xsmres.DSPDev);
                                         g_free (productid);
                                         productid=g_strdup_printf ("Device used: %s\n Start 'gxsm4 -h no' to correct the problem.", xsmres.DSPDev);
-                                        main_get_gapp()->alert (N_("Unkonwn Hardware"), N_("Query Vendor ID failed."), productid, 1);
+                                        main_get_gapp()->alert (N_("Unkonwn Hardware"), N_("Query Vendor ID failed."), productid, -1);
                                         PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-E02-- unkown hardware, vendor ID mismatch.");
                                         close (dsp);
                                         dsp = 0;
@@ -288,7 +288,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 			        g_free (productid);
 				if (vendor == 0x0a59 && product == 0x0101){
 				        productid=g_strdup ("Vendor/Product: B.Paillard, Signal Ranger STD");
-					main_get_gapp()->alert (N_("Wrong Hardware detected"), N_("No MK2 found."), productid, 1);
+					main_get_gapp()->alert (N_("Wrong Hardware detected"), N_("No MK2 found."), productid, -1);
 					PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-E04-- wrong hardware: SR-STD, please use SR-SP2/STD HwI.");
 					target = SR_HWI_TARGET_C54;
 					close (dsp);
@@ -298,7 +298,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 				}
 				else if (vendor == 0x0a59 && product == 0x0103){
 				        productid=g_strdup ("Vendor/Product: B.Paillard, Signal Ranger SP2");
-					main_get_gapp()-> alert (N_("Wrong Hardware detected"), N_("No MK2 found."), productid, 1);
+					main_get_gapp()-> alert (N_("Wrong Hardware detected"), N_("No MK2 found."), productid, -1);
 					PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-E05-- wrong hardware: SR-SP2, please use SR-SP2/STD HwI.");
 					target =  SR_HWI_TARGET_C54;
 					close (dsp);
@@ -331,7 +331,7 @@ sranger_mk3_hwi_dev::sranger_mk3_hwi_dev(){
 					sranger_mark_id = 3;
 				}else{
 				        productid=g_strdup ("Vendor/Product: B.Paillard, unkown version!");
-					main_get_gapp()->alert (N_("Unkonwn Hardware detected"), N_("No Signal Ranger found."), productid, 1);
+					main_get_gapp()->alert (N_("Unkonwn Hardware detected"), N_("No Signal Ranger found."), productid, -1);
 					PI_DEBUG_GM (DBG_L4, "HWI-DEV-MK3-E06-- SR-MK?? 1612:%s found -- not supported.", productid);
 					close (dsp);
 					dsp=0;
