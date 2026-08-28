@@ -478,15 +478,17 @@ DSPControlUserTabs::DSPControlUserTabs (Gxsm4app *app):AppBase(app)
 
         PI_DEBUG (DBG_L5, "DSPControlUserTabs::DSPControlUserTabs");
 
-	AppWindowInit (tmp);
-
+	//AppWindowInit (tmp);
+	AppWindowInit ("DSP Control 1", tmp);
+        set_window_geometry ("dsp-control-1");
+        g_free (tmp);
+        
         notebook = gtk_notebook_new ();
 	DSPControlContainerClass->add_notebook (notebook, NOTEBOOK_SR_CRTL_USER);
 	gtk_grid_attach (GTK_GRID (v_grid), notebook, 1,1, 1,1);
 	gtk_widget_show (notebook);
         gtk_widget_set_size_request  (notebook, 400, 300);
 
-	set_window_geometry ("dsp-control-1");
 }
 
 DSPControlUserTabs::~DSPControlUserTabs ()
@@ -662,9 +664,11 @@ void DSPControl::AppWindowInit(const gchar *title, const gchar *sub_title){
                 
                 PI_DEBUG (DBG_L2,  "VC::VC setup titlbar" );
 
-                gtk_window_set_title (GTK_WINDOW (window), title);
-                gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
-        
+                SetTitle (title, sub_title);
+
+                //gtk_window_set_title (GTK_WINDOW (window), title);
+                //gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
+
                 v_grid = gtk_grid_new ();
                 gtk_window_set_child (GTK_WINDOW (window), v_grid);
                 g_object_set_data (G_OBJECT (window), "v_grid", v_grid);
@@ -1358,8 +1362,10 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
 	probe_findex = 0;
 
 	gchar *tmp = g_strdup_printf ("SR DSP Control %s [%s]", (DSPPACClass)? "MK3-PLL/A810":"MK2/A810", xsmres.DSPDev);
-
-	AppWindowInit (tmp); // call one, setup window
+       
+	AppWindowInit ("DSP Control 0", tmp); // call one, setup window
+        set_window_geometry ("dsp-control-0");
+        g_free (tmp);
 
 	// update some from DSP -- new!!
 	sranger_common_hwi->read_dsp_feedback ();
@@ -3182,7 +3188,6 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
 	AppWindowInit (NULL); // call two, setup header bar menu, confiugure mode needs to operate on default show/hide
         configure_callback (NULL, NULL, this);
         
-	set_window_geometry ("dsp-control-0");
 }
 
 

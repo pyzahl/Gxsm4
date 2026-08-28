@@ -724,9 +724,10 @@ void DSPMoverControl::AppWindowInit(const gchar *title, const gchar *sub_title){
 
                 XSM_DEBUG (DBG_L2,  "VC::VC setup titlbar" );
 
-                gtk_window_set_title (GTK_WINDOW (window), title);
-                gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
-        
+                SetTitle (title, sub_title);
+                //gtk_window_set_title (GTK_WINDOW (window), title);
+                //gtk_window_set_titlebar (GTK_WINDOW (window), header_bar);
+
                 v_grid = gtk_grid_new ();
 
                 gtk_window_set_child (GTK_WINDOW (window), v_grid);
@@ -784,13 +785,15 @@ void DSPMoverControl::create_folder (){
         //Gtk_EntryControl *ec_phase;
  
         PI_DEBUG (DBG_L2, "DSPMoverControl::create_folder");
+        AppWindowInit ("dsp-mover-control"); //"DSP Mover Control"); // stage one // must add key to xml file: core-sources/org.gnome.gxsm4.window-geometry.gschema.xml
+        set_window_geometry ("dsp-mover-control");
 
-	if( IS_MOVER_CTRL ){
-		AppWindowInit (MOV_MOVER_TITLE); // stage one
-	}
-	else {
-		AppWindowInit (MOV_SLIDER_TITLE); // stage one
-        }
+	//if( IS_MOVER_CTRL ){
+	//	AppWindowInit (MOV_MOVER_TITLE); // stage one
+	//}
+	//else {
+	//	AppWindowInit (MOV_SLIDER_TITLE); // stage one
+        //}
         
 	// ========================================
 	notebook = gtk_notebook_new ();
@@ -1589,7 +1592,6 @@ void DSPMoverControl::create_folder (){
         configure_callback (NULL, NULL, this); // configure "false"
         
         AppWindowInit (NULL); // stage two
-        set_window_geometry ("dsp-mover-control");
 }
 
 void DSPMoverControl::update(){
