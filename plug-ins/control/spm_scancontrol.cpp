@@ -139,7 +139,8 @@ static void spm_scancontrol_movie_callback (GtkWidget *w, void *data); // called
 static void spm_scancontrol_hscapture_callback (GtkWidget *w, void *data); // called on high speed capture start
 static void spm_scancontrol_pause_callback (GtkWidget *w, void *data); // called on pause/unpause
 static void spm_scancontrol_stop_callback (GtkWidget *w, void *data); // called on scan stop
-static void spm_scancontrol_set_subscan_callback (GtkWidget *w, void *data); // called on scan stop
+static void spm_scancontrol_set_subscan_callback (GtkWidget *w, void *data); // called on SLS
+static void spm_scancontrol_set_subscan_cont_callback (GtkWidget *w, void *data); // called on Auto Scan Cont
 static void spm_scancontrol_SaveValues_callback ( gpointer );
 
 // Fill in the GxsmPlugin Description here -- see also: Gxsm/src/plugin.h
@@ -432,6 +433,8 @@ SPM_ScanControl::SPM_ScanControl (Gxsm4app *app):AppBase(app)
         g_object_set_data( G_OBJECT (bm_tmp), "SPMCONTROL_SLS_BUTTON", slsbutton);
 	main_get_gapp()->RegisterPluginToolbarButton (G_OBJECT (slsbutton), "Toolbar_SubLineScan");
 
+        GtkWidget *slscbutton = spmsc_bp->grid_add_button ("SLSC", "Sub Line Scan Auto Continue", 1, G_CALLBACK (spm_scancontrol_set_subscan_cont_callback), this);
+
         GtkWidget *pbutton = spmsc_bp->grid_add_button ("Pause", "Toggle Pause Scan", 1, G_CALLBACK (spm_scancontrol_pause_callback), this);
 	main_get_gapp()->RegisterPluginToolbarButton (G_OBJECT (pbutton), "Toolbar_Scan_Pause");
 
@@ -492,22 +495,26 @@ SPM_ScanControl::SPM_ScanControl (Gxsm4app *app):AppBase(app)
         spmsc_bp->grid_add_ec ("SLS Xs", Unity, &sls_config[0], 0, 99999, ".0f", REMOTE_PREFIX "sls-xs");
         g_object_set_data (G_OBJECT (bs_tmp), "SPMCONTROL_SLS_XS", spmsc_bp->input);
         g_object_set_data (G_OBJECT (slsbutton), "SLSC0", spmsc_bp->ec);
+        g_object_set_data (G_OBJECT (slscbutton), "SLSC0", spmsc_bp->ec);
         g_object_set_data (G_OBJECT (slscheckbutton), "SLSC0", spmsc_bp->ec);
 
         spmsc_bp->grid_add_ec ("SLS Xn", Unity, &sls_config[1], 0, 99999, ".0f", REMOTE_PREFIX "sls-xn");
         g_object_set_data (G_OBJECT (bs_tmp), "SPMCONTROL_SLS_XN", spmsc_bp->input);
         g_object_set_data (G_OBJECT (slsbutton), "SLSC1", spmsc_bp->ec);
+        g_object_set_data (G_OBJECT (slscbutton), "SLSC1", spmsc_bp->ec);
         g_object_set_data (G_OBJECT (slscheckbutton), "SLSC1", spmsc_bp->ec);
 
 	spmsc_bp->new_line ();
         spmsc_bp->grid_add_ec ("SLS Ys", Unity, &sls_config[2], 0, 99999, ".0f", REMOTE_PREFIX "sls-ys");
         g_object_set_data (G_OBJECT (bs_tmp), "SPMCONTROL_SLS_YS", spmsc_bp->input);
         g_object_set_data (G_OBJECT (slsbutton), "SLSC2", spmsc_bp->ec);
+        g_object_set_data (G_OBJECT (slscbutton), "SLSC2", spmsc_bp->ec);
         g_object_set_data (G_OBJECT (slscheckbutton), "SLSC2", spmsc_bp->ec);
 
         spmsc_bp->grid_add_ec ("SLS Yn", Unity, &sls_config[3], 0, 99999, ".0f", REMOTE_PREFIX "sls-yn");
         g_object_set_data (G_OBJECT (bs_tmp), "SPMCONTROL_SLS_YN", spmsc_bp->input);
         g_object_set_data (G_OBJECT (slsbutton), "SLSC3", spmsc_bp->ec);
+        g_object_set_data (G_OBJECT (slscbutton), "SLSC3", spmsc_bp->ec);
         g_object_set_data (G_OBJECT (slscheckbutton), "SLSC3", spmsc_bp->ec);
         
         // ==>  SPMC_RemoteEntryList
@@ -883,6 +890,25 @@ static void spm_scancontrol_stop_callback (GtkWidget *w, void *data){
 	((SPM_ScanControl*)data) -> stop_scan();
 }
 
+static void spm_scancontrol_set_subscan_cont_callback (GtkWidget *w, void *data){
+        if (main_get_gapp()->xsm->GetActiveScan ()){
+                gtk_check_button_set_active (GTK_CHECK_BUTTON (g_object_get_data (G_OBJECT (w), "SUBSCAN_RB")), TRUE);
+                gint xm = main_get_gapp()->xsm->GetActiveScan ()->mem2d->GetNx ();
+                gint ym = main_get_gapp()->xsm->GetActiveScan ()->mem2d->GetNy ();
+
+                gint line = (main_get_gapp()->xsm->hardware->RTQuery () -  ((SPM_ScanControl*)data)->get_sls_ys()) + (SCAN_DIR_TOPDOWN ? -1 : +1);
+
+                ((SPM_ScanControl*)data) -> set_subscan (0, xm,
+                                                         line, ym-line);
+                        
+                PI_DEBUG (DBG_L1, "SSC::SET_SUBSCAN done.");
+                ((Gtk_EntryControl*) g_object_get_data (G_OBJECT (w), "SLSC0")) -> Put_Value ();
+                ((Gtk_EntryControl*) g_object_get_data (G_OBJECT (w), "SLSC1")) -> Put_Value ();
+                ((Gtk_EntryControl*) g_object_get_data (G_OBJECT (w), "SLSC2")) -> Put_Value ();
+                ((Gtk_EntryControl*) g_object_get_data (G_OBJECT (w), "SLSC3")) -> Put_Value ();
+                ((SPM_ScanControl*)data) -> set_subscan (); /* setup for partial/sub scan */
+        }
+}
 
 static void spm_scancontrol_set_subscan_callback (GtkWidget *w, void *data){
         gboolean s;

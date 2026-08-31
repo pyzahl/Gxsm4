@@ -998,6 +998,10 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
         g_signal_connect (gesture, "released", G_CALLBACK (ProfileControl::released_cb), this);
         gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (gesture));
 
+        // Force the initial frame to use a real size, matching your default window size
+        gtk_drawing_area_set_content_width(GTK_DRAWING_AREA(canvas), 600);
+        gtk_drawing_area_set_content_height(GTK_DRAWING_AREA(canvas), 400);
+        
         gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (canvas),
                                        GtkDrawingAreaDrawFunc (ProfileControl::canvas_draw_function),
                                         this, NULL);

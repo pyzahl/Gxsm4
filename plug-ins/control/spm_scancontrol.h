@@ -243,7 +243,10 @@ public:
 			return NULL;
 	};
 	void compute_mvolt_list (GtkWidget *grid);
-	GtkWidget *remote_param;
+
+	int get_sls_ys() { return sls_config[2]; };
+
+        GtkWidget *remote_param;
         GSList *all_scan_list;
 
         BuildParam *spmsc_bp;
@@ -283,8 +286,8 @@ private:
 	gint      multi_volt_number; // number of volts to use
 	GSList    *multi_volt_list;
 
-	gboolean  sls_mode;
 	int       sls_config[4];
+	gboolean  sls_mode;
 	
 	GSList*   SPMC_RemoteEntryList;
         GtkWidget* scan_start_button;
