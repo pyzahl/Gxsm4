@@ -999,8 +999,9 @@ void ProfileControl::Init(const gchar *titlestring, int ChNo, const gchar *resid
         gtk_widget_add_controller (canvas, GTK_EVENT_CONTROLLER (gesture));
 
         // Force the initial frame to use a real size, matching your default window size
-        gtk_drawing_area_set_content_width(GTK_DRAWING_AREA(canvas), 600);
-        gtk_drawing_area_set_content_height(GTK_DRAWING_AREA(canvas), 400);
+        // is not doing what I want, set the minimal size so
+        gtk_drawing_area_set_content_width(GTK_DRAWING_AREA(canvas), 300);
+        gtk_drawing_area_set_content_height(GTK_DRAWING_AREA(canvas), 200);
         
         gtk_drawing_area_set_draw_func (GTK_DRAWING_AREA (canvas),
                                        GtkDrawingAreaDrawFunc (ProfileControl::canvas_draw_function),
