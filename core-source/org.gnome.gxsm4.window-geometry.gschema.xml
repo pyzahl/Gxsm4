@@ -24,6 +24,20 @@
 	Automatically restore windows to first screen aka X left of this x-position (=screen res / scaling), if enabled via auto-push-to-first-screen.
       </description>
     </key>
+    <key name="auto-stack-x" type="d">
+      <default>1.0</default>
+      <summary>Auto X stacking/arranging of window geometry factor</summary>
+      <description>
+	window overlap factor, 1.0 = no overlap, 0.95 5% overlapp to save space
+      </description>
+    </key>
+    <key name="auto-stack-y" type="d">
+      <default>1.0</default>
+      <summary>Auto Y stacking/arranging of window geometry factor</summary>
+      <description>
+	window overlap factor, 1.0 = no overlap, 0.95 5% overlapp to save space
+      </description>
+    </key>
     <key name="gxsm4" type="ai">
       <default>[1,1, 0,0,0,0]</default>
       <summary>show/hide state, option, X,Y, H,W</summary>

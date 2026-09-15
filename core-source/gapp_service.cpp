@@ -1614,7 +1614,8 @@ void AppBase::LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref
         gsize n_stores;
 
         const int num_windows_per_row = 8;
-        double stack = 0.95;
+        double stack = g_settings_get_double (geometry_settings, "auto-stack-x");
+
         double href = 0.;
         gchar *wk=NULL;
 
@@ -1669,8 +1670,8 @@ void AppBase::LoadGeometryWRefAutoPlace(const gchar *wref_key, const gchar *wref
 void AppBase::LoadGeometryWRefAutoPlaceABmode(const gchar *wref_key){
         int nth = 0;
         int mth = 0;
-        double stackx = 0.95;
-        double stacky = 0.92;
+        double stackx = g_settings_get_double (geometry_settings, "auto-stack-x");
+        double stacky = g_settings_get_double (geometry_settings, "auto-stack-y");
         gchar *wk=NULL;
         gsize n_stores;
 
