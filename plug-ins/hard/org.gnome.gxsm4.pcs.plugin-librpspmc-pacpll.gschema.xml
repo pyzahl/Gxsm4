@@ -649,8 +649,8 @@
     </key>
 
     <key name="dsp-spmc-lck-freq" type="d">
-      <default>987</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-FREQ', Default/U: 1234 Hz     </summary>
+      <default>787</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-FREQ', Default/U: 787 Hz     </summary>
       <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-FREQ', Default/U:     987 Hz    , Adjustment PCS Name: 'dsp-SPMC-LCK-FREQ' </description>
     </key>
 
@@ -709,15 +709,15 @@
     </key>
 
     <key name="dsp-spmc-lck-bq1-coef-ba00" type="ad">
-      <default>[ 1.10598994e-03, -1.64650460e-03,  1.10598994e-03,  1.00000000e+00, -1.91355997e+00,  9.18013456e-01]</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA6', Default/U:  5 Hz @ 987Hz/7679/128 -> SOS[0] := [ 1.10598994e-03 -1.64650460e-03  1.10598994e-03  1.00000000e+00  -1.91355997e+00  9.18013456e-01]  </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U:  BQ ellip LP 4th SOS vector section 1 for 5 Hz @ 987Hz/7679/128 -> SOS[0] := [ 1.10598994e-03 -1.64650460e-03  1.10598994e-03  1.00000000e+00  -1.91355997e+00  9.18013456e-01]   , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA' </description>
+      <default> [0.031232599999999999, -0.0622558, 0.031232599999999999, 1.0, -1.9764860448225414, 0.9768895309575143] </default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA6', Default/U:  5 Hz @ 987Hz/7679/128 -> SOS[0] := [0.031232599999999999, -0.0622558, 0.031232599999999999, 1.0, -1.9764860448225414, 0.9768895309575143] use python script/scipy.signal to calculate (LocKIn-ConfigureBQs.py ) </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U:  BQ ellip LP 2nd/4th SOS vector section 1 for 5 Hz @ 987Hz/7679/128 -> SOS[0] := [ 1.10598994e-03 -1.64650460e-03  1.10598994e-03  1.00000000e+00  -1.91355997e+00  9.18013456e-01]   , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA use python script/scipy.signal to calculate (LocKIn-ConfigureBQs.py )' </description>
     </key>
 
     <key name="dsp-spmc-lck-bq2-coef-ba00" type="ad">
-      <default>[ 1.00000000e+00, -1.89566593e+00,  1.00000000e+00,  1.00000000e+00, -1.95408151e+00,  9.68945642e-01]</default>
-      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA6', Default/U: 5 Hz @ 987Hz/7679/128 -> SOS[1] := [ 1.00000000e+00 -1.89566593e+00  1.00000000e+00  1.00000000e+00 -1.95408151e+00  9.68945642e-01]  </summary>
-      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U: BQ ellip LP 4th SOS vector section 2 for 5 Hz @ 987Hz/7679/128 -> SOS[1] := [ 1.00000000e+00 -1.89566593e+00  1.00000000e+00  1.00000000e+00 -1.95408151e+00  9.68945642e-01]    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA' </description>
+      <default>[1.0, -1.9983863458255349, 0.99999999999999978, 1.0, -1.9939945106389911, 0.99493432648559599]</default>
+      <summary>PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA6', Default/U: 5 Hz @ 987Hz/7679/128 -> SOS[1] := [ 1.00000000e+00 -1.89566593e+00  1.00000000e+00  1.00000000e+00 -1.95408151e+00  9.68945642e-01] use python script/scipy.signal to calculate (LocKIn-ConfigureBQs.py ) </summary>
+      <description>pcs0000, PCS Remote-ID: 'dsp-SPMC-LCK-BQ-COEF-BA', Default/U: BQ ellip LP 2nd/4th SOS vector section 2 for 5 Hz @ 987Hz/7679/128 -> SOS[1] := [ 1.00000000e+00 -1.89566593e+00  1.00000000e+00  1.00000000e+00 -1.95408151e+00  9.68945642e-01]    , Adjustment PCS Name: 'dsp-SPMC-LCK-BQ-COEF-BA use python script/scipy.signal to calculate (LocKIn-ConfigureBQs.py )' </description>
     </key>
 
     <key name="dsp-spmc-zs-bq-coef-ba00" type="ad">
