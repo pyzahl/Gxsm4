@@ -503,7 +503,11 @@ void Param_Control::Set_Parameter(double value, int flg, int usr2base){
 	}else{
 		gchar *ctxt = Get_UsrString ();
 		XSM_DEBUG(DBG_L2, "Set Value [" << ctxt << "] = " );
-		std::cin >> ctxt;
+                g_free (ctxt);
+
+                std::string input;
+                std::cin >> input;
+                ctxt = g_strdup(input.c_str());
 		Set_FromValue(unit->Usr2Base(ctxt));
                 g_free (ctxt);
 	}
