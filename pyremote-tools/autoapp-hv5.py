@@ -14,12 +14,14 @@ class THV5():
         def THVCoarseMove(self, channel, direction, burstcount, period, voltage, start):
                 #c=['X','Y','Z']
                 if start:
+                        self.request ('coarse?v0={}&p0={}&a0={}&c0=0'.format(int(voltage), int(1000*period), channel))
                         return self.request ('coarse?v={}&p0={}&a0={}&c0={}&bs=0'.format(int(voltage), int(1000*period), channel, burstcount*direction))
                 else:
                         return self.request ('coarse?v={}&p0={}&a0={}&c0={}&bs=0'.format(0, 0, c[channel], 0))
 
         def TipDownApp(self, n):
-                 self.THVCoarseMove('Z', -1, n, 0.5, 50,  True)
+                 self.THVCoarseMove('Z', -1, n, 0.5, 30,  True)
+                 #time.sleep(3) ## HV Glitch wait up
 
 
 # in HV Volts
@@ -96,7 +98,7 @@ thv=THV5('http://192.168.40.10/')
 
 print (abs(dFreq()), 'Hz')
 
-run_auto_approach(0.03)
+run_auto_approach(0.013)
 
 print ("Finished/Aborted.")
 
