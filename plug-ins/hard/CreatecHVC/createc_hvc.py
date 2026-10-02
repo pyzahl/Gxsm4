@@ -232,8 +232,8 @@ CHV5_gains = np.array([12., 12., 24.])
 
 CHV5_coarse = {
         'steps': [10,10,5],
-        'volts': [100.0,100.0,75.0],
-        'period': [500,500,500]
+        'volts': [80.0,80.0,50.0],
+        'period': [1000,1000,1000]
         }
 
 CHV5_driftcomp = [ 0., 0., 0. ]
@@ -322,6 +322,7 @@ class THV5():
                 c=['X','Y','Z']
                 ## http://192.168.40.10/coarse?v0=15&p0=500&a0=Z&c0=1&bs=0
                 if start:
+                        self.request ('coarse?v0={}&p0={}&a0={}&c0=0'.format(int(voltage), int(1000*period), channel))
                         return self.request ('coarse?v={}&p0={}&a0={}&c0={}&bs=0'.format(int(voltage), int(period), c[channel], burstcount*direction))
                 else:
                         return self.request ('coarse?v={}&p0={}&a0={}&c0={}&bs=0'.format(0, 0, c[channel], 0))

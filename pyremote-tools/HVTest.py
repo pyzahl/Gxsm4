@@ -14,6 +14,7 @@ class THV5():
         def THVCoarseMove(self, channel, direction, burstcount, period, voltage, start):
                 #c=['X','Y','Z']
                 if start:
+                        self.request ('coarse?v0={}&p0={}&a0={}&c0=0'.format(int(voltage), int(1000*period), channel))
                         return self.request ('coarse?v={}&p0={}&a0={}&c0={}&bs=0'.format(int(voltage), int(1000*period), channel, burstcount*direction))
                 else:
                         return self.request ('coarse?v={}&p0={}&a0={}&c0={}&bs=0'.format(0, 0, c[channel], 0))
@@ -101,16 +102,15 @@ thv=THV5('http://192.168.40.10/')
 
 ### TEST HV STEPPING
 
-for d in ['X', 'Y', 'Z']:
-	print (f'Testing {d} @ 20V')
-	thv.THVCoarseMove(d, 1, 200, 1, 20, True)
-	time.sleep(1)
-	thv.THVCoarseMove(d, -1, 200, 1, 20, True)
-	time.sleep(2)
-	print (f'Testing {d} @ 70V')
-	thv.THVCoarseMove(d, 1, 200, 1, 70, True)
-	time.sleep(1)
-	thv.THVCoarseMove(d, -1, 200, 1, 70, True)
+for d in ['Z']: #]['X', 'Y', 'Z']:
+	for V in [20,40]:
+		print (f'Testing {d} @ {V}V')
+		thv.THVCoarseMove(d, 1, 1, 1, V, True)
+		time.sleep(0.5)
+		thv.THVCoarseMove(d, 1, 1000, 1, V, True)
+		time.sleep(1)
+		thv.THVCoarseMove(d, -1, 1000, 1, V, True)
+		time.sleep(2)
 	time.sleep(3)
 
 ##### GXSM Auto App Start:
