@@ -203,20 +203,28 @@ public:
         gint last_vector_index;
 
         // system history buffer FIFO
+        // written by stream thread (push_history_vector), read by main thread -- access only with history_mutex locked
         GSList *rpspmc_history;
+        guint  history_len;
         int    history_block_size;
+        GMutex history_mutex;
         void push_history_vector (void *shm_mirror_block, int min_size){
-                int max_hist = 2*16384+1;
-                history_block_size = min_size;
+                guint max_hist = 2*16384+1;
 
                 double *block = new double [min_size];
                 memcpy (block, shm_mirror_block, min_size * sizeof(double));
+
+                g_mutex_lock (&history_mutex);
+                history_block_size = min_size;
                 rpspmc_history = g_slist_prepend (rpspmc_history, block);
-                if (g_slist_length (rpspmc_history) > max_hist){
+                ++history_len;
+                if (history_len > max_hist){
                         GSList *last = g_slist_last (rpspmc_history);
-                        delete last->data;
+                        delete[] (double*) last->data;
                         rpspmc_history = g_slist_delete_link (rpspmc_history, last);
+                        --history_len;
                 }
+                g_mutex_unlock (&history_mutex);
                 
                 // RPSPMC HISTORY BLOCK:
                 // [0..9]:    RPSPMC  Meter Monitors: XYZ MAX MIN (3x3), gint64: NOW TIME as of g_get_real_time ()   X012, Y345, Z678, T9   ** time in number of microseconds since January 1, 1970 UTC.
@@ -226,35 +234,51 @@ public:
         };
         
         guint get_history_len (){
-                if (rpspmc_history)
-                        return g_slist_length (rpspmc_history);
-                else
-                        return 0;
+                g_mutex_lock (&history_mutex);
+                guint len = history_len;
+                g_mutex_unlock (&history_mutex);
+                return len;
         };
         
         void get_history_vector (int pos, double *histarr, int n){
                 double *arr = histarr;
                 GSList *iterator;
                 int i=0;
-                if (pos < 0 || pos >= history_block_size) return;
-                if (rpspmc_history)
+                g_mutex_lock (&history_mutex);
+                if (pos >= 0 && pos < history_block_size && rpspmc_history)
                         for (iterator = rpspmc_history; iterator && i++<n; iterator = iterator->next)
                                 *arr++ = ((double*)iterator->data)[pos];
+                g_mutex_unlock (&history_mutex);
         };
         void get_history_vector_f (int pos, gfloat *histarr, int n){
                 gfloat *arr = histarr;
                 GSList *iterator;
                 int i=0;
                 static int k=0;
-                if (pos < 0 || pos >= history_block_size) return;
-                if (rpspmc_history)
+                g_mutex_lock (&history_mutex);
+                if (pos < 0 || pos >= history_block_size){
+                        g_mutex_unlock (&history_mutex);
+                        return;
+                }
+                if (rpspmc_history){
                         for (iterator = rpspmc_history; iterator && i++<n; iterator = iterator->next)
                                 *arr++ = (gfloat) ((double*)iterator->data)[pos];
-                else{
+                        g_mutex_unlock (&history_mutex);
+                } else{
+                        g_mutex_unlock (&history_mutex);
                         k++;
                         for (i=0; i<n; i++)
                                 *arr++ = (gfloat) sin((i+k)*2*M_PI*10/n);
                 }
+        };
+        void free_history (){
+                g_mutex_lock (&history_mutex);
+                for (GSList *l = rpspmc_history; l; l = l->next)
+                        delete[] (double*) l->data;
+                g_slist_free (rpspmc_history);
+                rpspmc_history = NULL;
+                history_len = 0;
+                g_mutex_unlock (&history_mutex);
         };
         
         //SPM_emulator *spm_emu; // DSP emulator for dummy data generation and minimal SPM behavior

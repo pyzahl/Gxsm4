@@ -107,6 +107,7 @@ private:
         gdouble mouse_x;
         gdouble mouse_y;
         gboolean dragging;
+        guint active_button;
 };
 
 #endif

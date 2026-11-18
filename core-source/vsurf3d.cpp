@@ -291,6 +291,7 @@ namespace
         GLuint Uniform_shadeLambertianMaterialColor(0);
         GLuint Uniform_shadeLambertianMaterialColorFog(0);
         GLuint Uniform_shadeVolume(0);
+        GLuint Uniform_loc_shadeModel((GLuint)-1);
 
 #if 0        //
         GLuint Uniform_S3D_vertexDirect(0); // vertex
@@ -568,6 +569,29 @@ public:
                 g_message ("base_plane draw state: program=%d vao=%d element_buffer=%d patches=%d indices=%d vao_expected=%u index_expected=%u",
                            current_program, current_vao, current_element_buffer, patch_vertices,
                            IndicesCount, VertexArrayName, IndexBufferName);
+
+                // Diagnostic: print texture and subroutine selection state
+                g_message ("Textures: Surf3D=%u Palette=%u Volume3D=%u | eval_setup=[%u,%u,%u] vertex_setup=%u",
+                           TesselationTextureName[0], TesselationTextureName[1], (numv>1?TesselationTextureName[2]:0),
+                           Uniform_evaluation_setup[0], Uniform_evaluation_setup[1], Uniform_evaluation_setup[2],
+                           Uniform_vertex_setup[0]);
+
+                /* print cached fragment subroutine indices and active value */
+                g_message ("Fragment subroutine indices: terrain=%u debug=%u lambert=%u vol=%u",
+                           Uniform_shadeTerrain, Uniform_shadeDebugMode, Uniform_shadeLambertian, Uniform_shadeVolume);
+                if (Uniform_loc_shadeModel != (GLuint)-1){
+                        GLuint active_idx = 0;
+                        glGetUniformSubroutineuiv (GL_FRAGMENT_SHADER, (GLint)Uniform_loc_shadeModel, &active_idx);
+                        g_message ("Active fragment subroutine index (shadeModel) = %u", active_idx);
+                }
+
+                /* dump important UBO fragment shading values for debug */
+                g_message ("UBO FragmentShading: debug_color_source=%u shininess=%f lightDir=(%f,%f,%f) eyePos=(%f,%f,%f) diffuse=(%f,%f,%f)",
+                           Block_FragmentShading.debug_color_source,
+                           Block_FragmentShading.shininess,
+                           Block_FragmentShading.lightDirWorld.x, Block_FragmentShading.lightDirWorld.y, Block_FragmentShading.lightDirWorld.z,
+                           Block_FragmentShading.eyePosWorld.x, Block_FragmentShading.eyePosWorld.y, Block_FragmentShading.eyePosWorld.z,
+                           Block_FragmentShading.diffuseColor.x, Block_FragmentShading.diffuseColor.y, Block_FragmentShading.diffuseColor.z);
                 
                 glDrawElements (GL_PATCHES, IndicesCount, GL_UNSIGNED_INT, 0);
 
@@ -1329,6 +1353,9 @@ private:
                         Uniform_shadeLambertianMaterialColorFog = glGetSubroutineIndex (Tesselation_ProgramName, GL_FRAGMENT_SHADER, "shadeLambertianMaterialColorFog" );
                         Uniform_shadeVolume       = glGetSubroutineIndex (Tesselation_ProgramName, GL_FRAGMENT_SHADER, "shadeVolume" );
 
+                        /* cache subroutine-uniform location for fragment selector */
+                        Uniform_loc_shadeModel = (GLuint) glGetSubroutineUniformLocation (Tesselation_ProgramName, GL_FRAGMENT_SHADER, "shadeModel");
+
                         Surf3d::checkError("initProgram -- get uniform subroutine references...");
 		}
 
@@ -1661,6 +1688,15 @@ public:
 
                 Block_FragmentShading.wrap = 0.3; // = 0.3;
                 Block_FragmentShading.debug_color_source = (GLuint)s->GLv_data.shader_mode;
+                g_message ("Fragment Debug Source=%u lightDir=(%f,%f,%f) eyePos=(%f,%f,%f)",
+                           Block_FragmentShading.debug_color_source,
+                           Block_FragmentShading.lightDirWorld.x,
+                           Block_FragmentShading.lightDirWorld.y,
+                           Block_FragmentShading.lightDirWorld.z,
+                           Block_FragmentShading.eyePosWorld.x,
+                           Block_FragmentShading.eyePosWorld.y,
+                           Block_FragmentShading.eyePosWorld.z);
+
                 updateFragmentShading ();
 
                 // Tesseleation control -- lod is not yet used
@@ -1718,7 +1754,10 @@ public:
                 glUniformSubroutinesuiv (GL_TESS_EVALUATION_SHADER, 3, Uniform_evaluation_setup);
 
                 Surf3d::checkError ("render -- configure color_source");
-                
+
+                /* Diagnostic: print requested ShadeModel char from prefs */
+                g_message ("ShadeModel requested: '%c'", s->GLv_data.ShadeModel[0]);
+
                 switch (s->GLv_data.ShadeModel[0]){
                 case 'L': glUniformSubroutinesuiv (GL_FRAGMENT_SHADER, 1, &Uniform_shadeLambertian); break;
 		case 'T': glUniformSubroutinesuiv (GL_FRAGMENT_SHADER, 1, &Uniform_shadeTerrain); break;
@@ -2002,8 +2041,12 @@ public:
         };
 
         void cursorPositionCallback(int mouse, double x, double y){
+                const float view_w = WindowSize.x > 1 ? static_cast<float>(WindowSize.x) : 500.0f;
+                const float view_h = WindowSize.y > 1 ? static_cast<float>(WindowSize.y) : 500.0f;
+                const float view_min = view_w < view_h ? view_w : view_h;
+
                 if (mouse == 'Z'){ // incremental
-                        DistanceCurrent = (DistanceOrigin += 0.02f*glm::vec3(x, y, 0.));
+                        DistanceCurrent = (DistanceOrigin += 0.05f*glm::vec3(x, 0.0f, y));
                         return;
                 }
                 if (mouse == 'i'){
@@ -2025,9 +2068,18 @@ public:
 
                 MouseCurrent = glm::ivec2(x, y);
                 glm::vec2 mouse_delta = glm::vec2(MouseCurrent - MouseOrigin);
-                DistanceCurrent    = mouse == 'M' ? DistanceOrigin + glm::vec3(mouse_delta.x, 0., mouse_delta.y)/100.0f : DistanceOrigin;
-                TranslationCurrent = mouse == 'T' ? TranslationOrigin + (mouse_delta / 1000.0f) : TranslationOrigin;
-                RotationCurrent    = mouse == 'R' ? RotationOrigin + glm::radians(mouse_delta)/10.0f : RotationOrigin;
+                glm::vec2 normalized_delta = glm::vec2(mouse_delta.x / view_w, mouse_delta.y / view_h);
+                glm::vec2 rotation_delta = glm::vec2(-normalized_delta.x * glm::radians(180.0f),
+                                                     -normalized_delta.y * glm::radians(120.0f));
+                glm::vec2 translation_delta = glm::vec2(normalized_delta.y,
+                                                        -normalized_delta.x) * 1.1f;
+                glm::vec3 distance_delta = glm::vec3((-mouse_delta.y / view_min) * 6.0f,
+                                                     0.0f,
+                                                     0.0f);
+
+                DistanceCurrent    = mouse == 'M' ? DistanceOrigin + distance_delta : DistanceOrigin;
+                TranslationCurrent = mouse == 'T' ? TranslationOrigin + translation_delta : TranslationOrigin;
+                RotationCurrent    = mouse == 'R' ? RotationOrigin + rotation_delta : RotationOrigin;
         };
 
         void get_rotation (float *wxyz){
@@ -3022,4 +3074,3 @@ inline bool Surf3d::checkFramebuffer(GLuint FramebufferName)
 
 	return Status != GL_FRAMEBUFFER_COMPLETE;
 }
-

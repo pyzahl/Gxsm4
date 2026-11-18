@@ -776,11 +776,20 @@ public:
                 action_script_running = 0;
                 message_list  = NULL;
                 g_mutex_init (&mutex);
-                
+
                 closing = false;
+                console_thread = NULL;
+                console_thread_done = 0;
         };
 	virtual ~py_gxsm_console ();
-        
+
+        // start the main python interpreter (console) thread
+        void start_console_thread ();
+        // request python console thread to terminate, interrupt a running user script,
+        // keep main loop alive while waiting (scripts may wait on main loop idle jobs),
+        // returns TRUE if thread terminated (or was never started) within timeout
+        gboolean shutdown_python (gint timeout_ms=5000);
+
         virtual void AppWindowInit(const gchar *title, const gchar *sub_title=NULL);
 	
         void initialize(void);
@@ -1099,7 +1108,9 @@ private:
         bool restart_interpreter;
         //PyRunThreadData run_data;
 
-        gboolean closing; // Indicates Python console closing
+        gint closing; // Indicates Python console closing (atomic access)
+        GThread *console_thread; // python console thread, NULL if not started (i.e. new instance mode -s)
+        gint console_thread_done; // set by console thread when finished (atomic access)
 
         GSList *message_list;
         gboolean gui_ready;
@@ -3800,17 +3811,60 @@ int ok_button_callback( GtkWidget *widget, gpointer data)
 	return 0;
 }
 
-py_gxsm_console::~py_gxsm_console (){
-        PI_DEBUG_GM(DBG_L2, "Pyremote Plugin: destructor. Calls: Py_FinalizeEx()");
-        closing = true;
+int Stop(void *);
 
-        // TODO: Wait up to N seconds before exiting impolitely
-        while( closing ) {  // Waiting for Python thread to close...
-                 g_usleep(DEFAULT_SLEEP_USECS);
+void py_gxsm_console::start_console_thread (){
+        if (console_thread)
+                return;
+        g_atomic_int_set (&console_thread_done, 0);
+        console_thread = g_thread_new ("PyRunConsoleThread", py_gxsm_console::PyRunConsoleThread, NULL);
+}
+
+gboolean py_gxsm_console::shutdown_python (gint timeout_ms){
+        g_atomic_int_set (&closing, 1);
+
+        if (!console_thread){ // never started (e.g. -s new instance mode), nothing to wait for
+                PI_DEBUG_GM (DBG_L2, "Pyremote Plugin: shutdown -- no python console thread running.");
+                return TRUE;
         }
-        PI_DEBUG_GM(DBG_L2, "Pyremote Plugin: destructor completed.");
 
-        //Py_FinalizeEx();
+        // A running user script never returns to the console loop by itself -- ask python to abort it.
+        // Py_AddPendingCall is safe to call without holding the GIL (the script thread may hold it).
+        if (user_script_data.cmd && !g_atomic_int_get (&console_thread_done)){
+                g_message ("Pyremote: user script still running at shutdown -- requesting script abort (KeyboardInterrupt).");
+                Py_AddPendingCall (&Stop, NULL);
+        }
+
+        // Wait for the python thread to finish. Keep the main loop alive meanwhile:
+        // script calls (gxsm.*) post idle jobs to the main thread and block until they are executed (WAIT_JOIN_MAIN).
+        gint64 t_end = g_get_monotonic_time () + (gint64)timeout_ms * 1000;
+        gint64 t_kick = g_get_monotonic_time () + 1000000;
+        while (!g_atomic_int_get (&console_thread_done) && g_get_monotonic_time () < t_end){
+                while (g_main_context_iteration (NULL, FALSE));
+                g_usleep (DEFAULT_SLEEP_USECS);
+                if (user_script_data.cmd && g_get_monotonic_time () > t_kick){ // repeat abort request, a script may catch one
+                        Py_AddPendingCall (&Stop, NULL);
+                        t_kick = g_get_monotonic_time () + 1000000;
+                }
+        }
+
+        if (g_atomic_int_get (&console_thread_done)){
+                g_thread_join (console_thread);
+                console_thread = NULL;
+                PI_DEBUG_GM (DBG_L2, "Pyremote Plugin: python console thread terminated.");
+                return TRUE;
+        }
+
+        g_warning ("Pyremote: python console thread did not terminate within %d ms (script blocked?). Giving up waiting.", timeout_ms);
+        return FALSE;
+}
+
+py_gxsm_console::~py_gxsm_console (){
+        PI_DEBUG_GM(DBG_L2, "Pyremote Plugin: destructor.");
+        // normally already done by pyremote_cleanup, no-op then
+        if (!shutdown_python ())
+                g_warning ("Pyremote: destroying console while python thread is still running.");
+        PI_DEBUG_GM(DBG_L2, "Pyremote Plugin: destructor completed.");
 }
 
 
@@ -4137,7 +4191,7 @@ gpointer py_gxsm_console::PyRunConsoleThread(gpointer user_data)
         // create new environment
         PyObject *d = NULL;
         PyThreadState *thread_state = PyEval_SaveThread();
-        while( pygc && !pygc->closing)  // Close when console is deleted...
+        while( pygc && !g_atomic_int_get (&pygc->closing))  // Close when console is shut down...
         {
                 // If run_data was set, run in python
                 if( s->cmd )
@@ -4149,8 +4203,10 @@ gpointer py_gxsm_console::PyRunConsoleThread(gpointer user_data)
                                 if (d != NULL)
                                         pygc->destroy_environment(d);
                                 d = pygc->create_environment("__console__");
-                                if (!d)
+                                if (!d){
+                                        thread_state = PyEval_SaveThread (); // release GIL again, restored below
                                         break;  // Exit on environment failure
+                                }
                         }
 
                         s->ret = pygc->run_string(s->cmd, s->mode, d, d,
@@ -4166,6 +4222,13 @@ gpointer py_gxsm_console::PyRunConsoleThread(gpointer user_data)
 
         PI_DEBUG_GM(DBG_L2, "Pyremote Plugin: Python thread closing.");
 
+        // give still running action script threads a moment to finish before finalizing the interpreter
+        // (GIL is released here, main loop is kept alive by shutdown_python)
+        for (int i=0; i<200 && pygc->action_script_running > 0; ++i)
+                g_usleep (DEFAULT_SLEEP_USECS);
+        if (pygc->action_script_running > 0)
+                g_warning ("Pyremote: finalizing python while %d action script(s) still running.", pygc->action_script_running);
+
         // Destroy environment, close python interpreter.
         PyEval_RestoreThread (thread_state);
         if (d != NULL)
@@ -4174,7 +4237,7 @@ gpointer py_gxsm_console::PyRunConsoleThread(gpointer user_data)
 
         PI_DEBUG_GM(DBG_L2, "Pyremote Plugin: Python thread ended..");
 
-        pygc->closing = false;
+        g_atomic_int_set (&pygc->console_thread_done, 1);
         return NULL;
 }
 
@@ -5396,7 +5459,7 @@ static void pyremote_init(void)
         g_thread_new (NULL, PySHMServer_Run, &dummy);
         
         py_gxsm_remote_console->run("\nPy Remote Console Init...");
-        g_thread_new (NULL, py_gxsm_console::PyRunConsoleThread, NULL);
+        py_gxsm_remote_console->start_console_thread ();
 }
 
 
@@ -5420,8 +5483,15 @@ static void pyremote_cleanup(void)
 	if (py_gxsm_remote_console){
                 PI_DEBUG(DBG_L3, "Pyremote Plugin: saving geometry forced now.");
                 py_gxsm_remote_console->SaveGeometry (); // some what needed and now it running the destruictor also. Weird.
-                PI_DEBUG(DBG_L3, "Pyremote Plugin: closing up remote control console: delete py_gxsm_remote_console.");
-		delete py_gxsm_remote_console;
+                PI_DEBUG(DBG_L3, "Pyremote Plugin: shutting down python console thread.");
+                if (py_gxsm_remote_console->shutdown_python ()){
+                        PI_DEBUG(DBG_L3, "Pyremote Plugin: closing up remote control console: delete py_gxsm_remote_console.");
+                        delete py_gxsm_remote_console;
+                } else {
+                        // python thread still alive and referencing the console object -- do not free it under its feet,
+                        // intentionally leaked, process is about to exit / plugin unloaded.
+                        g_warning ("Pyremote: python thread still busy, not deleting console object.");
+                }
         }
         py_gxsm_remote_console = NULL;
 

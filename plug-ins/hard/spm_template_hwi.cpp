@@ -1684,7 +1684,7 @@ void SPM_Template_Control::create_folder (){
                                          IV_auto_flags,  GCallback (callback_change_IV_auto_flags),
                                          GCallback (SPM_Template_Control::Probing_exec_IV_callback),
                                          GCallback (SPM_Template_Control::Probing_write_IV_callback),
-                                         GCallback (SPM_Template_Control::Probing_graph_callback),
+                                         GCallback (SPM_Template_Control::Probing_graph_button_callback),
                                          GCallback (SPM_Template_Control::Probing_abort_callback),
                                          this,
                                          "IV");
@@ -1962,7 +1962,7 @@ void SPM_Template_Control::create_folder (){
                                          GVP_auto_flags,  GCallback (callback_change_GVP_auto_flags),
                                          GCallback (SPM_Template_Control::Probing_exec_GVP_callback),
                                          GCallback (SPM_Template_Control::Probing_write_GVP_callback),
-                                         GCallback (SPM_Template_Control::Probing_graph_callback),
+                                         GCallback (SPM_Template_Control::Probing_graph_button_callback),
                                          GCallback (SPM_Template_Control::Probing_abort_callback),
                                          this,
                                          "VP");
@@ -2116,7 +2116,7 @@ void SPM_Template_Control::create_folder (){
 
 	bp->grid_add_button ("Plot");
 	g_signal_connect (G_OBJECT (bp->button), "clicked",
-                          G_CALLBACK (SPM_Template_Control::Probing_graph_callback), this);
+                          G_CALLBACK (SPM_Template_Control::Probing_graph_button_callback), this);
 	
         save_button = bp->grid_add_button ("Save");
 	g_signal_connect (G_OBJECT (bp->button), "clicked",

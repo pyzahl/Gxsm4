@@ -2189,7 +2189,7 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
                                          IV_auto_flags,  GCallback (callback_change_IV_auto_flags),
                                          GCallback (DSPControl::Probing_exec_IV_callback),
                                          GCallback (DSPControl::Probing_write_IV_callback),
-                                         GCallback (DSPControl::Probing_graph_callback),
+                                         GCallback (DSPControl::Probing_graph_button_callback),
                                          GCallback (DSPControl::Probing_abort_callback),
                                          this,
                                          "IV");
@@ -2242,7 +2242,7 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
                                          FZ_auto_flags,  GCallback (callback_change_FZ_auto_flags),
                                          GCallback (DSPControl::Probing_exec_FZ_callback),
                                          GCallback (DSPControl::Probing_write_FZ_callback),
-                                         GCallback (DSPControl::Probing_graph_callback),
+                                         GCallback (DSPControl::Probing_graph_button_callback),
                                          GCallback (DSPControl::Probing_abort_callback),
                                          this,
                                          "FZ");
@@ -2302,7 +2302,7 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
                                          PL_auto_flags,  GCallback (callback_change_PL_auto_flags),
                                          GCallback (DSPControl::Probing_exec_PL_callback),
                                          GCallback (DSPControl::Probing_write_PL_callback),
-                                         GCallback (DSPControl::Probing_graph_callback),
+                                         GCallback (DSPControl::Probing_graph_button_callback),
                                          GCallback (DSPControl::Probing_abort_callback),
                                          this,
                                          "PL");
@@ -2350,7 +2350,7 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
                                          LP_auto_flags,  GCallback (callback_change_LP_auto_flags),
                                          GCallback (DSPControl::Probing_exec_LP_callback),
                                          GCallback (DSPControl::Probing_write_LP_callback),
-                                         GCallback (DSPControl::Probing_graph_callback),
+                                         GCallback (DSPControl::Probing_graph_button_callback),
                                          GCallback (DSPControl::Probing_abort_callback),
                                          this,
                                          "LP");
@@ -2389,7 +2389,7 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
                                          SP_auto_flags,  GCallback (callback_change_SP_auto_flags),
                                          GCallback (DSPControl::Probing_exec_SP_callback),
                                          GCallback (DSPControl::Probing_write_SP_callback),
-                                         GCallback (DSPControl::Probing_graph_callback),
+                                         GCallback (DSPControl::Probing_graph_button_callback),
                                          GCallback (DSPControl::Probing_abort_callback),
                                          this,
                                          "SP");
@@ -2429,7 +2429,7 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
                                          TS_auto_flags,  GCallback (callback_change_TS_auto_flags),
                                          GCallback (DSPControl::Probing_exec_TS_callback),
                                          GCallback (DSPControl::Probing_write_TS_callback),
-                                         GCallback (DSPControl::Probing_graph_callback),
+                                         GCallback (DSPControl::Probing_graph_button_callback),
                                          GCallback (DSPControl::Probing_abort_callback),
                                          this,
                                          "TS");
@@ -2691,7 +2691,7 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
                                          GVP_auto_flags,  GCallback (callback_change_GVP_auto_flags),
                                          GCallback (DSPControl::Probing_exec_GVP_callback),
                                          GCallback (DSPControl::Probing_write_GVP_callback),
-                                         GCallback (DSPControl::Probing_graph_callback),
+                                         GCallback (DSPControl::Probing_graph_button_callback),
                                          GCallback (DSPControl::Probing_abort_callback),
                                          this,
                                          "GVP");
@@ -2763,7 +2763,7 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
                                          TK_auto_flags,  GCallback (callback_change_TK_auto_flags),
                                          GCallback (DSPControl::Probing_exec_TK_callback),
                                          GCallback (DSPControl::Probing_write_TK_callback),
-                                         GCallback (DSPControl::Probing_graph_callback),
+                                         GCallback (DSPControl::Probing_graph_button_callback),
                                          GCallback (DSPControl::Probing_abort_callback),
                                          this,
                                          "TK");
@@ -2886,7 +2886,7 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
                                          AC_auto_flags,  GCallback (callback_change_AC_auto_flags),
                                          GCallback (DSPControl::LockIn_exec_callback),
                                          GCallback (DSPControl::LockIn_write_callback),
-                                         GCallback (DSPControl::Probing_graph_callback),
+                                         GCallback (DSPControl::Probing_graph_button_callback),
                                          GCallback (DSPControl::Probing_abort_callback),
                                          this,
                                          "AC");
@@ -2934,7 +2934,7 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
                                          AX_auto_flags,  GCallback (callback_change_AX_auto_flags),
                                          GCallback (DSPControl::Probing_exec_AX_callback),
                                          GCallback (DSPControl::Probing_write_AX_callback),
-                                         GCallback (DSPControl::Probing_graph_callback),
+                                         GCallback (DSPControl::Probing_graph_button_callback),
                                          GCallback (DSPControl::Probing_abort_callback),
                                          this,
                                          "AX");
@@ -2962,7 +2962,7 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
                                          ABORT_auto_flags,  GCallback (callback_change_ABORT_auto_flags),
                                          GCallback (DSPControl::Probing_exec_ABORT_callback),
                                          GCallback (DSPControl::Probing_write_ABORT_callback),
-                                         GCallback (DSPControl::Probing_graph_callback),
+                                         GCallback (DSPControl::Probing_graph_button_callback),
                                          GCallback (DSPControl::Probing_abort_callback),
                                          this,
                                          "ABORT");
@@ -3155,7 +3155,7 @@ DSPControl::DSPControl (Gxsm4app *app):AppBase(app) {
 
 	dsp_bp->grid_add_button ("Plot");
 	g_signal_connect (G_OBJECT (dsp_bp->button), "clicked",
-                          G_CALLBACK (DSPControl::Probing_graph_callback), this);
+                          G_CALLBACK (DSPControl::Probing_graph_button_callback), this);
 	
         save_button = dsp_bp->grid_add_button ("Save");
 	g_signal_connect (G_OBJECT (dsp_bp->button), "clicked",

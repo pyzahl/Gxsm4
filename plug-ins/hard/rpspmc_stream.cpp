@@ -140,6 +140,20 @@ gpointer RP_stream::wspp_asio_thread (void *ptr_rp_stream){
         return NULL;
 }
 
+void RP_stream::stream_shutdown (){
+        if (!wspp_asio_gthread)
+                return;
+        g_message ("RP_stream: shutting down RPSPMC DMA stream thread.");
+        std::error_code ec;
+        if (con)
+                client->close(con, websocketpp::close::status::going_away, "gxsm shutdown", ec);
+        client->stop(); // make sure ASIO run() returns, even if close handshake does not complete
+        g_thread_join (wspp_asio_gthread);
+        wspp_asio_gthread=NULL;
+        con = NULL;
+        g_message ("RP_stream: stream thread terminated.");
+}
+
 void RP_stream::stream_connect_cb (gboolean connect){
         if (!get_rp_address ()) return;
         debug_log (get_rp_address ());
@@ -315,17 +329,24 @@ void  RP_stream::on_message(RP_stream* self, websocketpp::connection_hdl hdl, ws
                                         }
                                         //self->on_new_Z85Vector_message (vec, size); // process vector message ** badly broken
 #endif
-                                        if (self->shm_memory){
-                                                if (size == 400){ // Enforce Verify Length to current setup of 20 x 20 vectors
-                                                        memcpy  (self->shm_memory, &vec[VEC_LEN*(VEC_VNUM-1)], 10*sizeof(double));
-                                                        memcpy  (self->shm_memory+100*sizeof(double), &vec[0], size*sizeof(double));
-                                                        for (int k=0; k<size; k+=20)
-                                                                rpspmc_hwi->push_history_vector (self->shm_memory+(100+k)*sizeof(double), 20);
-                                                        // advance
-                                                        contents_next += 13+4+size*sizeof(double);
-                                                } else {
-                                                        g_warning ("Z85DVector Error. Size Mismatch Config <%s>", g_strrstr (contents, "{Z85Vector[")); break;
-                                                }
+                                        // SHM block may get unmapped by main thread (shutdown) -- hold lock while using it
+                                        g_mutex_lock (&self->shm_mutex);
+                                        gchar *shm = (gchar*) self->shm_memory;
+                                        gboolean shm_ok  = shm != NULL;
+                                        gboolean size_ok = size == 400; // Enforce Verify Length to current setup of 20 x 20 vectors
+                                        if (shm_ok && size_ok){
+                                                memcpy  (shm, &vec[VEC_LEN*(VEC_VNUM-1)], 10*sizeof(double));
+                                                memcpy  (shm+100*sizeof(double), &vec[0], size*sizeof(double));
+                                                for (int k=0; k<size; k+=20)
+                                                        rpspmc_hwi->push_history_vector (shm+(100+k)*sizeof(double), 20);
+                                        }
+                                        g_mutex_unlock (&self->shm_mutex);
+
+                                        if (shm_ok && size_ok){
+                                                // advance
+                                                contents_next += 13+4+size*sizeof(double);
+                                        } else if (shm_ok) {
+                                                g_warning ("Z85DVector Error. Size Mismatch Config <%s>", g_strrstr (contents, "{Z85Vector[")); break;
                                         } else {
                                                 g_warning ("Z85DVector Push SHM Invalid Error. Message=<%s>", g_strrstr (contents, "{Z85Vector[")); break;
                                         }

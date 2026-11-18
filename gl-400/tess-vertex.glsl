@@ -7,8 +7,6 @@
 
 #define POSITION		0
 
-layout(std140, column_major) uniform;
-
 layout(location = POSITION) in vec2 PositionXZ;  // XZ in GL is XY in plane
 
 out block

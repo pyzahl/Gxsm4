@@ -306,12 +306,19 @@ static void rpspmc_pacpll_hwi_configure(void)
 // cleanup-Function, make sure the Menustrings are matching those above!!!
 static void rpspmc_pacpll_hwi_cleanup(void)
 {
+        // FIRST stop the RPSPMC DMA stream thread: it writes into the SHM block owned by rpspmc_pacpll
+        // and uses rpspmc_hwi -- must be terminated before any of these get destroyed.
+        if (rpspmc_hwi)
+                rpspmc_hwi->stream_shutdown ();
+
 	// delete ...
         if (rpspmc_gvpmover)
                 delete rpspmc_gvpmover ;
+        rpspmc_gvpmover = NULL;
         
 	if( rpspmc_pacpll )
 		delete rpspmc_pacpll ;
+        rpspmc_pacpll = NULL; // referenced e.g. by rpspmc_hwi->RTQuery and get_rp_address
 
 	if(rpspmc_pacpll_hwi_pi.status) g_free(rpspmc_pacpll_hwi_pi.status); 
 

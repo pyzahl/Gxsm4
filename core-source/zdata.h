@@ -52,6 +52,8 @@ class ZData{
 public:
 	ZData(int Nx, int Ny, int Nv);
 	virtual ~ZData();
+	ZData(const ZData&) = delete;            // owns raw buffers, copying would double free
+	ZData& operator=(const ZData&) = delete;
 
 	inline int GetNx(){ return nx; };
 	inline int GetX0Sub(){ return cp_ixy_sub[0]; };
@@ -311,11 +313,10 @@ public:
                                 const double ya[] = { -1.0, 0.0, 1.0, 2.0 };
                                 const size_t nx = sizeof(xa) / sizeof(double); /* x grid points */
                                 const size_t ny = sizeof(ya) / sizeof(double); /* y grid points */
-                                double *za = malloc(nx * ny * sizeof(double));
+                                double *za = (double*) malloc(nx * ny * sizeof(double));
                                 gsl_spline2d *spline = gsl_spline2d_alloc(T, nx, ny);
                                 gsl_interp_accel *xacc = gsl_interp_accel_alloc();
                                 gsl_interp_accel *yacc = gsl_interp_accel_alloc();
-                                size_t i, j;
 
                                 int x0=int(floor(x));
                                 int y0=int(floor(y));
@@ -323,7 +324,7 @@ public:
                                 /* set z grid values */
                                 for (int i=-1; i<3; ++i)
                                         for (int j=-1; j<3; ++j)
-                                                gsl_spline2d_set(spline, za, i, j, (double)Zdat[pbcy(y0+j)*nv+v][pbcx(x0+i)]);
+                                                gsl_spline2d_set(spline, za, i+1, j+1, (double)Zdat[pbcy(y0+j)*nv+v][pbcx(x0+i)]); // grid index 0..3 <=> offset -1..2
 
                                 /* initialize interpolation */
                                 gsl_spline2d_init(spline, xa, ya, za, nx, ny);

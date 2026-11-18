@@ -6,8 +6,6 @@
 #define POSITION		0
 #define LATTICE                 1
 
-layout(std140, column_major) uniform;
-
 layout(location = POSITION) in vec4 Position;
 layout(location = LATTICE)  in vec4 LatPos;
 

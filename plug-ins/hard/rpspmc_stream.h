@@ -63,6 +63,7 @@ public:
 
                 send_msg_func=NULL;
                 shm_memory=NULL;
+                g_mutex_init (&shm_mutex);
                 wspp_asio_gthread=NULL;
                 
                 port=9003;
@@ -95,17 +96,23 @@ public:
                 error=NULL;
                 last_vector_pc_confirmed = -1;
         };
-        ~RP_stream (){};
+        ~RP_stream (){ stream_shutdown (); };
 
         void set_message_func (message_func msg_func){
                 send_msg_func=msg_func;
         };
 
+        // set/reset SHM mirror reference. Locked: the stream thread writes to it -- after set_shm_ref(NULL) returned,
+        // the stream thread is guaranteed to no longer access the old block (safe to munmap)
         void set_shm_ref (void *mptr){
+                g_mutex_lock (&shm_mutex);
                 shm_memory=mptr;
+                g_mutex_unlock (&shm_mutex);
         };
 
         void stream_connect_cb (gboolean connect); // connect/dissconnect
+        // stop stream unconditionally and join stream thread -- must be called before any objects used by the stream thread are destroyed
+        void stream_shutdown ();
 
         static void got_client_connection (GObject *object, gpointer user_data);
         static void on_message(RP_stream* self, websocketpp::connection_hdl hdl, wsppclient::message_ptr msg);
@@ -329,7 +336,8 @@ public:
 	GError *error;
 
         message_func send_msg_func;
-        void *shm_memory;
+        void *shm_memory;   // access only with shm_mutex locked
+        GMutex shm_mutex;
 };
 
 

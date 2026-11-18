@@ -148,6 +148,8 @@ public:
 	Mem2d(Mem2d *m, MEM2D_CREATE_MODE Option=M2D_ZERO);
 	Mem2d(Mem2d *m, int Nx, int Ny, int Nv=1);
 	virtual ~Mem2d();
+	Mem2d(const Mem2d&) = delete;            // owns data/layer info/events, copying would double free
+	Mem2d& operator=(const Mem2d&) = delete;
 
 	void copy(Mem2d *m, int x0=-1, int y0=-1, int vi=-1, int vf=-1, int nx=-1, int ny=-1, gboolean observe_shift=false);
 

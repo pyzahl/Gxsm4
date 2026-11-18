@@ -68,9 +68,9 @@ ZData::ZData(int Nx, int Ny, int Nv){
         Ylookup=new double[ny]; 
         Vlookup=new double[nv];
 
-        memset (Xlookup, 0, Nx);
-        memset (Ylookup, 0, Ny);
-        memset (Vlookup, 0, Nv);
+        memset (Xlookup, 0, Nx*sizeof(double));
+        memset (Ylookup, 0, Ny*sizeof(double));
+        memset (Vlookup, 0, Nv*sizeof(double));
         creepfactor    = 0.;
         enable_drift_correction = false;
 
@@ -110,9 +110,9 @@ int ZData::ZResize(int Nx, int Ny, int Nv){
 	Xlookup=new double[Nx];
 	Ylookup=new double[Ny];
 	Vlookup=new double[Nv];
-	memset (Xlookup, 0, Nx);
-	memset (Ylookup, 0, Ny);
-	memset (Vlookup, 0, Nv);
+	memset (Xlookup, 0, Nx*sizeof(double));
+	memset (Ylookup, 0, Ny*sizeof(double));
+	memset (Vlookup, 0, Nv*sizeof(double));
 	if(xl){
 		memcpy(Xlookup, xl, (Nx > nx ? nx:Nx)*sizeof(double));
 		delete [] xl; 
@@ -213,7 +213,9 @@ int TZData<ZTYP>::Resize(int Nx, int Ny, int Nv){
 				XSM_DEBUG (DBG_L6, "TZData: Resize Del old");
 				TDel();
 				XSM_DEBUG (DBG_L6, "TZData: Resize New");
+				ZResize(Nx, Ny, Nv); // set new nx,ny,nv first -- TNew() allocates using current dimensions
 				TNew();
+				return 1;
 			}else{
 				XSM_DEBUG (DBG_L6, "TZData: real Resize, copy old ");
 				ZTYP** Zdold = Zdat;
@@ -238,11 +240,14 @@ int TZData<ZTYP>::Resize(int Nx, int Ny, int Nv){
 							memset(Zdat[q], 0, sizeof(ZTYP)*Nx);
 						if(i < ny && v < nv && Zdold[i*nv+v]){
                                                         memcpy (Zdat[q], Zdold[i*nv+v], sizeof(ZTYP)*(Nx < nx ? Nx : nx));
-							//delete [] Zdold[q]; // obsolete
-                                                        //Zdold[q] = NULL;
 						}
 					}
 				}
+				// free all remaining old rows (rows i>=Ny were already freed above),
+				// includes rows of layers v>=Nv if the number of layers shrinks
+				for(int i=0; i<ny; ++i)
+					for(int v=0; v<nv; ++v)
+						delete [] Zdold[i*nv+v];
 				delete [] Zdold;
 			}
 		}
@@ -839,7 +844,7 @@ Mem2d::Mem2d(Mem2d *m, MEM2D_CREATE_MODE Option){
 	scan_event_list = NULL;
 	layer_information_list = NULL;
 	nlyi=0;
-	GetPlaneMxyz (plane_mx, plane_my, plane_z0);
+	m->GetPlaneMxyz (plane_mx, plane_my, plane_z0);
 	Mnew(m->GetNx(), m->GetNy(), m->GetNv(), m->GetTyp());
 	switch(Option){
 	case M2D_ZERO: break;
@@ -870,7 +875,7 @@ Mem2d::Mem2d(Mem2d *m, int Nx, int Ny, int Nv){
 	scan_event_list = NULL;
 	layer_information_list = NULL;
 	nlyi=0;
-	GetPlaneMxyz (plane_mx, plane_my, plane_z0);
+	m->GetPlaneMxyz (plane_mx, plane_my, plane_z0);
 	Mnew(Nx, Ny, Nv, m->GetTyp());
 }
 
@@ -1160,7 +1165,9 @@ int Mem2d::WriteScanEvents (NcFile &ncf){
 			main_get_gapp ()->progress_info_set_bar_fraction (sip/sil, 2);
 		}
 
-		// free ProbeEventsList and Elements!
+		// free ProbeEventsList and Elements (Event wrappers only, ProbeEntries are owned by ScanEvents)
+		g_slist_free_full (ProbeEventsList, [](gpointer p){ delete (Event*)p; });
+		ProbeEventsList = NULL;
 	}
 
 	XSM_DEBUG (DBG_L2, "NCF Write Scan Events -- writing user events");
@@ -1178,7 +1185,7 @@ int Mem2d::WriteScanEvents (NcFile &ncf){
 			}
 		}
 #endif
-		uel = g_slist_sort (uel, GCompareFunc (compare_user_entry_messageid));
+		uel = UserEventsList = g_slist_sort (uel, GCompareFunc (compare_user_entry_messageid));
 #if 0
 		{
 			GSList *l=uel;
@@ -1212,7 +1219,9 @@ int Mem2d::WriteScanEvents (NcFile &ncf){
 			main_get_gapp ()->progress_info_set_bar_fraction (sip/sil, 2);
 		}
 
-		// free ProbeEventsList and Elements!
+		// free UserEventsList and Elements (temporary UserEntry copies created above)
+		g_slist_free_full (UserEventsList, [](gpointer p){ delete (UserEntry*)p; });
+		UserEventsList = NULL;
 	}
 	XSM_DEBUG (DBG_L2, "NCF Write Scan Events -- done.");
 
@@ -1285,13 +1294,15 @@ int Mem2d::LoadScanEvents (NcFile &ncf){
 				gchar *message_id = g_strndup (dimname+11, strlen(dimname)-11-4);
 //				XSM_DEBUG (DBG_L2, " ---->[" << message_id << "] ");
 				ue = new UserEntry ("User", ncf, message_id, se, 0, this);
+				g_free (message_id); // UserEntry keeps its own copy
+				if (!se) // nothing loaded, not attached -- we own it
+					delete ue;
+				// else: ue is owned by se (attached to scan_event_list), must not be deleted here
+				ue = NULL;
 			}
 		}
 		g_free (dimname);
         }                                
-
-	if (ue)
-		delete ue;
 
 
 	XSM_DEBUG (DBG_L2, "NCF Load: Scan Events -- done.");
@@ -1305,10 +1316,10 @@ void Mem2d::AttachScanEvent (ScanEvent *se){
 /* Speicher für 2D Daten anfordern */
 
 void Mem2d::Mnew(int Nx, int Ny, int Nv, ZD_TYPE type){
+	XSM_DEBUG (DBG_L6, "Mem2d::Mnew");
+	if(data) Mdelete(); // must be called before Init(), which resets Zbins/Zibins
 	Init();
 	zdtyp=type;
-	XSM_DEBUG (DBG_L6, "Mem2d::Mnew");
-	if(data) Mdelete();
 	switch(zdtyp){
 	case ZD_BYTE:   data = new TZData<TYPE_ZD_BYTE>(Nx, Ny, Nv); break;
 	case ZD_SHORT:  data = new TZData<TYPE_ZD_SHORT>(Nx, Ny, Nv); break;
@@ -1372,7 +1383,7 @@ void Mem2d::L_info_new (gboolean keep){
 			int i;
 			XSM_DEBUG (DBG_L6, "Mem2d::L_info_new w KEEP old: COPY OLD ");
 			for (i=0; i<ntmp && i<nlyi; ++i)
-				if (!layer_information_list)
+				if (layer_information_list)
 					if (i<nlyi){
 						tmp[i] = layer_information_list[i];
 						XSM_DEBUG (DBG_L6, "Mem2d::L_info_new w KEEP old: COPY [" << i << "]");
@@ -1390,13 +1401,13 @@ void Mem2d::L_info_new (gboolean keep){
 				tmp[i] = NULL;
 			XSM_DEBUG (DBG_L6, "Mem2d::L_info_new w KEEP old: CLEANUP OLD EXCESS ");
 			for (i=ntmp; i<nlyi; ++i)
-				if (!layer_information_list && i<nlyi)
+				if (layer_information_list && i<nlyi)
 					if (layer_information_list[i]){
 						g_list_foreach (layer_information_list[i], (GFunc) Mem2d::free_layer_information, this);
 						g_list_free (layer_information_list[i]);
 					}
 			XSM_DEBUG (DBG_L6, "Mem2d::L_info_new w KEEP old: CLEANUP OLD EXCESS ARRAY ");
-			if (!layer_information_list)
+			if (layer_information_list)
 				delete[] layer_information_list;
 			XSM_DEBUG (DBG_L6, "Mem2d::L_info_new w KEEP old - done. ");
 			nlyi = ntmp;
@@ -3098,12 +3109,15 @@ gboolean MemDigiFilter::Convolve(Mem2d *Src, Mem2d *Dest){
                                         for(j=0; j<=tns; j++)
                                                 sum += x.data->GetNext() * data->GetNext();
                                 }
+                                Dest->data->Z (sum, jj, ii);
                         }
                 }
         } else {
                 // new threadded convole code
                 if (max_jobs > 3)
                         max_jobs--; // leave one
+                if (max_jobs > Dest->GetNy ()) // do not leave job[]/tpi[] entries uninitialized
+                        max_jobs = Dest->GetNy ();
 
                 // do convolution, thread up convolute jobs !
                 Mem2d_Digi_Filter_Convolve_Job_Env job[max_jobs];

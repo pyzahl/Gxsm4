@@ -79,7 +79,9 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(){
         
         delayed_tip_move_update_timer_id = 0;
         rpspmc_history=NULL;
+        history_len = 0;
         history_block_size = 0;
+        g_mutex_init (&history_mutex);
 
 
         // SRCS Mapping for Scan Channels as set via Channelselector (independing from Graphs/GVP) in Gxsm, but here same masks as same GVP is used
@@ -120,6 +122,8 @@ rpspmc_hwi_dev::rpspmc_hwi_dev():RP_stream(){
 }
 
 rpspmc_hwi_dev::~rpspmc_hwi_dev(){
+        stream_shutdown (); // normally already done by plugin cleanup -- stream thread must be gone before members are destroyed
+        free_history ();
 }
 
 void rpspmc_hwi_dev::hwi_init_overrides(){ // auto adjust and override preferences
@@ -174,6 +178,9 @@ const gchar *rpspmc_hwi_dev::get_rp_address (){
 }
 
 gboolean rpspmc_hwi_dev::update_status_idle(gpointer self){
+        // may still be pending after plugin cleanup (queued by stream thread on shutdown) -- objects are gone then
+        if (!rpspmc_hwi || self != rpspmc_hwi || !rpspmc_pacpll)
+                return G_SOURCE_REMOVE;
         ((rpspmc_hwi_dev*)self) -> status_append(NULL, false);
         return G_SOURCE_REMOVE;
 };

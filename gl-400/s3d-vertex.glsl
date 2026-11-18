@@ -9,8 +9,6 @@
 #define POSITION		0
 #define TEXCOORD		1
 
-layout(std140, column_major) uniform;
-
 layout(location = POSITION) in vec4 position;
 layout(location = TEXCOORD) in vec2 texcoord;
 

@@ -5,8 +5,6 @@
 
 #include "g3d-allshader-uniforms.glsl"
 
-layout(std140, column_major) uniform;
-
 in block
 {
         vec3 Vertex;
@@ -17,5 +15,5 @@ in block
 out vec4 FragColor;
 
 void main(void) {
-        FragColor = vec4(1, 1, 1, texture2D(textTexture, In.TexCoord).r) * textColor;
+        FragColor = vec4(1, 1, 1, texture(textTexture, In.TexCoord).r) * textColor;
 }

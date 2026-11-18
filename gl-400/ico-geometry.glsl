@@ -3,8 +3,6 @@
 
 #include "g3d-allshader-uniforms.glsl"
 
-layout(std140, column_major) uniform;
-
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 3) out;
 

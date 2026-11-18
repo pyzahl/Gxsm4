@@ -793,7 +793,12 @@ int SPM_Template_Control::Probing_graph_callback( GtkWidget *widget, SPM_Templat
 	XSM_DEBUG_PG ("Probing_graph_callback MasterScan? Add Ev." );
 
 	ScanEvent *se = NULL;
-	if (main_get_gapp()->xsm->MasterScan && finish_flag){
+	if (main_get_gapp()->xsm->MasterScan && finish_flag
+            && dspc->garray_probedata [PROBEDATA_ARRAY_X0] && dspc->garray_probedata [PROBEDATA_ARRAY_X0]->len > 0
+            && dspc->garray_probedata [PROBEDATA_ARRAY_XS] && dspc->garray_probedata [PROBEDATA_ARRAY_XS]->len > 0
+            && dspc->garray_probedata [PROBEDATA_ARRAY_Y0] && dspc->garray_probedata [PROBEDATA_ARRAY_Y0]->len > 0
+            && dspc->garray_probedata [PROBEDATA_ARRAY_YS] && dspc->garray_probedata [PROBEDATA_ARRAY_YS]->len > 0
+            && dspc->garray_probedata [PROBEDATA_ARRAY_ZS] && dspc->garray_probedata [PROBEDATA_ARRAY_ZS]->len > 0){ // need probe data for event position
 		// find first section header and take this X,Y coordinates as reference -- start of probe event
 		XSM_DEBUG_PG ("Probing_graph_callback MasterScan: adding Ev." );
 		int sec = 0;

@@ -3,8 +3,6 @@
 
 #include "g3d-allshader-uniforms.glsl"
 
-layout(std140, column_major) uniform;
-
 in block
 {
         vec3 Position;

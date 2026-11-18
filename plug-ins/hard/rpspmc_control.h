@@ -438,6 +438,9 @@ public:
 
         static int auto_probe_callback(GtkWidget *widget, RPSPMC_Control *self);
 	static int Probing_graph_callback(GtkWidget *widget, RPSPMC_Control *self, int finish_flag=0);
+	// GTK "clicked" handler wrapper: a button signal passes only (widget, user_data) -- never connect Probing_graph_callback directly,
+	// finish_flag would be undefined (random register content) and may trigger event creation without data -> crash
+	static void Probing_graph_button_callback(GtkWidget *widget, RPSPMC_Control *self) { Probing_graph_callback (widget, self, 0); };
         static int Probing_event_setup_scan (int ch, const gchar *titleprefix, const gchar *name, const gchar *unit, const gchar *label, double d2u, int nvalues);
 	static int Probing_eventcheck_callback(GtkWidget *widget, RPSPMC_Control *self);
 	static int Probing_exec_ABORT_callback(GtkWidget *widget, RPSPMC_Control *self);
