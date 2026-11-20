@@ -1151,6 +1151,9 @@ public:
         gl_400_3D_visualization (GtkGLArea *area, Surf3d *surf){
                 Validated = true;
                 glarea = area;
+                released = false;
+                if (glarea) // auto NULL if the widget gets destroyed before us
+                        g_object_add_weak_pointer (G_OBJECT (glarea), (gpointer*)&glarea);
                 s = surf;
                 Major=4;
                 Minor=0;
@@ -1183,13 +1186,44 @@ public:
                 fit_pending = false;
         };
         ~gl_400_3D_visualization(){
-                //end(); // too late, glarea reference is gone! 
-                if (surface_plane)
-                        delete surface_plane;
-                if (text_vao)
+                release ();
+                if (glarea)
+                        g_object_remove_weak_pointer (G_OBJECT (glarea), (gpointer*)&glarea);
+        };
+
+        // Make our own GL context current. GL objects are shared with GTK's renderer context
+        // (GTK4 draws all widgets via GL), so any GL call -- in particular glDelete*() and
+        // texture uploads -- issued while another context is current hits GTK's objects
+        // and corrupts other windows (magenta/cyan blocks, garbled glyphs).
+        bool make_current () {
+                if (!glarea || !gtk_widget_get_realized (GTK_WIDGET (glarea)))
+                        return false;
+                gtk_gl_area_make_current (glarea);
+                return gtk_gl_area_get_error (glarea) == NULL;
+        };
+
+        // Free all GL resources with our context current. Call from "unrealize" (GTK docs) or
+        // before destruction. If the context is gone already, leak instead of deleting into
+        // a foreign context.
+        void release () {
+                if (released)
+                        return;
+                released = true;
+                if (!make_current ()){
+                        surface_plane = NULL; // intentionally leaked, see above
+                        text_vao = NULL;
+                        ico_vao = NULL;
+                        return;
+                }
+                end ();
+                if (text_vao){
                         delete text_vao;
-                if (ico_vao)
+                        text_vao = NULL;
+                }
+                if (ico_vao){
                         delete ico_vao;
+                        ico_vao = NULL;
+                }
         };
 
 private:
@@ -1704,7 +1738,8 @@ public:
 		if (!Validated) return false;
 
                 /* we need to ensure that the GdkGLContext is set before calling GL API */
-                gtk_gl_area_make_current (glarea);
+                if (!make_current ())
+                        return false;
 
                 if (surface_plane){
                         delete surface_plane;
@@ -1718,17 +1753,23 @@ public:
                         glDeleteProgram(Tesselation_ProgramName);
                         glDeleteProgram(S3D_ProgramName);
                         glDeleteProgram(IcoTess_ProgramName);
+                        glDeleteProgram(SimpleSurface_ProgramName);
+                        glDeleteBuffers(3, &Uniform_ubo_list[0]);
 
                         Tesselation_ProgramName = 0;
                         S3D_ProgramName = 0;
                         IcoTess_ProgramName = 0;
+                        SimpleSurface_ProgramName = 0;
+                        Uniform_ubo_list[0] = Uniform_ubo_list[1] = Uniform_ubo_list[2] = 0;
                 }
 		return Surf3d::checkError("end");
 	};
 
         // used for height mapping
         bool updateTexture (GLint line, GLsizei num_lines=1) { 
-		if (!Validated) return false;
+		if (!Validated || !surface_plane) return false;
+                if (!make_current ()) // called from data update path, outside of render: never upload into GTK's context
+                        return false;
 
                 return surface_plane->update_displacement_data (Surf3D_Z_Data, line, num_lines);
         };
@@ -2305,6 +2346,7 @@ public:
 
 private:
         bool Validated;
+        bool released;
         bool force_fallback;
         bool fit_pending;
         Surf3d *s;
@@ -2355,11 +2397,20 @@ Surf3d::Surf3d():View(){
         GLvarinit();
 }
 
+void unrealize_vsurf3d_cb (GtkGLArea *area, Surf3d *s);
+
 Surf3d::~Surf3d(){
         XSM_DEBUG (GL_DEBUG_L2, "Surf3d::~");
 
-        if (gl_tess)
+        // Window teardown (delete v3dcontrol below) emits "unrealize": detach our handler
+        // first, we are being destroyed. Then free GL resources (with our context current).
+        if (v3dcontrol && v3dcontrol->get_glarea ())
+                g_signal_handlers_disconnect_by_func (v3dcontrol->get_glarea (), (gpointer)unrealize_vsurf3d_cb, this);
+        if (gl_tess){
+                gl_tess->release ();
                 delete gl_tess;
+                gl_tess = NULL;
+        }
 
         self = NULL;
 
@@ -3069,6 +3120,17 @@ void Surf3d::GLdrawsurface(int y_to_update, int refresh_all){
 
 
 
+// The "unrealize" signal handler: GL context is about to go away -- free GL resources now,
+// with our context current (realize rebuilds everything).
+void unrealize_vsurf3d_cb (GtkGLArea *area, Surf3d *s){
+	XSM_DEBUG (GL_DEBUG_L2, "GL:::UNREALIZE-EVENT");
+        if (!s || !s->gl_tess)
+                return;
+        s->gl_tess->release ();
+        delete s->gl_tess;
+        s->gl_tess = NULL;
+}
+
 void realize_vsurf3d_cb (GtkGLArea *area, Surf3d *s){
 	XSM_DEBUG (GL_DEBUG_L2, "GL:::REALIZE-EVENT");
         // We need to make the context current if we want to
@@ -3081,6 +3143,12 @@ void realize_vsurf3d_cb (GtkGLArea *area, Surf3d *s){
         if (gtk_gl_area_get_error (area) != NULL)
                 return;
 
+        // release GL resources on unrealize (connect once)
+        g_signal_handlers_disconnect_by_func (area, (gpointer)unrealize_vsurf3d_cb, s);
+        g_signal_connect (area, "unrealize", G_CALLBACK (unrealize_vsurf3d_cb), s);
+
+        if (s->gl_tess) // stale instance from a previous realize
+                delete s->gl_tess;
         s->gl_tess = new gl_400_3D_visualization (area, s);
         s->set_gl_data ();
         
