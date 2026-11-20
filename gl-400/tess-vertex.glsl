@@ -15,8 +15,6 @@ out block
 } Out;
 
 
-subroutine float vertexModelType(vec2 position);
-subroutine uniform vertexModelType vertexModel;
 
 float height_transform(float y)
 {
@@ -27,51 +25,57 @@ vec2 terraincoord(vec2 position){
         return vec2 (cCenter.x - position.x, -(cCenter.y - (-position.y)/aspect.y));
 }
 
-subroutine( vertexModelType )
 float vertex_height_flat(vec2 position)
 {
         return height_transform (cCenter.z);
 }
 
-subroutine( vertexModelType )
 float vertex_height_direct(vec2 position)
 {
         return height_transform (texture (Surf3D_Z_Data, terraincoord(position)).a);
 }
 
-subroutine( vertexModelType )
 float vertex_height_simple_z(vec2 position)
 {
         vec4 zz = texture (Surf3D_Z_Data, terraincoord(position));
         return height_transform (zz.a);
 }
 
-subroutine( vertexModelType )
 float vertex_height_x(vec2 position)
 {
         return height_transform (texture (Surf3D_Z_Data, terraincoord(position)).x);
 }
 
-subroutine( vertexModelType )
 float vertex_height_y(vec2 position)
 {
         return height_transform (texture (Surf3D_Z_Data, terraincoord(position)).y);
 }
 
-subroutine( vertexModelType )
 float vertex_height_z(vec2 position)
 {
         return height_transform (texture (Surf3D_Z_Data, terraincoord(position)).z);
 }
 
-subroutine( vertexModelType )
 float vertex_plane_at(vec2 position)
 {
         return height_transform (plane_at);
 }
 
+float vertex_height(vec2 position)
+{
+        switch (vertexModel){
+        case HEIGHT_FLAT:     return vertex_height_flat (position);
+        case HEIGHT_SIMPLE_Z: return vertex_height_simple_z (position);
+        case HEIGHT_VIEW_Z:   return vertex_height_z (position);
+        case HEIGHT_Y:        return vertex_height_y (position);
+        case HEIGHT_X:        return vertex_height_x (position);
+        case HEIGHT_PLANE_AT: return vertex_plane_at (position);
+        default:              return vertex_height_direct (position);
+        }
+}
+
 void main()
 {
-        Out.Vertex = vec3 (PositionXZ.x, vertexModel (PositionXZ), -PositionXZ.y);
+        Out.Vertex = vec3 (PositionXZ.x, vertex_height (PositionXZ), -PositionXZ.y);
         gl_Position = vec4 (Out.Vertex, 1.0);
 }

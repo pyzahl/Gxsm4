@@ -32,8 +32,7 @@
 #include "glbvars.h"
 
 #if ENABLE_3DVIEW_HAVE_GL_GLEW
-#include <GL/glew.h>
-#include <GL/gl.h>
+#include <epoxy/gl.h>
 #endif
 
 
@@ -375,6 +374,7 @@ public:
         static inline bool checkError(const char* Title);
 
         void create_surface_buffer ();
+        void resolve_x_channel ();
         void set_gl_data ();
         gboolean check_dimension_changed();
         

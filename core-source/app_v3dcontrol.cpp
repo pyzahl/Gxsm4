@@ -48,8 +48,6 @@
 
 #include <gtk/gtk.h>
 
-#include <GL/gl.h>
-#include <GL/glu.h>
 
 #include <gdk/gdkkeysyms.h>
 
@@ -157,7 +155,10 @@ V3dControl::V3dControl (Gxsm4app *app,
 
         // set required GL version (4.0)
         gtk_gl_area_set_required_version (GTK_GL_AREA(glarea), 4, 0);
-        // gtk_gl_area_set_use_es (GTK_GL_AREA(glarea), true);
+#if GTK_CHECK_VERSION(4,12,0)
+        // desktop GL core profile only -- GTK may otherwise hand out a GLES context (e.g. on some EGL/Wayland setups)
+        gtk_gl_area_set_allowed_apis (GTK_GL_AREA(glarea), GDK_GL_API_GL);
+#endif
         g_object_set_data (G_OBJECT(glarea), "Surf3D", vdata); // Surf3D reference
         
         gtk_widget_set_size_request (glarea, 500, 500);

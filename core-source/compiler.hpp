@@ -1,6 +1,6 @@
 #pragma once
 
-#include <GL/glew.h>
+#include <epoxy/gl.h>
 #include <glm/gtc/type_precision.hpp>
 
 #include <map>

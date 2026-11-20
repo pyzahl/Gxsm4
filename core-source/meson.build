@@ -110,7 +110,7 @@ app_gxsm_sources = [
     'xsmmath.cpp',
     ]
 
-if gl.found() and glew.found() and build_gxsm_view3d
+if gl.found() and epoxy.found() and build_gxsm_view3d
     app_gxsm_sources += [
         'app_v3dcontrol.cpp',
         'vsurf3d.cpp',
@@ -126,7 +126,7 @@ endif
 
 lib_app_gxsm = library(
     app_gxsm_sources,
-    dependencies : [ deps, gl, glew ],
+    dependencies : [ deps, gl, epoxy ],
     link_with: [ lib_global_gxsm, lib_pcs_gxsm, lib_utils_gxsm ],
     install: true
 )

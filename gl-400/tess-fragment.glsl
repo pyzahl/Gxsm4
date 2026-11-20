@@ -16,10 +16,7 @@ in block {
 out vec4 FragColor;
 
 
-subroutine vec4 shadeModelType(vec3 vertex, vec3 vertexEye, 
-                               vec3 normal, vec4 color);
 
-subroutine uniform shadeModelType shadeModel;
 
 float saturate(float v) {
     return clamp( v, 0.0, 1.0);
@@ -102,7 +99,6 @@ vec3 map_xyz_values(vec2 position)
 
 
 // terrain level shader
-subroutine( shadeModelType )
 vec4 shadeTerrain(vec3 vertex, vec3 vertexEye, 
                   vec3 normal, vec4 color)
 {
@@ -193,7 +189,6 @@ vec4 shadeTerrain(vec3 vertex, vec3 vertexEye,
 }
 
 // vertex,... surface color
-subroutine( shadeModelType )
 vec4 shadeDebugMode(vec3 vertex, vec3 vertexEye, 
                     vec3 normal, vec4 color)
 {
@@ -250,7 +245,6 @@ vec4 shadeDebugMode(vec3 vertex, vec3 vertexEye,
 
 
 // Lambertian light model for surface
-subroutine( shadeModelType )
 vec4 shadeLambertian(vec3 vertex, vec3 vertexEye, 
                      vec3 normal, vec4 color)
 {
@@ -270,7 +264,6 @@ vec4 shadeLambertian(vec3 vertex, vec3 vertexEye,
 }
 
 // Lambertian light model for surface
-subroutine( shadeModelType )
 vec4 shadeLambertianXColor(vec3 vertex, vec3 vertexEye, 
                            vec3 normal, vec4 color)
 {
@@ -292,7 +285,6 @@ vec4 shadeLambertianXColor(vec3 vertex, vec3 vertexEye,
 }
 
 // Lambertian light model for surface, use homogenious surface color = material_color
-subroutine( shadeModelType )
 vec4 shadeLambertianMaterialColor(vec3 vertex, vec3 vertexEye, 
                                   vec3 normal, vec4 color)
 {
@@ -311,7 +303,6 @@ vec4 shadeLambertianMaterialColor(vec3 vertex, vec3 vertexEye,
 }
 
 // Lambertian light model for surface, use homogenious surface color = material_color
-subroutine( shadeModelType )
 vec4 shadeLambertianMaterialColorFog(vec3 vertex, vec3 vertexEye, 
                                      vec3 normal, vec4 color)
 {
@@ -340,7 +331,6 @@ vec3 volumecoord(vec3 position){
 }
 
 // Volume shade model for 3D cube interior -- tracing eye vector
-subroutine( shadeModelType )
 vec4 shadeVolume(vec3 vertex, vec3 vertexEye, 
                  vec3 normal, vec4 color)
 {
@@ -362,14 +352,22 @@ vec4 shadeVolume(vec3 vertex, vec3 vertexEye,
 
 }
 
+vec4 shade(vec3 vertex, vec3 vertexEye, vec3 normal, vec4 color)
+{
+        switch (shadeModel){
+        case SHADE_TERRAIN:            return shadeTerrain (vertex, vertexEye, normal, color);
+        case SHADE_MATERIAL_COLOR:     return shadeLambertianMaterialColor (vertex, vertexEye, normal, color);
+        case SHADE_MATERIAL_COLOR_FOG: return shadeLambertianMaterialColorFog (vertex, vertexEye, normal, color);
+        case SHADE_LAMBERTIAN_XCOLOR:  return shadeLambertianXColor (vertex, vertexEye, normal, color);
+        case SHADE_VOLUME:             return shadeVolume (vertex, vertexEye, normal, color);
+        case SHADE_DEBUG:              return shadeDebugMode (vertex, vertexEye, normal, color);
+        default:                       return shadeLambertian (vertex, vertexEye, normal, color);
+        }
+}
+
 void main()
 {
-        if (gl_FrontFacing) {
-                // shade fragment, use model as selected via shaderFunction pointer
-                FragColor = shadeModel (In.Vertex, In.VertexEye,
-                                        In.Normal, In.Color);
-        } else {
-                FragColor = shadeModel (In.Vertex, In.VertexEye,
-                                        In.Normal, backsideColor);
-        }
+        // shade fragment with the model selected via uniform shadeModel (same for all fragments: no divergence)
+        FragColor = shade (In.Vertex, In.VertexEye, In.Normal,
+                           gl_FrontFacing ? In.Color : backsideColor);
 }

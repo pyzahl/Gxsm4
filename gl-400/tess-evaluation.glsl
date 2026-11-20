@@ -20,14 +20,8 @@ out block {
         vec4 Color;
 } Out;
 
-subroutine float eval_vertexModelType(vec4 zz);
-subroutine uniform eval_vertexModelType eval_vertexModel;
 
-subroutine vec4 colorModelType(vec4 zz);
-subroutine uniform colorModelType colorModel;
 
-subroutine vec3 eval_vertexPlaneType(vec3 position);
-subroutine uniform eval_vertexPlaneType eval_vertexPlane;
 
 
 float height_transform(float y)
@@ -48,37 +42,31 @@ vec2 terraincoord(vec2 position){
 
 // == Height ===========================
 
-subroutine( eval_vertexModelType )
 float height_flat(vec4 zz)
 {
         return height_transform (plane_at);
 }
 
-subroutine( eval_vertexModelType )
 float height_direct(vec4 zz)
 {
         return height_transform (zz.a);
 }
 
-subroutine( eval_vertexModelType )
 float height_simple_z(vec4 zz)
 {
         return height_transform (zz.a);
 }
 
-subroutine( eval_vertexModelType )
 float height_x(vec4 zz)
 {
         return height_transform (zz.x);
 }
 
-subroutine( eval_vertexModelType )
 float height_y(vec4 zz)
 {
         return height_transform (zz.y);
 }
 
-subroutine( eval_vertexModelType )
 float height_z(vec4 zz)
 {
         return height_transform (zz.z);
@@ -87,31 +75,26 @@ float height_z(vec4 zz)
 
 // == Color ==============================
 
-subroutine( colorModelType )
 vec4 colorFlat(vec4 zz)
 {
         return textureLod (GXSM_Palette, 0.5, 0.0);
 }
 
-subroutine( colorModelType )
 vec4 colorDirect(vec4 zz)
 {
         return textureLod (GXSM_Palette, color_offset.x+color_offset.y*zz.a, 0.0);
 }
 
-subroutine( colorModelType )
 vec4 colorViewMode(vec4 zz)
 {
         return textureLod (GXSM_Palette, color_offset.x+color_offset.y*zz.z, 0.0);
 }
 
-subroutine( colorModelType )
 vec4 colorXChannel(vec4 zz)
 {
         return textureLod (GXSM_Palette, color_offset.x+color_offset.y*zz.x, 0.0);
 }
 
-subroutine( colorModelType )
 vec4 colorY(vec4 zz)
 {
         return textureLod (GXSM_Palette, color_offset.x+color_offset.y*zz.y, 0.0);
@@ -119,36 +102,65 @@ vec4 colorY(vec4 zz)
 
 
 // Plane Default "XZ" -- normal terrain like surface representaion
-subroutine( eval_vertexPlaneType )
 vec3 eval_vertex_XZ_plane(vec3 pos)
 {
         return pos; // pos.xyz
 }
 
-subroutine( eval_vertexPlaneType )
 vec3 eval_vertex_XY_plane(vec3 pos)
 {
         return pos.xzy;
 }
 
-subroutine( eval_vertexPlaneType )
 vec3 eval_vertex_ZY_plane(vec3 pos)
 {
         return pos.yxz;
 }
 
-subroutine( eval_vertexPlaneType )
 vec3 eval_vertex_M_plane(vec3 pos)
 {
         return vec3 (ViewAlignedModelView * vec4 (pos, 1.0));
 }
 
 
+float eval_height(vec4 zz)
+{
+        switch (heightModel){
+        case HEIGHT_FLAT:     return height_flat (zz);
+        case HEIGHT_SIMPLE_Z: return height_simple_z (zz);
+        case HEIGHT_VIEW_Z:   return height_z (zz);
+        case HEIGHT_Y:        return height_y (zz);
+        case HEIGHT_X:        return height_x (zz);
+        default:              return height_direct (zz);
+        }
+}
+
+vec4 eval_color(vec4 zz)
+{
+        switch (colorModel){
+        case COLOR_FLAT: return colorFlat (zz);
+        case COLOR_VIEW: return colorViewMode (zz);
+        case COLOR_X:    return colorXChannel (zz);
+        case COLOR_Y:    return colorY (zz);
+        default:         return colorDirect (zz);
+        }
+}
+
+vec3 eval_plane(vec3 pos)
+{
+        switch (planeModel){
+        case PLANE_XY: return eval_vertex_XY_plane (pos);
+        case PLANE_ZY: return eval_vertex_ZY_plane (pos);
+        case PLANE_M:  return eval_vertex_M_plane (pos);
+        default:       return eval_vertex_XZ_plane (pos);
+        }
+}
+
 float height_at_delta(vec2 delta)
 {
         vec2 tc = terraincoord (delta);
         vec4 zz = textureLod (Surf3D_Z_Data, tc, 0.0);
-        return eval_vertexModel (zz);
+        return eval_height (zz);
 }
 
 void main()
@@ -161,18 +173,18 @@ void main()
 	vec4 position = mix(a, b, v);
         vec2 tc = terraincoord (position.xz);
         vec4 zz = textureLod (Surf3D_Z_Data, tc, 0.0);
-        position.y = eval_vertexModel (zz);
+        position.y = eval_height (zz);
 
         // calculate normal from neightbor heights
         vec3 off = vec3 (delta.xy, 0.0);
         float dxdz = height_at_delta (position.xz - off.xz) - height_at_delta (position.xz + off.xz);
         float dydz = height_at_delta (position.xz - off.zy) - height_at_delta (position.xz + off.zy);
         // deduce terrain normal
-        Out.Normal = eval_vertexPlane (normalize (vec3(dxdz, 2*delta.x, dydz/aspect.y)));
+        Out.Normal = eval_plane (normalize (vec3(dxdz, 2*delta.x, dydz/aspect.y)));
 
-        Out.Color     = colorModel (zz);
+        Out.Color     = eval_color (zz);
 
-        Out.Vertex    = eval_vertexPlane (position.xyz);
+        Out.Vertex    = eval_plane (position.xyz);
         Out.VertexEye = vec3 (ModelView * vec4(Out.Vertex, 1.0));  // eye space
         gl_Position = ModelViewProjection * vec4(Out.Vertex, 1.0);
 }

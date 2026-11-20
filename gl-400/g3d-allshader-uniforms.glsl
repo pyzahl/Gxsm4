@@ -70,35 +70,35 @@ uniform vec4 textColor;
 uniform vec4 TipPosition;
 uniform vec4 TipColor;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// Mode selectors (plain int uniforms, replacing GLSL subroutines for portability).
+// KEEP IN SYNC with enum gl_shader_modes in core-source/vsurf3d.cpp
+#define HEIGHT_FLAT      0
+#define HEIGHT_DIRECT    1
+#define HEIGHT_SIMPLE_Z  2
+#define HEIGHT_VIEW_Z    3
+#define HEIGHT_Y         4
+#define HEIGHT_X         5
+#define HEIGHT_PLANE_AT  6
+#define COLOR_FLAT       0
+#define COLOR_DIRECT     1
+#define COLOR_VIEW       2
+#define COLOR_X          3
+#define COLOR_Y          4
+#define PLANE_XZ         0
+#define PLANE_XY         1
+#define PLANE_ZY         2
+#define PLANE_M          3
+#define SHADE_LAMBERTIAN           0
+#define SHADE_TERRAIN              1
+#define SHADE_MATERIAL_COLOR       2
+#define SHADE_MATERIAL_COLOR_FOG   3
+#define SHADE_LAMBERTIAN_XCOLOR    4
+#define SHADE_VOLUME               5
+#define SHADE_DEBUG                6
+uniform int vertexModel;      // HEIGHT_*  (vertex stage)
+uniform int heightModel;      // HEIGHT_*  (tess evaluation stage)
+uniform int colorModel;       // COLOR_*
+uniform int planeModel;       // PLANE_*
+uniform int shadeModel;       // SHADE_*
 
 /* END OF INCLUDE: KEEP THIS AT LINE 100 -- OFFSET FOR ERROR END GLSL INCLUDE */
