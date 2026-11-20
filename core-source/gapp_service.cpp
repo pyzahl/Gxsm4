@@ -998,7 +998,7 @@ int AppBase::position_auto (){
                                                 g_spawn_command_line_sync (hyprctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
                                                 
                                                 if (error != NULL) {
-                                                        g_error ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);
+                                                        g_warning ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);
                                                         g_free (hyprctl_cmdline);
                                                         g_error_free (error);
                                                         g_free (title);
@@ -1028,10 +1028,10 @@ int AppBase::position_auto (){
                                                 g_spawn_command_line_sync (hyprctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
                                                 
                                                 if (error != NULL) {
-                                                        g_error ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);
+                                                        g_warning ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);
                                                         g_free (hyprctl_cmdline);
                                                         g_error_free (error);
-                                                        return;
+                                                        return -1;
                                                 }
                                                 if (once || exit_status){
                                                         g_print ("Stdout: %s\n", stdout_buf);
@@ -1112,7 +1112,7 @@ int AppBase::position_auto (){
                                                 
                                                 once = true; // test
                                                 if (error != NULL) {
-                                                        g_error ("EE [%s] *** Sorry I tried: %s E: %s -- make sure: busctl is installed and activate GxsmWM Extension for Gnome Shell!\n", window_key, busctl_cmdline, error->message);
+                                                        g_warning ("EE [%s] *** Sorry I tried: %s E: %s -- make sure: busctl is installed and activate GxsmWM Extension for Gnome Shell!\n", window_key, busctl_cmdline, error->message);
                                                         g_error_free (error);
                                                         g_free (busctl_cmdline);
                                                         g_free (stdout_buf);
@@ -1160,7 +1160,7 @@ int AppBase::position_auto (){
                                                 g_message ("Wayland some what, but No Wayland compositor detected.\n");
                                         }
                                 } else
-                                        g_error ("Unsupported GDK backend");
+                                        g_warning ("Unsupported GDK backend");
                 }
 # endif
 #else
@@ -1219,7 +1219,7 @@ int AppBase::resize_auto (){
                                                 g_spawn_command_line_sync (hyprctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
                                                 
                                                 if (error != NULL) {
-                                                        g_error ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);
+                                                        g_warning ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);
                                                         g_free (hyprctl_cmdline);
                                                         g_error_free (error);
                                                         return -1;
@@ -1242,7 +1242,7 @@ int AppBase::resize_auto (){
                                         }
                                 } else
 # endif
-                                        g_error ("Unsupported GDK backend");
+                                        g_warning ("Unsupported GDK backend");
                 }
 #else
         XSM_DEBUG_GM (DBG_L2, "AppBase::resize_auto ** ENABLE_GXSM_WINDOW_MANAGEMENT is disabled.");
@@ -1325,7 +1325,7 @@ void json_filter_window (const char *json_string, const char *window_to_find, in
         GError *error = NULL;
 
         if (!json_parser_load_from_data (parser, json_string, -1, &error)) {
-                g_error("Unable to parse JSON: %s", error->message);
+                g_warning ("Unable to parse JSON: %s", error->message);
                 g_clear_error(&error);
                 return;
         }
@@ -1451,7 +1451,7 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
 #endif
                                         g_spawn_command_line_sync (hyprctl_cmdline, &stdout_buf, &stderr_buf, &exit_status, &error);
                                         if (error != NULL) {
-                                                g_error ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);
+                                                g_warning ("Sorry I tried. Error executing command: %s E: %s\n", hyprctl_cmdline, error->message);
                                                 g_free (hyprctl_cmdline);
                                                 g_error_free (error);
                                                 return;
@@ -1515,7 +1515,7 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                                 once = true; // test
 
                                 if (error != NULL) {
-                                        g_error ("EE [%s] *** Sorry I tried: %s E: %s (make sure to have busctl and the Gxsm-WM Extension insatlled and actiavted)\n", window_key, busctl_cmdline, error->message);
+                                        g_warning ("EE [%s] *** Sorry I tried: %s E: %s (make sure to have busctl and the Gxsm-WM Extension insatlled and actiavted)\n", window_key, busctl_cmdline, error->message);
                                         g_free (busctl_cmdline);
                                         g_error_free (error);
                                         return;
@@ -1578,7 +1578,7 @@ void AppBase::SaveGeometry(gboolean store_to_settings){
                         }
                 } else
 # endif
-                        g_error ("Unsupported GDK backend");
+                        g_warning ("Unsupported GDK backend");
 
         if (store_to_settings && window_key){
                 GVariant *storage = g_variant_new_fixed_array (g_variant_type_new ("i"), window_geometry, WGEO_SIZE, sizeof (gint32));
