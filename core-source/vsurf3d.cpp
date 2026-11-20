@@ -223,7 +223,8 @@ namespace
 	GLuint Uniform_lod_factor(0); // float
 
         // Model View and Projection
-        GLuint Uniform_ubo_list[3];
+        // NOTE: UBO ids are per view instance (gl_400_3D_visualization::Uniform_ubo_list), never shared here:
+        // buffer binding points are per GL context, a shared id list gets overwritten by a 2nd view => 1st view freezes.
         GLuint const ModelViewMat_block(0); // => 0
         ubo::uniform_model_view Block_ModelViewMat(glm::mat4(1.), glm::mat4(1.), glm::mat4(1.));
 
@@ -1743,14 +1744,15 @@ public:
                         glDeleteProgram(S3D_ProgramName);
                         glDeleteProgram(IcoTess_ProgramName);
                         glDeleteProgram(SimpleSurface_ProgramName);
-                        glDeleteBuffers(3, &Uniform_ubo_list[0]);
 
                         Tesselation_ProgramName = 0;
                         S3D_ProgramName = 0;
                         IcoTess_ProgramName = 0;
                         SimpleSurface_ProgramName = 0;
-                        Uniform_ubo_list[0] = Uniform_ubo_list[1] = Uniform_ubo_list[2] = 0;
                 }
+                // per view UBOs
+                glDeleteBuffers(3, &Uniform_ubo_list[0]);
+                Uniform_ubo_list[0] = Uniform_ubo_list[1] = Uniform_ubo_list[2] = 0;
 		return Surf3d::checkError("end");
 	};
 
@@ -2319,6 +2321,7 @@ public:
 
 private:
         bool Validated;
+        GLuint Uniform_ubo_list[3] = { 0, 0, 0 }; // per view UBOs: ModelViewMat, SurfaceGeometry, FragmentShading
         bool released;
         bool force_fallback;
         bool fit_pending;
