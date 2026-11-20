@@ -30,7 +30,7 @@ vec4 shadeLambertian(vec3 vertex, vec3 vertexEye,
         //float diffuse = saturate( dot(n, -lightDir));
         float diffuse = clamp( (dot(n, -lightDirWorld.xyz) + wrap) / (1.0 + wrap), 0., 1.);   // wrap
         //float diffuse = dot(n, -lightDir)*0.5+0.5;
-        float specular = pow( clamp (dot(h, n), 0.,1.), shininess);
+        float specular = (shininess > 0.0 ? pow (clamp (dot(h, n), 0.,1.), shininess) : 1.0);
 
         vec3 finalColor = (ambientColor.xyz+specular*specularColor.xyz+diffuse*diffuseColor.xyz)*color.xyz;
 

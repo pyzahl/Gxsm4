@@ -22,6 +22,13 @@ float saturate(float v) {
     return clamp( v, 0.0, 1.0);
 }
 
+// specular term: pow(x,y) is undefined in GLSL for x == 0 and y <= 0 (NaN on some GPUs);
+// shininess 0 means "no highlight falloff" -> exactly 1.
+float specular_pow(float x, float s)
+{
+        return s > 0.0 ? pow (x, s) : 1.0;
+}
+
 // cheaper than smoothstep
 float linearstep(float a, float b, float x)
 {
@@ -136,7 +143,7 @@ vec4 shadeTerrain(vec3 vertex, vec3 vertexEye,
         //float diffuse = saturate( dot(n, -lightDir));
         float diffuse = saturate( (dot(n, -lightDirWorld.xyz) + Cwrap) / (1.0 + Cwrap));   // wrap
         //float diffuse = dot(n, -lightDir)*0.5+0.5;
-        float specular = pow( saturate(dot(h, n)), shininess);
+        float specular = specular_pow (saturate(dot(h, n)), shininess);
 
 #if 1
         // add some noise variation to colors
@@ -204,7 +211,7 @@ vec4 shadeDebugMode(vec3 vertex, vec3 vertexEye,
         //float diffuse = saturate( dot(n, -lightDir));
         float diffuse = saturate( (dot(n, -lightDirWorld.xyz) + wrap) / (1.0 + wrap));   // wrap
         //float diffuse = dot(n, -lightDir)*0.5+0.5;
-        float specular = pow( saturate(dot(h, n)), shininess);
+        float specular = specular_pow (saturate(dot(h, n)), shininess);
 
         vec3 SpecularColor = specular*specularColor.xyz;
         vec3 DiffuseColor  = diffuse*diffuseColor.xyz;
@@ -256,7 +263,7 @@ vec4 shadeLambertian(vec3 vertex, vec3 vertexEye,
         //float diffuse = saturate( dot(n, -lightDir));
         float diffuse = saturate( (dot(n, -lightDirWorld.xyz) + wrap) / (1.0 + wrap));   // wrap
         //float diffuse = dot(n, -lightDir)*0.5+0.5;
-        float specular = pow( saturate(dot(h, n)), shininess);
+        float specular = specular_pow (saturate(dot(h, n)), shininess);
 
         vec3 LambertianColor = ambientColor.xyz + specular*specularColor.xyz + diffuse*diffuseColor.xyz;
 
@@ -275,7 +282,7 @@ vec4 shadeLambertianXColor(vec3 vertex, vec3 vertexEye,
         //float diffuse = saturate( dot(n, -lightDir));
         float diffuse = saturate( (dot(n, -lightDirWorld.xyz) + wrap) / (1.0 + wrap));   // wrap
         //float diffuse = dot(n, -lightDir)*0.5+0.5;
-        float specular = pow( saturate(dot(h, n)), shininess);
+        float specular = specular_pow (saturate(dot(h, n)), shininess);
 
         vec3 LambertianColor = ambientColor.xyz + specular*specularColor.xyz + diffuse*diffuseColor.xyz;
 
@@ -296,7 +303,7 @@ vec4 shadeLambertianMaterialColor(vec3 vertex, vec3 vertexEye,
         //float diffuse = saturate( dot(n, -lightDir));
         float diffuse = saturate( (dot(n, -lightDirWorld.xyz) + wrap) / (1.0 + wrap));   // wrap
         //float diffuse = dot(n, -lightDir)*0.5+0.5;
-        float specular = pow (saturate(dot(h, n)), shininess);
+        float specular = specular_pow (saturate(dot(h, n)), shininess);
         vec3 LambertianColor = ambientColor.xyz + specular*specularColor.xyz + diffuse*diffuseColor.xyz;
 
         return vec4 (lightness * LambertianColor * materialColor.xyz, materialColor.a);
@@ -314,7 +321,7 @@ vec4 shadeLambertianMaterialColorFog(vec3 vertex, vec3 vertexEye,
         //float diffuse = saturate( dot(n, -lightDir));
         float diffuse = saturate( (dot(n, -lightDirWorld.xyz) + wrap) / (1.0 + wrap));   // wrap
         //float diffuse = dot(n, -lightDir)*0.5+0.5;
-        float specular = pow( saturate(dot(h, n)), shininess);
+        float specular = specular_pow (saturate(dot(h, n)), shininess);
         vec3 LambertianColor = ambientColor.xyz + specular*specularColor.xyz + diffuse*diffuseColor.xyz;
         vec3 finalColor = LambertianColor * materialColor.xyz;
 
