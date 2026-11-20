@@ -3126,7 +3126,9 @@ void realize_vsurf3d_cb (GtkGLArea *area, Surf3d *s){
         // function will return a #GError for you to catch
 
         if (gtk_gl_area_get_error (area) != NULL){
-                gchar *message = g_strdup_printf ("3D view: could not create an OpenGL 4.0 core context:\n%s",
+                gchar *message = g_strdup_printf ("3D view: could not create an OpenGL 4.0 core context:\n%s\n"
+                                                  "Hint: if GDK runs on OpenGL ES (GDK_DISABLE without 'gles-api',"
+                                                  " or GXSM_GL_ALLOW_GLES set), NVIDIA cannot share a desktop GL context with it.",
                                                   gtk_gl_area_get_error (area)->message);
                 g_critical ("%s", message);
                 main_get_gapp ()->warning (message);

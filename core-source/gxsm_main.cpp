@@ -148,6 +148,23 @@ int main (int argc, char **argv)
 {
         GError *error = NULL;
 
+        // 3D view (GtkGLArea) needs a desktop GL 4.x core context. GtkGLArea contexts are always
+        // shared with GDK's display context, and GTK >= 4.14 prefers OpenGL ES for that one.
+        // NVIDIA's EGL (and GLX) refuses to share a desktop-GL context with a GLES context
+        // -> "Unable to create a GL context". Mesa tolerates it, NVIDIA does not.
+        // Hence: keep GDK on desktop GL (GDK_DISABLE=gles-api, GTK >= 4.16). Must be set before
+        // GDK opens the display. Opt out with GXSM_GL_ALLOW_GLES=1 (e.g. GLES-only embedded GPUs).
+        if (!g_getenv ("GXSM_GL_ALLOW_GLES")){
+                const gchar *gdk_disable = g_getenv ("GDK_DISABLE");
+                if (!gdk_disable || !*gdk_disable)
+                        g_setenv ("GDK_DISABLE", "gles-api", TRUE);
+                else if (!strstr (gdk_disable, "gles-api")){
+                        gchar *tmp = g_strconcat (gdk_disable, ",gles-api", NULL);
+                        g_setenv ("GDK_DISABLE", tmp, TRUE);
+                        g_free (tmp);
+                }
+        }
+
         // init rand
         srand (time(0));
 
