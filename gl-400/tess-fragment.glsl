@@ -33,6 +33,42 @@ float linearstep(float a, float b, float x)
 
 #define smoothstep linearstep
 
+// == Value noise =====================================================
+// Replacement for the GLSL built-ins noise2()/noise3(): deprecated and
+// returning 0 on current drivers. Smooth value noise on a unit lattice,
+// components in [-1, 1].
+float gxsm_hash12 (vec2 p)
+{
+        vec3 p3 = fract (vec3 (p.xyx) * 0.1031);
+        p3 += dot (p3, p3.yzx + 33.33);
+        return fract ((p3.x + p3.y) * p3.z);
+}
+
+float gxsm_value_noise (vec2 p)
+{
+        vec2 i = floor (p);
+        vec2 f = fract (p);
+        vec2 u = f*f*(3.0 - 2.0*f); // hermite fade
+        float a = gxsm_hash12 (i);
+        float b = gxsm_hash12 (i + vec2 (1.0, 0.0));
+        float c = gxsm_hash12 (i + vec2 (0.0, 1.0));
+        float d = gxsm_hash12 (i + vec2 (1.0, 1.0));
+        return 2.0*mix (mix (a, b, u.x), mix (c, d, u.x), u.y) - 1.0;
+}
+
+vec2 gxsm_noise2 (vec2 p)
+{
+        return vec2 (gxsm_value_noise (p),
+                     gxsm_value_noise (p + vec2 (17.31, 41.73)));
+}
+
+vec3 gxsm_noise3 (vec2 p)
+{
+        return vec3 (gxsm_value_noise (p),
+                     gxsm_value_noise (p + vec2 (17.31, 41.73)),
+                     gxsm_value_noise (p + vec2 (63.17, 29.53)));
+}
+
 
 // terrain defaults
 const vec3 CsunColor = vec3(1.0, 1.0, 0.7);
@@ -85,7 +121,7 @@ vec4 shadeTerrain(vec3 vertex, vec3 vertexEye,
   
         //vec3 noisePos = vertex.xyz + vec3(translate.x, 0.0, translate.y);
         vec3 noisePos = vertex.xyz;
-        float nois = length(noise2(noisePos.xz))*0.5+0.5;
+        float nois = length(gxsm_noise2(64.0*noisePos.xz))*0.5+0.5;
 
         float height = vertex.y;
 
@@ -179,7 +215,7 @@ vec4 shadeDebugMode(vec3 vertex, vec3 vertexEye,
         vec3 DiffuseColor  = diffuse*diffuseColor.xyz;
         vec3 LambertianColor = ambientColor.xyz + SpecularColor + DiffuseColor;
 
-        vec3 nois = noise3(100.*vertex.xz)*0.5+vec3(0.5);
+        vec3 nois = gxsm_noise3(100.*vertex.xz)*0.5+vec3(0.5);
         float dist = length (eyePosWorld.xyz);
 
         // if spot light -- not for far far away sun

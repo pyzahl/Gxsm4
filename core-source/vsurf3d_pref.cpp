@@ -78,17 +78,26 @@ GnomeResEntryInfoType v3dControl_pref_def_const[] = {
 	GNOME_RES_ENTRY_FLOATSLIDER
 	( "V3dControl.View/RotationX", "Rotation X", "0", GET_GLV_OFFSET (&GLvd_offset.rot[0]), 
 	  Rot_OptionsList, N_("View"),
-	  N_("Rotation Angle in X [LMB + Mouse left/right]"), NULL
+	  N_("Model rotation angle X: tilt about the GL Z axis (applied after Z).\n"
+	     "Rotation is R = Rot_X(-Y) * Rot_Z(X) * Rot_Y(Z).\n"
+	     "LMB drag rotates in the screen frame and updates X, Y and Z.\n\n"
+	     "Mouse (always aligned with the current view):\n"
+	     " LMB drag: rotate about the screen center\n"
+	     " MMB or Shift+LMB drag: pan, surface follows the mouse\n"
+	     " RMB or Ctrl/Alt+LMB drag: dolly, drag up = closer\n"
+	     " Wheel: zoom, Shift+Wheel: fine zoom, Ctrl+Wheel: height scale"), NULL
 		),
 	GNOME_RES_ENTRY_FLOATSLIDER
 	( "V3dControl.View/RotationY", "Rotation Y", "-90", GET_GLV_OFFSET (&GLvd_offset.rot[1]), 
 	  Rot_OptionsList, N_("View"),
-	  N_("Rotation Angle in Y [LMB + Mouse up/down]"), NULL
+	  N_("Model rotation angle Y: rotation about the GL X axis (applied last).\n"
+	     "LMB drag rotates in the screen frame and updates X, Y and Z."), NULL
 		),
 	GNOME_RES_ENTRY_FLOATSLIDER
 	( "V3dControl.View/RotationZ", "Rotation Z", "0", GET_GLV_OFFSET (&GLvd_offset.rot[2]), 
 	  Rot_OptionsList, N_("View"),
-	  N_("Rotation Angle in Z"), NULL
+	  N_("Model rotation angle Z: turn about the surface normal (applied first).\n"
+	     "LMB drag rotates in the screen frame and updates X, Y and Z."), NULL
 		),
 	GNOME_RES_ENTRY_OPTION
 	( GNOME_RES_STRING, "V3dControl.View/RotationPreset", "Manual", GET_GLV_OFFSET (&GLvd_offset.view_preset[0]),
@@ -105,8 +114,9 @@ GnomeResEntryInfoType v3dControl_pref_def_const[] = {
 
 	GNOME_RES_ENTRY_FLOAT_VEC3
 	( "V3dControl.View/Translation", "Translation", "0 0 0", GET_GLV_OFFSET (&GLvd_offset.trans), N_("View"),
-	  N_("set translations vector X, Y, Z\n"
-	     "[MMB + Mouse up/down/left/right]"), NULL
+	  N_("Translation vector X, Y, Z (surface X, surface Y, height):\n"
+	     "this model point is moved into the rotation center / screen center.\n"
+	     "[MMB or Shift+LMB drag: pan in the screen plane]"), NULL
 		),
 
 	GNOME_RES_ENTRY_FLOATSLIDER
@@ -134,19 +144,25 @@ GnomeResEntryInfoType v3dControl_pref_def_const[] = {
 	GNOME_RES_ENTRY_FLOATSLIDER
 	( "V3dControl.View/Shift", "Shift", "0.0", GET_GLV_OFFSET (&GLvd_offset.camera[0]), 
 	  Dist_OptionsList, N_("View"),
-	  N_("Shift: Camera GL_X Position (Shift to left/right from surface center -- in top view rotation)"), NULL
+	  N_("Camera offset GL X from the look-at point.\n"
+	     "Camera offset vector = (Shift, -Distance, -Elevation).\n"
+	     "Zooming scales the whole vector, keeping the view direction."), NULL
 		),
 
 	GNOME_RES_ENTRY_FLOATSLIDER
 	( "V3dControl.View/Distance", "Distance", "1.5", GET_GLV_OFFSET (&GLvd_offset.camera[1]), 
 	  Dist_OptionsList, N_("View"),
-	  N_("Distance: Camera GL_Z Position [also use Mouse Wheel] (Distance from surface center in front -- in top view rotation)"), NULL
+	  N_("Camera offset GL Y from the look-at point (negated).\n"
+	     "[Wheel: zoom, Shift+Wheel: fine zoom, RMB or Ctrl/Alt+LMB drag: dolly]\n"
+	     "Zooming scales Shift, Distance and Elevation together."), NULL
 		),
 
 	GNOME_RES_ENTRY_FLOATSLIDER
 	( "V3dControl.View/Elevation", "Elevation", "1.0", GET_GLV_OFFSET (&GLvd_offset.camera[2]), 
 	  Dist_OptionsList, N_("View"),
-	  N_("Elevation: Camera GL-Y Position [RMB + Mouse up/dn] (surface normal axis, elevation above surface -- in top view rotation)"), NULL
+	  N_("Camera offset GL Z from the look-at point (negated).\n"
+	     "[Wheel: zoom, RMB or Ctrl/Alt+LMB drag: dolly]\n"
+	     "Zooming scales Shift, Distance and Elevation together."), NULL
 		),
   
 	GNOME_RES_ENTRY_SEPARATOR (N_("View"), NULL),
@@ -469,8 +485,8 @@ GnomeResEntryInfoType v3dControl_pref_def_const[] = {
 	     " 3: return vec4 (lightness*LambertianColor, 1.)\n"
 	     " 4: return lightness*color\n"
 	     " 5: finalColor = applyFog (finalColor, dist, viewDir); return vec4(lightness*finalColor, 1.)\n"
-	     " 6: return vec4 (mix (finalColor.xyz, nois, 0.2), 1.)\n"
-	     " 7: return vec4 (nois, 1.)\n"
+	     " 6: return vec4 (mix (finalColor.xyz, nois, 0.2), 1.)  -- 20% value noise overlay\n"
+	     " 7: return vec4 (nois, 1.)  -- value noise only\n"
 	     " 8: return lightness*color\n"
 	     " 9: return color\n"
 	     " 10: return vec4(normal*0.5+0.5, 1.0)\n"
