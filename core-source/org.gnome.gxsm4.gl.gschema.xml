@@ -85,6 +85,7 @@
         <choice value='Right'/>
         <choice value='Areal View Front'/>
         <choice value='Scan: Auto Tip View'/>
+        <choice value='Best Fit'/>
       </choices>
       <default>'Manual'</default>
       <summary>Predefined Views.
@@ -104,6 +105,13 @@ Elevation and Distance referring to Top View Model Orientation.
       <summary>Predefined Look-At Positions.</summary>
       <description>
         Predefined Look-At Positions.
+      </description>
+    </key>
+    <key name="autofit" type="b">
+      <default>true</default>
+      <summary>Auto fit on load</summary>
+      <description>
+        true GXSM OPTIONS=(true, Auto fit on load: when new data is shown, set a 3/4 front view, a reasonable height scale (Hskl) and fit the camera distance.)
       </description>
     </key>
     <key name="translation" type="ad">

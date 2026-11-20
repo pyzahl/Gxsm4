@@ -1180,6 +1180,7 @@ public:
                 text_vao = NULL;
                 ico_vao = NULL;
                 force_fallback = false;
+                fit_pending = false;
         };
         ~gl_400_3D_visualization(){
                 //end(); // too late, glarea reference is gone! 
@@ -1271,6 +1272,101 @@ private:
                 if (s->GLv_data.Ortho)
                         return 2.0f*0.02f*s->GLv_data.fov*orthoScale () / w;
                 return 2.0f*dist*tanf (glm::radians (s->GLv_data.fov)*0.5f) / h;
+        };
+
+        // GL height extent of the full data Z range (as used by render())
+        GLfloat glHeightScale () const {
+                if (s->GLv_data.height_scale_mode[0] == 'A')
+                        return s->GLv_data.hskl
+                                * (s->get_scan ())->mem2d->data->zrange
+                                * (s->get_scan ())->data.s.dz
+                                / (s->get_scan ())->data.s.rx;
+                return s->GLv_data.hskl;
+        };
+
+        static double nice_125 (double v){ // round to 1, 2, 5 x 10^n
+                if (!(v > 0.)) return v;
+                double e = pow (10., floor (log10 (v)));
+                double m = v/e;
+                return e * (m < 1.5 ? 1. : m < 3.5 ? 2. : m < 7.5 ? 5. : 10.);
+        };
+
+        // Fit the model into the view: auto Z (Hskl), 3/4 front view, camera distance to fit
+        void auto_fit (){
+                Scan *sc = s->get_scan ();
+                const double rx = sc->data.s.rx;
+                const double ry = sc->data.s.ry;
+                const double zr = sc->mem2d->data->zrange * sc->data.s.dz; // full Z range in world units
+                const float  a  = rx > 0. ? (float)(ry/rx) : 1.0f;        // model Z extent (surface Y)
+
+                // 1) auto Z (conservative): full Z range rises to ~20% of the scan width,
+                //    but never flatten real relief (Hskl >= 1) and stay within the Hskl slider range
+                const double relief = 0.2;
+                if (s->GLv_data.height_scale_mode[0] == 'A'){
+                        if (zr > 0. && rx > 0.)
+                                s->GLv_data.hskl = glm::clamp (nice_125 (relief * rx / zr), 1.0, 20.0);
+                } else
+                        s->GLv_data.hskl = relief;
+                const float hs = glHeightScale ();
+
+                // 2) camera along default direction, look at model center
+                strcpy (s->GLv_data.look_at, "Center");
+                glm::vec3 dir = glm::normalize (glm::vec3 (0.f, -1.5f, -1.0f)); // = default camera (Shift,Distance,Elevation)=(0,1.5,1)
+                DistanceOrigin = DistanceCurrent = 1.8f*dir;
+                TranslationOrigin = TranslationCurrent = glm::vec3 (0.f);
+
+                // 3) 3/4 view from front: elevation 35 deg, turned by 25 deg about the surface normal
+                glm::vec3 right, up, fwd; float dist;
+                viewBasis (right, up, fwd, dist);
+                const float el = glm::radians (35.f);
+                const float az = glm::radians (-25.f);
+                glm::vec3 n = sinf (el)*(-fwd) + cosf (el)*up;      // surface normal (model +Y) in world
+                glm::vec3 f = cosf (el)*(-fwd) - sinf (el)*up;      // model front (-Z) toward viewer
+                glm::vec3 mz = -f;
+                glm::vec3 mx = glm::cross (n, mz);
+                glm::mat4 B (glm::vec4 (mx, 0.f), glm::vec4 (n, 0.f), glm::vec4 (mz, 0.f), glm::vec4 (0.f, 0.f, 0.f, 1.f));
+                glm::mat4 R = glm::rotate (glm::mat4 (1.f), az, n) * B;
+                RotationOrigin = RotationCurrent = rotationAngles (R);
+                R = rotationMatrix (RotationCurrent); // exactly what will be rendered
+
+                // 4) distance: all bounding box corners inside the frustum (10% margin)
+                const float margin = 1.1f;
+                const float off = s->GLv_data.slice_offset;
+                const float W = WindowSize.x > 1 ? WindowSize.x : 500.f;
+                const float H = WindowSize.y > 1 ? WindowSize.y : 500.f;
+                const float aspect = W/H;
+                const float ty = tanf (glm::radians (s->GLv_data.fov)*0.5f);
+                const float tx = ty*aspect;
+                float d_need = 0.f, ext_x = 0.f, ext_y = 0.f, z_max = 0.f;
+                for (int i=0; i<8; ++i){
+                        glm::vec3 c ((i&1 ? 0.5f : -0.5f),
+                                     (i&2 ? 0.5f*hs : -0.5f*hs) + off,
+                                     (i&4 ? 0.5f*a  : -0.5f*a));
+                        glm::vec3 w = glm::vec3 (glm::translate (R, modelPosition ()) * glm::vec4 (c, 1.f));
+                        // NOTE: std::fabs, not fabsf -- fabsf(glm::dot(..)) evaluated to 0 in a standalone glm/gcc test
+                        float xc = margin*std::fabs (glm::dot (w, right));
+                        float yc = margin*std::fabs (glm::dot (w, up));
+                        float zc = glm::dot (w, -fwd); // toward camera
+                        if (ty > 1e-6f)
+                                d_need = fmaxf (d_need, fmaxf (zc + xc/tx, zc + yc/ty));
+                        ext_x = fmaxf (ext_x, xc);
+                        ext_y = fmaxf (ext_y, yc);
+                        z_max = fmaxf (z_max, zc);
+                }
+                if (s->GLv_data.Ortho){
+                        // ortho half extents: 0.02*fov*S (x) and 0.02*fov*S/aspect (y), S = |D|/1.8
+                        float k = 0.02f*s->GLv_data.fov;
+                        float S = k > 0.f ? fmaxf (ext_x/k, ext_y*aspect/k) : 1.f;
+                        d_need = fmaxf (1.8f*S, z_max + 0.1f);
+                }
+                if (d_need > 1e-3f)
+                        DistanceOrigin = DistanceCurrent = d_need*dir;
+
+                // write back to settings/dialog
+                get_rotation (s->GLv_data.rot);
+                get_translation (s->GLv_data.trans);
+                get_camera (s->GLv_data.camera);
+                s->UpdateGLv_control ();
         };
 
 	bool initProgram() {
@@ -1646,6 +1742,10 @@ public:
         
 	bool render() {
 		if (!Validated) return false;
+                if (fit_pending){ // needs final window size, so done here
+                        fit_pending = false;
+                        auto_fit ();
+                }
                 GLfloat GL_height_scale = 1.;
                 
                 switch (s->GLv_data.height_scale_mode[0]){
@@ -2090,6 +2190,8 @@ public:
                 WindowSize  = glm::ivec2(w, h);
         };
 
+        void request_fit (){ fit_pending = true; };
+
         void set_force_fallback(bool force){
                 force_fallback = force;
                 g_message ("3D shader mode: %s", force ? "SimpleSurface fallback" : "tessellation");
@@ -2204,6 +2306,7 @@ public:
 private:
         bool Validated;
         bool force_fallback;
+        bool fit_pending;
         Surf3d *s;
         GtkGLArea *glarea;
         int Major, Minor; // minimal version needed
@@ -2536,6 +2639,10 @@ void Surf3d::GLupdate (void* data){
                                 s->GLv_data.trans[0] = s->GLv_data.trans[1] = s->GLv_data.trans[2] = 0.;
                                 s->UpdateGLv_control();  s->GLv_data.view_preset[0]='*';
                                 break;
+                        case 'B': // Best Fit
+                                s->gl_tess->request_fit ();
+                                s->GLv_data.view_preset[0]='*';
+                                break;
                         case 'S':
                                 s->GetXYZNormalized (s->GLv_data.trans, s->GLv_data.height_scale_mode[0] == 'A');
                                 s->UpdateGLv_control();
@@ -2595,7 +2702,8 @@ gboolean Surf3d::check_dimension_changed(){
 
                                 delete gl_tess;
                                 gl_tess = NULL;
-                        }
+                        } else if (GLv_data.AutoFit)
+                                gl_tess->request_fit (); // new data dimensions
                 }
                 return true;
         } else
@@ -2989,7 +3097,8 @@ void realize_vsurf3d_cb (GtkGLArea *area, Surf3d *s){
 
                 delete s->gl_tess;
                 s->gl_tess = NULL;
-        }
+        } else if (s->GLv_data.AutoFit)
+                s->gl_tess->request_fit ();
         XSM_DEBUG (GL_DEBUG_L2, "GL:::REALIZE-EVENT  (realize_vsurf3d_cb) completed.");
 }
 

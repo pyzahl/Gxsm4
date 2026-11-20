@@ -31,7 +31,7 @@ Surf3d_GLview_data GLvd_offset; // dummy
 
 const gchar *TrueFalse_OptionsList[]  = { "true", "false", NULL };
 const gchar *OnOff_OptionsList[]      = { "On", "Off", NULL };
-const gchar *ViewPreset_OptionsList[] = { "Manual", "Top", "Front", "Left", "Right", "Areal View Front", "Scan: Auto Tip View", NULL };
+const gchar *ViewPreset_OptionsList[] = { "Manual", "Top", "Front", "Left", "Right", "Areal View Front", "Scan: Auto Tip View", "Best Fit", NULL };
 const gchar *LookAt_OptionsList[]     = { "Manual", "Tip", "Center", NULL };
 
 const gchar *VertexSrc_OptionsList[]  = { "Flat", "Direct Height", "Mode View Height", "Channel-X", "y-data", "Test Simple Shader Z",
@@ -108,6 +108,13 @@ GnomeResEntryInfoType v3dControl_pref_def_const[] = {
 	( GNOME_RES_STRING, "V3dControl.View/LookAt", "Center", GET_GLV_OFFSET (&GLvd_offset.look_at[0]),
 	  LookAt_OptionsList, N_("View"), 
 	  N_("Predefined Look-At Positions.")
+		),
+	GNOME_RES_ENTRY_OPTION
+	( GNOME_RES_BOOL, "V3dControl.View/AutoFit", "true", GET_GLV_OFFSET (&GLvd_offset.AutoFit),
+	  TrueFalse_OptionsList, N_("View"),
+	  N_("Auto fit on load: when new data is shown, set a 3/4 front view,\n"
+	     "a reasonable height scale (Hskl) and fit the camera distance.\n"
+	     "Use the View Preset 'Best Fit' to do this any time.")
 		),
 		
 	GNOME_RES_ENTRY_SEPARATOR (N_("View"), NULL),
