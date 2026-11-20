@@ -153,8 +153,11 @@ int main (int argc, char **argv)
         // NVIDIA's EGL (and GLX) refuses to share a desktop-GL context with a GLES context
         // -> "Unable to create a GL context". Mesa tolerates it, NVIDIA does not.
         // Hence: keep GDK on desktop GL (GDK_DISABLE=gles-api, GTK >= 4.16). Must be set before
-        // GDK opens the display. Opt out with GXSM_GL_ALLOW_GLES=1 (e.g. GLES-only embedded GPUs).
-        if (!g_getenv ("GXSM_GL_ALLOW_GLES")){
+        // GDK opens the display. Only done with the NVIDIA driver loaded: elsewhere (Mesa: Intel,
+        // AMD, llvmpipe, Raspberry Pi V3D/VC4 with desktop GL < 3.2) GTK's GLES default is kept.
+        // Opt out with GXSM_GL_ALLOW_GLES=1.
+        if (!g_getenv ("GXSM_GL_ALLOW_GLES")
+            && g_file_test ("/proc/driver/nvidia/version", G_FILE_TEST_EXISTS)){
                 const gchar *gdk_disable = g_getenv ("GDK_DISABLE");
                 if (!gdk_disable || !*gdk_disable)
                         g_setenv ("GDK_DISABLE", "gles-api", TRUE);
