@@ -89,6 +89,10 @@
 // glm, gli, GL support includes
 // ------------------------------------------------------------
 #include "ogl_framework.hpp"
+#ifndef GLM_ENABLE_EXPERIMENTAL
+#define GLM_ENABLE_EXPERIMENTAL
+#endif
+#include <glm/gtx/euler_angles.hpp>
 
 #define GL_DEBUG_L2 0
 #define GL_DEBUG_L3 1
@@ -292,6 +296,40 @@ namespace
         GLuint Uniform_shadeLambertianMaterialColorFog(0);
         GLuint Uniform_shadeVolume(0);
         GLuint Uniform_loc_shadeModel((GLuint)-1);
+        GLuint Uniform_fragment_setup[1] = { 0 };
+
+        // subroutine uniform locations (assigned by the linker, NOT declaration order)
+        GLint Loc_vertexModel(-1);
+        GLint Loc_eval_vertexModel(-1);
+        GLint Loc_colorModel(-1);
+        GLint Loc_eval_vertexPlane(-1);
+        GLint Loc_shadeModel(-1);
+
+        // Subroutine uniform state is NOT part of program object state: it is
+        // reset on every glUseProgram() call (GL 4.x spec, enforced by Mesa and
+        // recent drivers). Therefore it must be (re)applied after glUseProgram,
+        // immediately before drawing, with indices placed at their linker
+        // assigned locations.
+        void apply_subroutine_stage (GLuint program, GLenum stage, const GLint *locs, const GLuint *values, int n){
+                GLint num_locations = 0;
+                glGetProgramStageiv (program, stage, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &num_locations);
+                if (num_locations <= 0)
+                        return;
+                std::vector<GLuint> idx (num_locations, 0);
+                for (int i=0; i<n; ++i)
+                        if (locs[i] >= 0 && locs[i] < num_locations)
+                                idx[locs[i]] = values[i];
+                glUniformSubroutinesuiv (stage, num_locations, idx.data());
+        }
+
+        void apply_tesselation_subroutines (){
+                GLint vl[1] = { Loc_vertexModel };
+                apply_subroutine_stage (Tesselation_ProgramName, GL_VERTEX_SHADER, vl, Uniform_vertex_setup, 1);
+                GLint el[3] = { Loc_eval_vertexModel, Loc_colorModel, Loc_eval_vertexPlane };
+                apply_subroutine_stage (Tesselation_ProgramName, GL_TESS_EVALUATION_SHADER, el, Uniform_evaluation_setup, 3);
+                GLint fl[1] = { Loc_shadeModel };
+                apply_subroutine_stage (Tesselation_ProgramName, GL_FRAGMENT_SHADER, fl, Uniform_fragment_setup, 1);
+        }
 
 #if 0        //
         GLuint Uniform_S3D_vertexDirect(0); // vertex
@@ -385,7 +423,6 @@ public:
         };
         
         gboolean init_vao (){
-                g_message ("base_plane init_vao");
                 Surf3d::checkError("make_plane::init_vao");
 		if (!Validated) return false;
 
@@ -400,7 +437,6 @@ public:
                 glBindBuffer(GL_ARRAY_BUFFER, 0);
                 glBindVertexArray(0);
 
-                g_message ("base_plane init_vao end");
 
                 return Validated && Surf3d::checkError("make_plane::init_vao");
         };
@@ -511,7 +547,6 @@ public:
                         return false;
 
                 if (force_fallback) {
-                        g_message ("base_plane draw: forcing SimpleSurface shader");
                         glUseProgram (SimpleSurface_ProgramName);
                         glActiveTexture (GL_TEXTURE0);
                         glBindTexture (GL_TEXTURE_2D, TesselationTextureName[0]);
@@ -525,9 +560,6 @@ public:
                                 g_warning ("SimpleSurface shader program %u is not linked", SimpleSurface_ProgramName);
                                 return false;
                         }
-                        g_message ("base_plane forced fallback state: program=%u vao=%u vertex_buffer=%u element_buffer=%u texture=%u indices=%d",
-                                   SimpleSurface_ProgramName, VertexArrayName, ArrayBufferName,
-                                   FallbackIndexBufferName, TesselationTextureName[0], FallbackIndicesCount);
                         glDrawElements (GL_TRIANGLES, FallbackIndicesCount, GL_UNSIGNED_INT, 0);
                         Surf3d::checkError ("make_plane::draw forced fallback");
                         glBindBuffer (GL_ARRAY_BUFFER, 0);
@@ -538,6 +570,8 @@ public:
 
                 glUseProgram (Tesselation_ProgramName);
                 Surf3d::checkError("make_plane::draw useprogram");
+                apply_tesselation_subroutines (); // must follow glUseProgram, see note there
+                Surf3d::checkError("make_plane::draw subroutines");
                 
                 glBindVertexArray (VertexArrayName);
                 glEnableVertexAttribArray (semantic::attr::POSITION);
@@ -558,41 +592,6 @@ public:
                 }
                 Surf3d::checkError("make_plane::draw tex2");
 
-                GLint current_program = 0;
-                GLint current_vao = 0;
-                GLint current_element_buffer = 0;
-                GLint patch_vertices = 0;
-                glGetIntegerv (GL_CURRENT_PROGRAM, &current_program);
-                glGetIntegerv (GL_VERTEX_ARRAY_BINDING, &current_vao);
-                glGetIntegerv (GL_ELEMENT_ARRAY_BUFFER_BINDING, &current_element_buffer);
-                glGetIntegerv (GL_PATCH_VERTICES, &patch_vertices);
-                g_message ("base_plane draw state: program=%d vao=%d element_buffer=%d patches=%d indices=%d vao_expected=%u index_expected=%u",
-                           current_program, current_vao, current_element_buffer, patch_vertices,
-                           IndicesCount, VertexArrayName, IndexBufferName);
-
-                // Diagnostic: print texture and subroutine selection state
-                g_message ("Textures: Surf3D=%u Palette=%u Volume3D=%u | eval_setup=[%u,%u,%u] vertex_setup=%u",
-                           TesselationTextureName[0], TesselationTextureName[1], (numv>1?TesselationTextureName[2]:0),
-                           Uniform_evaluation_setup[0], Uniform_evaluation_setup[1], Uniform_evaluation_setup[2],
-                           Uniform_vertex_setup[0]);
-
-                /* print cached fragment subroutine indices and active value */
-                g_message ("Fragment subroutine indices: terrain=%u debug=%u lambert=%u vol=%u",
-                           Uniform_shadeTerrain, Uniform_shadeDebugMode, Uniform_shadeLambertian, Uniform_shadeVolume);
-                if (Uniform_loc_shadeModel != (GLuint)-1){
-                        GLuint active_idx = 0;
-                        glGetUniformSubroutineuiv (GL_FRAGMENT_SHADER, (GLint)Uniform_loc_shadeModel, &active_idx);
-                        g_message ("Active fragment subroutine index (shadeModel) = %u", active_idx);
-                }
-
-                /* dump important UBO fragment shading values for debug */
-                g_message ("UBO FragmentShading: debug_color_source=%u shininess=%f lightDir=(%f,%f,%f) eyePos=(%f,%f,%f) diffuse=(%f,%f,%f)",
-                           Block_FragmentShading.debug_color_source,
-                           Block_FragmentShading.shininess,
-                           Block_FragmentShading.lightDirWorld.x, Block_FragmentShading.lightDirWorld.y, Block_FragmentShading.lightDirWorld.z,
-                           Block_FragmentShading.eyePosWorld.x, Block_FragmentShading.eyePosWorld.y, Block_FragmentShading.eyePosWorld.z,
-                           Block_FragmentShading.diffuseColor.x, Block_FragmentShading.diffuseColor.y, Block_FragmentShading.diffuseColor.z);
-                
                 glDrawElements (GL_PATCHES, IndicesCount, GL_UNSIGNED_INT, 0);
 
 #if 1
@@ -622,11 +621,9 @@ public:
                 if (BaseGridH < 2)
                         BaseGridH = 2;
                 
-                g_message ("make_plane");
                 VertexCount =  BaseGridW*BaseGridH;
                 VertexObjectSize = VertexCount * sizeof(glm::vec2);
                
-                g_message ("mkplane w=%d h=%d  nvertices=%d", BaseGridW, BaseGridH, VertexCount);
                 if (!vertex)
                         vertex = g_new (glm::vec2, VertexCount);
                 double s_factor = 1.0/(BaseGridW-1);
@@ -643,7 +640,6 @@ public:
                                 //g_message ("mkplane vtx -- x=%d y=TEX z=%d  [%d]",x,y, offset);
                         }
                 }
-                g_message ("mkplane -- Vertex Count=%d", offset);
 
                 if (!indices){
                         // Patch Indices
@@ -667,7 +663,6 @@ public:
                                         indices[ii++].indices.x = p4;
                                 }
                         }
-                        g_message ("mkplane -- Indices Count=%d of %d", ii, IndicesCount);
                 }
 
                 if (!FallbackIndices){
@@ -724,7 +719,6 @@ public:
                 ArrayBufferName = 0;
                 VertexArrayName = 0;
 
-                g_message ("text_plane:: init object");
 
                 if (Validated && FT_Init_FreeType(&ft)) {
                         g_warning ("Could not init freetype library. -- No GL text rendering.");
@@ -749,7 +743,6 @@ public:
                 }
                 
                 Surf3d::checkError("text_plane::init");
-                g_message ("text_plane:: init object completed");
         };
         ~text_plane (){
 		if (Validated){
@@ -781,7 +774,6 @@ public:
                 return Validated && Surf3d::checkError("text_plane:: init_buffer completed");
         };
         gboolean init_vao (){
-                g_message ("base_plane init_vao");
                 Surf3d::checkError("make_plane::init_vao");
 		if (!Validated) return false;
 
@@ -797,6 +789,9 @@ public:
 
                 return Validated && Surf3d::checkError("make_plane::init_vao");
         };
+        // Labels are flat text in model space. They are re-oriented every frame (mirror and/or 180 deg
+        // turn within their own plane, keeping the footprint) so they always read left-to-right and
+        // unmirrored on screen, from whatever side the label plane is seen.
         gboolean draw (const char *text, glm::vec3 pos, glm::vec3 ex, glm::vec3 ey, glm::vec4 color=glm::vec4(1.0,0.1,0.5,0.7)) {
  		if (!Validated) return false;
 
@@ -815,7 +810,15 @@ public:
 
                 glUniform4fv (glGetUniformLocation (S3D_ProgramName, "textColor"), 1, &color.x);
 
+                // Glyph texture lives on its own unit 3. The active unit is left at whatever the
+                // surface/volume draw used last, so select it explicitly -- otherwise glyphs get
+                // uploaded to another unit and the shader samples a foreign texture (=> boxes).
+                glActiveTexture (GL_TEXTURE3);
                 glBindTexture (GL_TEXTURE_2D, TextTextureName);
+                glUniform1i (glGetUniformLocation (S3D_ProgramName, "textTexture"), 3);
+                GLint unpack_alignment = 4;
+                glGetIntegerv (GL_UNPACK_ALIGNMENT, &unpack_alignment);
+                glPixelStorei (GL_UNPACK_ALIGNMENT, 1); // FreeType rows are byte packed
 
                 glBindVertexArray(VertexArrayName);
                 glBindBuffer (GL_ARRAY_BUFFER, ArrayBufferName);
@@ -844,6 +847,36 @@ public:
                         return false;
                 }
 
+                {
+                        GLfloat adv = 0.;
+                        for (int i = 0; i < utf32_length; i++)
+                                if (!FT_Load_Glyph (face, FT_Get_Char_Index (face, utf32_str[i]), FT_LOAD_DEFAULT))
+                                        adv += (GLfloat)(g->advance.x/64);
+                        GLfloat asc = (GLfloat)(face->size->metrics.ascender/64);
+                        if (adv < 1.) adv = 1.;
+
+                        // screen (NDC) projections of label origin, writing direction and up direction
+                        const glm::mat4 &MVP = Block_ModelViewMat.ModelViewProjection;
+                        glm::vec4 c0 = MVP * glm::vec4 (pos, 1.f);
+                        glm::vec4 c1 = MVP * glm::vec4 (pos + adv*ex, 1.f);
+                        glm::vec4 c2 = MVP * glm::vec4 (pos + asc*ey, 1.f);
+                        if (c0.w > 1e-6f && c1.w > 1e-6f && c2.w > 1e-6f){ // in front of the camera
+                                glm::vec2 p0 = glm::vec2 (c0) / c0.w;
+                                glm::vec2 a  = glm::vec2 (c1) / c1.w - p0; // writing direction on screen
+                                glm::vec2 b  = glm::vec2 (c2) / c2.w - p0; // glyph up on screen
+                                if (a.x*b.y - a.y*b.x < 0.f){ // seen from the back: mirror along writing direction
+                                        pos += adv*ex;
+                                        ex = -ex;
+                                        a = -a;
+                                }
+                                if (a.x < -0.25f*glm::length (a)){ // runs right-to-left: turn by 180 deg
+                                        pos += adv*ex + asc*ey;
+                                        ex = -ex;
+                                        ey = -ey;
+                                }
+                        }
+                }
+
                 for (int i = 0; i < utf32_length; i++) {
                         FT_UInt glyph_index = FT_Get_Char_Index(face, utf32_str[i]);
                         if (FT_Load_Glyph(face, glyph_index, FT_LOAD_RENDER)){
@@ -854,7 +887,7 @@ public:
                         glTexImage2D (
                                       GL_TEXTURE_2D,
                                       0,
-                                      GL_RED,
+                                      GL_R8,
                                       g->bitmap.width,
                                       g->bitmap.rows,
                                       0,
@@ -889,6 +922,8 @@ public:
                 glBindBuffer (GL_ARRAY_BUFFER, 0);
                 glBindVertexArray(0);
                 glBindTexture(GL_TEXTURE_2D, 0);
+                glActiveTexture (GL_TEXTURE0);
+                glPixelStorei (GL_UNPACK_ALIGNMENT, unpack_alignment);
 
                 glDisable (GL_BLEND);
                 
@@ -920,14 +955,12 @@ public:
 	               na = 10000;
 	        LatticeCount = na;
                 
-                g_message ("icosahedron:: init object count=%d", na);
 
                 Validated = init_vao ();
                 Validated = init_buffer ();
                 Validated = init_texture ();
 
                 Surf3d::checkError("icosahedron::init");
-                g_message ("icosahedron:: init object completed");
         };
         ~icosahedron (){
                 g_free (indices);
@@ -1057,7 +1090,6 @@ public:
                 return Validated && Surf3d::checkError("text_plane:: init_buffer completed");
         };
         gboolean init_vao (){
-                g_message ("icosahedron init_vao");
                 Surf3d::checkError("icosahedron::init_vao");
 		if (!Validated) return false;
 
@@ -1071,7 +1103,6 @@ public:
         gboolean draw (glm::vec4 pos, glm::vec4 scale, glm::vec4 color[4], gfloat tesslevel=2.) {
  		if (!Validated) return false;
 
-                g_message ("icosahedron draw");
 
                 glUseProgram (IcoTess_ProgramName);
 
@@ -1133,17 +1164,16 @@ public:
 
                 double aspect = (s->get_scan ())->data.s.ry / (s->get_scan ())->data.s.rx;
 
-                TranslationOrigin  = glm::vec2(0, 0*aspect);
+                (void)aspect;
+                TranslationOrigin  = glm::vec3(0.0f);
               	TranslationCurrent = TranslationOrigin;
-                Translation3axis = glm::vec3(0.0f,0.0f,0.0f);
 
                 DistanceOrigin  = glm::vec3(-60., 0., 0.);
               	DistanceCurrent = DistanceOrigin;
 
 
-                RotationOrigin = glm::vec2(0.75,0);
+                RotationOrigin = glm::vec3(0.75f, 0.0f, 0.0f);
                 RotationCurrent = RotationOrigin;
-                Rotation3axis = glm::vec3(0.0f,0.0f,0.0f);
 
                 WindowSize  = glm::ivec2(500, 500);
                 surface_plane = NULL;
@@ -1182,21 +1212,65 @@ private:
                 }
                 return glm::vec3(0,0,0);
         };
-#if 1
+        // Translation (GLv trans[0..2] = surface X, Y, Z) as GL model space offset.
+        // GL axes: X = surface X, Y = surface normal (height), Z = surface Y.
         glm::vec3 modelPosition() const {
-                return glm::vec3(-this->TranslationCurrent.x, 0.0, -this->TranslationCurrent.y);
+                return glm::vec3(-this->TranslationCurrent.x, -this->TranslationCurrent.z, -this->TranslationCurrent.y);
         };
-#endif
+
+        // Model rotation from the stored angles (radians):
+        //   R = Rot_X(-rot.y) * Rot_Z(rot.x) * Rot_Y(rot.z)    [GL Y = surface normal]
+        static glm::mat4 rotationMatrix (const glm::vec3 &r) {
+                return glm::eulerAngleXZY (-r.y, r.x, r.z);
+        };
+        static glm::vec3 rotationAngles (const glm::mat4 &R) {
+                float t1, t2, t3;
+                glm::extractEulerAngleXZY (R, t1, t2, t3);
+                return glm::vec3 (t2, -t1, t3);
+        };
+
         glm::mat4 modelView() const {
-                // rotate model 1st around it's origin
-                glm::mat4 ModelRotateX = glm::rotate(glm::mat4(1.0f), -this->RotationCurrent.y, glm::vec3(1.f, 0.f, 0.f)); // X
-                glm::mat4 ModelRotateY = glm::rotate(ModelRotateX, this->RotationCurrent.x, glm::vec3(0.f, 0.f, 1.f)); // GL Z is Screen depth = surface Y
-                glm::mat4 ModelRotateZ = glm::rotate(ModelRotateY, this->Rotation3axis.z, glm::vec3(0.f, 1.f, 0.f)); // GL Y is Screen Y = surface Z (I hate it)
-                //return ModelRotateZ;
-                // then translate
-                glm::mat4 ModelTranslate = glm::translate(ModelRotateZ,  modelPosition());
-                // final ModelView
-                return ModelTranslate;
+                // rotate model around the pivot (= world origin), then translate model so the pivot is the selected model point
+                return glm::translate (rotationMatrix (this->RotationCurrent), modelPosition());
+        };
+
+        // Camera position and look-at target in world space, as used for rendering.
+        void viewFrame (glm::vec3 &camera, glm::vec3 &target) const {
+                target = lookAtPosition ();
+                camera = cameraPosition ();
+                if (s->GLv_data.vertex_source[0] == 'V'){ // auto override x,y to align view planes for Volume Projection
+                        camera.x = 0.;
+                        camera.y = 0.;
+                }
+        };
+
+        // Screen aligned unit vectors in world space (right, up) and view direction (fwd).
+        void viewBasis (glm::vec3 &right, glm::vec3 &up, glm::vec3 &fwd, float &distance) const {
+                glm::vec3 cam, tgt;
+                viewFrame (cam, tgt);
+                glm::vec3 d = tgt - cam;
+                distance = glm::length (d);
+                fwd = distance > 1e-9f ? d/distance : glm::vec3 (1.f, 0.f, 0.f);
+                glm::vec3 r = glm::cross (fwd, glm::vec3 (0.f, 1.f, 0.f)); // same up vector as glm::lookAt in render()
+                right = glm::length (r) > 1e-6f ? glm::normalize (r) : glm::vec3 (0.f, 0.f, 1.f);
+                up = glm::cross (right, fwd);
+        };
+
+        // Ortho projection has no perspective zoom: scale its extent with the camera distance instead.
+        float orthoScale () const {
+                float d = glm::length (DistanceCurrent);
+                return d > 1e-6f ? d / 1.8f : 1.0f; // 1.8 ~ default camera distance
+        };
+
+        // world units per screen pixel at the look-at distance
+        float worldPerPixel () const {
+                glm::vec3 r, u, f; float dist;
+                viewBasis (r, u, f, dist);
+                const float h = WindowSize.y > 1 ? WindowSize.y : 500.0f;
+                const float w = WindowSize.x > 1 ? WindowSize.x : 500.0f;
+                if (s->GLv_data.Ortho)
+                        return 2.0f*0.02f*s->GLv_data.fov*orthoScale () / w;
+                return 2.0f*dist*tanf (glm::radians (s->GLv_data.fov)*0.5f) / h;
         };
 
 	bool initProgram() {
@@ -1204,7 +1278,6 @@ private:
                 // load and init shader program if not yet created -- only once, may shared!
 #if 1
                 if (Validated && ProgramName_RefCount > 0){
-                        g_message ("Shader Program is already initiated.");
                         ++ProgramName_RefCount;
                         return Validated;
                 }
@@ -1356,6 +1429,18 @@ private:
                         /* cache subroutine-uniform location for fragment selector */
                         Uniform_loc_shadeModel = (GLuint) glGetSubroutineUniformLocation (Tesselation_ProgramName, GL_FRAGMENT_SHADER, "shadeModel");
 
+                        Loc_vertexModel      = glGetSubroutineUniformLocation (Tesselation_ProgramName, GL_VERTEX_SHADER, "vertexModel");
+                        Loc_eval_vertexModel = glGetSubroutineUniformLocation (Tesselation_ProgramName, GL_TESS_EVALUATION_SHADER, "eval_vertexModel");
+                        Loc_colorModel       = glGetSubroutineUniformLocation (Tesselation_ProgramName, GL_TESS_EVALUATION_SHADER, "colorModel");
+                        Loc_eval_vertexPlane = glGetSubroutineUniformLocation (Tesselation_ProgramName, GL_TESS_EVALUATION_SHADER, "eval_vertexPlane");
+                        Loc_shadeModel       = glGetSubroutineUniformLocation (Tesselation_ProgramName, GL_FRAGMENT_SHADER, "shadeModel");
+
+                        Uniform_vertex_setup[0]     = Uniform_vertexDirect;
+                        Uniform_evaluation_setup[0] = Uniform_evaluationVertexDirect;
+                        Uniform_evaluation_setup[1] = Uniform_evaluationColorDirect;
+                        Uniform_evaluation_setup[2] = Uniform_evaluation_vertex_XZplane;
+                        Uniform_fragment_setup[0]   = Uniform_shadeLambertian;
+
                         Surf3d::checkError("initProgram -- get uniform subroutine references...");
 		}
 
@@ -1387,7 +1472,6 @@ private:
                 GLuint uniformBlockIndexProg = glGetUniformBlockIndex (program, block_name);
                 glUniformBlockBinding (program, uniformBlockIndexProg, block_id);
                 glBindBufferRange(GL_UNIFORM_BUFFER, block_id, Uniform_ubo_list[block_id], 0, block_size);
-                g_message ("UBO[%d] (%s) = %d <=> %d  {%u}", block_id,  block_name, uniformBlockIndexProg, Uniform_ubo_list[block_id], block_size);
         };
 
 	bool initBuffer() {
@@ -1531,11 +1615,9 @@ public:
                         surface_plane = NULL;
                 }
                
-                g_message ("end -- check for Shader Programs unload. %d", ProgramName_RefCount);
 
                 --ProgramName_RefCount;
                 if (ProgramName_RefCount == 0){
-                        g_message ("end -- unloading Shader Programs. %d", ProgramName_RefCount);
                 
                         glDeleteProgram(Tesselation_ProgramName);
                         glDeleteProgram(S3D_ProgramName);
@@ -1586,24 +1668,9 @@ public:
                         break;
                 }
 
-                glm::vec3 look_at = lookAtPosition ();
-                glm::vec3 camera_position = cameraPosition ();
-                
-                if (s->GLv_data.vertex_source[0] == 'V'){ // auto override x,y to align view planes for Volume Projection
-                        camera_position.x = 0.;
-                        camera_position.y = 0.;
-                }
+                glm::vec3 look_at, camera_position;
+                viewFrame (camera_position, look_at);
 
-                g_message ("Render (GL coord system):\n"
-                           " Camera at = (%g, %g, %g)\n"
-                           " Look at   = (%g, %g, %g)\n"
-                           " Translate = (%g, 0, %g)\n"
-                           " GL_height_scale = %g",
-                           camera_position.x, camera_position.y, camera_position.z,
-                           look_at.x, look_at.y, look_at.z,
-                           TranslationCurrent.x, TranslationCurrent.y,
-                           GL_height_scale
-                           );
                 
                 glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 glClearBufferfv (GL_COLOR, 0, s->GLv_data.clear_color);
@@ -1619,7 +1686,7 @@ public:
                 float aspect = WindowSize.x/WindowSize.y;
                 glm::mat4 Projection;
                 if (s->GLv_data.Ortho){
-                        GLfloat os=0.02;
+                        GLfloat os=0.02*orthoScale ();
                         Projection = glm::ortho (-os*s->GLv_data.fov, os*s->GLv_data.fov,
                                                  -os/aspect*s->GLv_data.fov, os/aspect*s->GLv_data.fov,
                                                  s->GLv_data.fnear, s->GLv_data.ffar);
@@ -1688,14 +1755,6 @@ public:
 
                 Block_FragmentShading.wrap = 0.3; // = 0.3;
                 Block_FragmentShading.debug_color_source = (GLuint)s->GLv_data.shader_mode;
-                g_message ("Fragment Debug Source=%u lightDir=(%f,%f,%f) eyePos=(%f,%f,%f)",
-                           Block_FragmentShading.debug_color_source,
-                           Block_FragmentShading.lightDirWorld.x,
-                           Block_FragmentShading.lightDirWorld.y,
-                           Block_FragmentShading.lightDirWorld.z,
-                           Block_FragmentShading.eyePosWorld.x,
-                           Block_FragmentShading.eyePosWorld.y,
-                           Block_FragmentShading.eyePosWorld.z);
 
                 updateFragmentShading ();
 
@@ -1755,18 +1814,16 @@ public:
 
                 Surf3d::checkError ("render -- configure color_source");
 
-                /* Diagnostic: print requested ShadeModel char from prefs */
-                g_message ("ShadeModel requested: '%c'", s->GLv_data.ShadeModel[0]);
 
                 switch (s->GLv_data.ShadeModel[0]){
-                case 'L': glUniformSubroutinesuiv (GL_FRAGMENT_SHADER, 1, &Uniform_shadeLambertian); break;
-		case 'T': glUniformSubroutinesuiv (GL_FRAGMENT_SHADER, 1, &Uniform_shadeTerrain); break;
-                case 'M': glUniformSubroutinesuiv (GL_FRAGMENT_SHADER, 1, &Uniform_shadeLambertianMaterialColor); break;
-                case 'F': glUniformSubroutinesuiv (GL_FRAGMENT_SHADER, 1, &Uniform_shadeLambertianMaterialColorFog); break;
-                case 'R': glUniformSubroutinesuiv (GL_FRAGMENT_SHADER, 1, &Uniform_shadeLambertianXColor); break;
-                case 'V': glUniformSubroutinesuiv (GL_FRAGMENT_SHADER, 1, &Uniform_shadeVolume); break;
-		case 'D': glUniformSubroutinesuiv (GL_FRAGMENT_SHADER, 1, &Uniform_shadeDebugMode); break;
-                default: glUniformSubroutinesuiv (GL_FRAGMENT_SHADER, 1, &Uniform_shadeLambertian); break;
+                case 'L': Uniform_fragment_setup[0] = Uniform_shadeLambertian; break;
+		case 'T': Uniform_fragment_setup[0] = Uniform_shadeTerrain; break;
+                case 'M': Uniform_fragment_setup[0] = Uniform_shadeLambertianMaterialColor; break;
+                case 'F': Uniform_fragment_setup[0] = Uniform_shadeLambertianMaterialColorFog; break;
+                case 'R': Uniform_fragment_setup[0] = Uniform_shadeLambertianXColor; break;
+                case 'V': Uniform_fragment_setup[0] = Uniform_shadeVolume; break;
+		case 'D': Uniform_fragment_setup[0] = Uniform_shadeDebugMode; break;
+                default: Uniform_fragment_setup[0] = Uniform_shadeLambertian; break;
                 }
                 Surf3d::checkError ("render -- configure shader");
 
@@ -1902,8 +1959,6 @@ public:
 
                         ico_vao->draw (tip_pos, tip_scaling, c, 4);
                         tz=tip_pos.y;
-                        g_message ("Actual Tip Position = %g %g %g  r.z=%g  z_rel[A]=%g  z_abs[A]=%g", tip_pos.x, tip_pos.y, tip_pos.z, r[2], tz , zabs);
-                        g_message ("Actual Tip Scale    = X%g Y%g Z%g   scale: %g %g %g", tip_scaling.x, tip_scaling.y, tip_scaling.z, scale[0], scale[1], scale[2]);
                 }
 
                 Surf3d::checkError ("render -- done gimmick ico_vao (tip)");
@@ -2040,69 +2095,92 @@ public:
                 g_message ("3D shader mode: %s", force ? "SimpleSurface fallback" : "tessellation");
         };
 
+        // Mouse navigation, all screen/view aligned:
+        //  'i'          : button press, remember mouse position and current state as reference
+        //  'R'          : rotate (orbit) about the look-at point; horizontal drag turns around the
+        //                 screen vertical axis, vertical drag around the screen horizontal axis
+        //  'T'          : pan; the surface follows the mouse in the screen plane
+        //  'M'          : dolly; drag up = move closer (exponential, no overshoot through target)
+        //  'Z'          : incremental zoom (scroll wheel), x = coarse steps, y = fine steps
+        //  'r','t','m'  : button release, commit current state as new reference
+        //  other        : reset current state to reference (used by set_*)
         void cursorPositionCallback(int mouse, double x, double y){
                 const float view_w = WindowSize.x > 1 ? static_cast<float>(WindowSize.x) : 500.0f;
                 const float view_h = WindowSize.y > 1 ? static_cast<float>(WindowSize.y) : 500.0f;
                 const float view_min = view_w < view_h ? view_w : view_h;
 
-                if (mouse == 'Z'){ // incremental
-                        DistanceCurrent = (DistanceOrigin += 0.05f*glm::vec3(x, 0.0f, y));
+                switch (mouse){
+                case 'Z': // incremental, multiplicative zoom
+                        DistanceOrigin *= powf (0.9f, (float)x) * powf (0.98f, (float)y);
+                        if (glm::length (DistanceOrigin) < 1e-3f)
+                                DistanceOrigin = 1e-3f * glm::normalize (DistanceOrigin + glm::vec3 (1e-9f));
+                        DistanceCurrent = DistanceOrigin;
                         return;
-                }
-                if (mouse == 'i'){
-                        MouseOrigin = glm::ivec2(x, y);
-                        return;
-                }
-                if (mouse == 't'){
+                case 'i':
+                        MouseOrigin = glm::vec2(x, y);
+                        RotationOrigin    = RotationCurrent;
                         TranslationOrigin = TranslationCurrent;
+                        DistanceOrigin    = DistanceCurrent;
                         return;
-                }
-                if (mouse == 'r'){
-                        RotationOrigin = RotationCurrent;
-                        return;
-                }
-                if (mouse == 'm'){
-                        DistanceOrigin = DistanceCurrent;
-                        return;
+                case 'r': RotationOrigin    = RotationCurrent;    return;
+                case 't': TranslationOrigin = TranslationCurrent; return;
+                case 'm': DistanceOrigin    = DistanceCurrent;    return;
+                default: break;
                 }
 
-                MouseCurrent = glm::ivec2(x, y);
-                glm::vec2 mouse_delta = glm::vec2(MouseCurrent - MouseOrigin);
-                glm::vec2 normalized_delta = glm::vec2(mouse_delta.x / view_w, mouse_delta.y / view_h);
-                glm::vec2 rotation_delta = glm::vec2(-normalized_delta.x * glm::radians(180.0f),
-                                                     -normalized_delta.y * glm::radians(120.0f));
-                glm::vec2 translation_delta = glm::vec2(normalized_delta.y,
-                                                        -normalized_delta.x) * 1.1f;
-                glm::vec3 distance_delta = glm::vec3((-mouse_delta.y / view_min) * 6.0f,
-                                                     0.0f,
-                                                     0.0f);
+                MouseCurrent = glm::vec2(x, y);
+                glm::vec2 d = MouseCurrent - MouseOrigin; // pixels, x right, y down
 
-                DistanceCurrent    = mouse == 'M' ? DistanceOrigin + distance_delta : DistanceOrigin;
-                TranslationCurrent = mouse == 'T' ? TranslationOrigin + translation_delta : TranslationOrigin;
-                RotationCurrent    = mouse == 'R' ? RotationOrigin + rotation_delta : RotationOrigin;
+                RotationCurrent    = RotationOrigin;
+                TranslationCurrent = TranslationOrigin;
+                DistanceCurrent    = DistanceOrigin;
+
+                switch (mouse){
+                case 'R': {
+                        glm::vec3 right, up, fwd; float dist;
+                        viewBasis (right, up, fwd, dist);
+                        const float k = glm::pi<float>() / view_min; // 180 deg per (smaller) window extent
+                        glm::mat4 R = glm::rotate (glm::mat4(1.0f), d.y*k, right)
+                                    * glm::rotate (glm::mat4(1.0f), d.x*k, up)
+                                    * rotationMatrix (RotationOrigin);
+                        RotationCurrent = rotationAngles (R);
+                } break;
+                case 'T': {
+                        glm::vec3 right, up, fwd; float dist;
+                        viewBasis (right, up, fwd, dist);
+                        glm::vec3 w = worldPerPixel () * (d.x*right - d.y*up); // world space shift
+                        glm::vec3 m = glm::transpose (glm::mat3 (rotationMatrix (RotationOrigin))) * w; // into model space
+                        // modelPosition = (-t.x, -t.z, -t.y)  ==> t -= (m.x, m.z, m.y)
+                        TranslationCurrent = TranslationOrigin - glm::vec3 (m.x, m.z, m.y);
+                } break;
+                case 'M': {
+                        DistanceCurrent = DistanceOrigin * expf (2.0f * d.y / view_min);
+                        if (glm::length (DistanceCurrent) < 1e-3f)
+                                DistanceCurrent = DistanceOrigin;
+                } break;
+                default: break;
+                }
         };
 
         void get_rotation (float *wxyz){
                 float dr = 180./M_PI;
                 wxyz[0] = dr*RotationCurrent.x;
                 wxyz[1] = -dr*RotationCurrent.y;
+                wxyz[2] = dr*RotationCurrent.z;
         };
         void set_rotation (float *wxyz){
                 float dr = M_PI/180.;
-                Rotation3axis = glm::vec3(wxyz[0]*dr, -wxyz[1]*dr, wxyz[2]*dr);
-                RotationOrigin = glm::vec2(wxyz[0]*dr, -wxyz[1]*dr);
+                RotationOrigin = glm::vec3(wxyz[0]*dr, -wxyz[1]*dr, wxyz[2]*dr);
                 cursorPositionCallback('x',0,0);
-                //g_message ("Rx %f Ry %f", RotationOrigin.x,RotationOrigin.y);
         };
         void get_translation (float *rxyz){
                 rxyz[0] = TranslationCurrent.x;
                 rxyz[1] = TranslationCurrent.y;
+                rxyz[2] = TranslationCurrent.z;
         };
         void set_translation (float *rxyz){
-                Translation3axis = glm::vec3(rxyz[0], rxyz[1], rxyz[2]);
-                TranslationOrigin = glm::vec2(rxyz[0], rxyz[1]);
+                TranslationOrigin = glm::vec3(rxyz[0], rxyz[1], rxyz[2]);
                 cursorPositionCallback('x',0,0);
-                //g_message ("Tx %f Ty %f", TranslationOrigin.x,TranslationOrigin.y);
         };
         void get_camera (float *d){
                 d[0] = DistanceCurrent.x;
@@ -2111,6 +2189,8 @@ public:
         };
         void set_camera (float *d){
                 DistanceCurrent = DistanceOrigin = glm::vec3(d[0], -d[1], -d[2]);
+                if (glm::length (DistanceCurrent) < 1e-3f) // degenerate: camera on top of target
+                        DistanceCurrent = DistanceOrigin = glm::vec3 (0.f, -1.5f, -1.0f);
         };
 
         void set_surface_data (glm::vec4 *data, glm::vec4 *palette, int nx, int ny, int nv){
@@ -2136,14 +2216,12 @@ private:
         glm::vec2 WindowSize;
 	glm::vec2 MouseOrigin;
 	glm::vec2 MouseCurrent;
-	glm::vec2 TranslationOrigin;
-	glm::vec2 TranslationCurrent;
-	glm::vec3 DistanceOrigin;
+	glm::vec3 TranslationOrigin;  // trans[0..2]: surface X, Y, Z
+	glm::vec3 TranslationCurrent;
+	glm::vec3 DistanceOrigin;     // camera offset from look-at point (GL world)
 	glm::vec3 DistanceCurrent;
-	glm::vec2 RotationOrigin;
-	glm::vec2 RotationCurrent;
-	glm::vec3 Rotation3axis;
-	glm::vec3 Translation3axis;
+	glm::vec3 RotationOrigin;     // radians: x, y, z as rot[0], -rot[1], rot[2]
+	glm::vec3 RotationCurrent;
 
         glm::vec4 *Surf3D_Z_Data;
         glm::vec4 *Surf3D_Palette;
@@ -2499,15 +2577,11 @@ void Surf3d::set_gl_data (){
 
 gboolean Surf3d::check_dimension_changed(){
         if (XPM_x != scan->mem2d->GetNx() || XPM_y != scan->mem2d->GetNy() || XPM_v != scan->mem2d->GetNv()){
-                g_message ("Reshaping GL scene/surface");
                 if (gl_tess){
-                        g_message ("Calling gl_tess->end()");
                         gl_tess->end ();
 
-                        g_message ("Recalculating buffers");
                         set_gl_data ();
         
-                        g_message ("Calling  gl_tess->begin()");
                         if (! gl_tess->begin()){
                                 gchar *message = g_strdup_printf
                                         ("FAILURE GL-TESS BEGIN/INIT failed at check_dimension_changed:\n"
@@ -2674,7 +2748,8 @@ void Surf3d::Translate(int n, double delta){
 }
 
 double Surf3d::Zoom(double x){ 
-	GLv_data.camera[1] += 0.02*x; 
+        for (int i=0; i<3; ++i)
+                GLv_data.camera[i] *= pow (0.9, x); // zoom along current view direction
         if (gl_tess)
                 gl_tess->set_camera (GLv_data.camera);
 	if (v3dcontrol){

@@ -28,6 +28,7 @@ void main()
 	{
 		gl_Position = gl_in[i].gl_Position;
 		Out.Vertex = In[i].Vertex;
+		Out.VertexEye = In[i].VertexEye;
 		Out.Normal = In[i].Normal;
 		Out.Color = In[i].Color;
 		EmitVertex();
