@@ -226,6 +226,9 @@ typedef struct{
 	int AutoFit;
 	gchar vertex_source[30];
 	float slice_start_n[4];
+	gchar volume_mode[30];   // Raycast Volume: "Composite" or "MIP"
+	float volume_steps;      // Raycast Volume: samples along box diagonal
+	float volume_density;    // Raycast Volume: optical depth per unit length at opacity 1
 	float slice_plane_index[4];
 
 	float light_global_ambient[4];

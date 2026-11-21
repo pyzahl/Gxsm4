@@ -195,6 +195,7 @@ Elevation and Distance referring to Top View Model Orientation.
         <choice value='Z-Slice'/>
         <choice value='Volume'/>
         <choice value='Scatter'/>
+        <choice value='Raycast Volume'/>
       </choices>
       <default>'Direct Height'</default>
       <summary>Vertex/Geometry Height Source for Surface Model or Flat Slicing/Volumetric rendering.</summary>
@@ -207,6 +208,31 @@ Elevation and Distance referring to Top View Model Orientation.
       <summary>Slicing Control: 1000 slice plane cover full range [Start, Stop, Step, --]</summary>
       <description>
         Slicing Control: 1000 slice plane cover full range [Start, Stop, Step, --]
+      </description>
+    </key>
+    <key name="volumerender" type="s">
+      <choices>
+        <choice value='Composite'/>
+        <choice value='MIP'/>
+      </choices>
+      <default>'Composite'</default>
+      <summary>Raycast Volume rendering mode</summary>
+      <description>
+        Raycast Volume rendering mode: Composite (semi transparent density cloud) or MIP (maximum intensity projection).
+      </description>
+    </key>
+    <key name="volumesteps" type="d">
+      <default>256</default>
+      <summary>Raycast Volume quality: samples along the volume diagonal</summary>
+      <description>
+        Raycast Volume quality: number of samples along the volume diagonal. Default 256.
+      </description>
+    </key>
+    <key name="volumedensity" type="d">
+      <default>10</default>
+      <summary>Raycast Volume density</summary>
+      <description>
+        Raycast Volume (Composite) density: optical depth per unit length at full opacity. Default 10.
       </description>
     </key>
   </schema>

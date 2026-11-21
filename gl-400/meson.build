@@ -4,6 +4,7 @@ install_data(
         's3d-vertex.glsl', 's3d-fragment.glsl',
         'simple-surface-vertex.glsl', 'simple-surface-fragment.glsl',
         'tess-vertex.glsl', 'tess-control.glsl', 'tess-evaluation.glsl', 'tess-fragment.glsl',
+        'volume-vertex.glsl', 'volume-fragment.glsl',
         'ico-vertex.glsl', 'ico-control.glsl', 'ico-evaluation.glsl', 'ico-geometry.glsl', 'ico-fragment.glsl',
     ],
     install_dir : get_option('datadir') / 'gxsm4/gl-400'

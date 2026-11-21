@@ -37,7 +37,11 @@ const gchar *LookAt_OptionsList[]     = { "Manual", "Tip", "Center", NULL };
 const gchar *VertexSrc_OptionsList[]  = { "Flat", "Direct Height", "Mode View Height", "Channel-X", "y-data", "Test Simple Shader Z",
 					  "X-Slice", "Y-Slice", "Z-Slice",
 					  "Volume", "Scatter",
+					  "Raycast Volume",
 					  NULL };
+const gchar *VolumeMode_OptionsList[]  = { "Composite", "MIP", NULL };
+const gchar *VolumeSteps_OptionsList[] = { "16","2048","16","64","0", NULL };
+const gchar *VolumeDensity_OptionsList[] = { "0","500","0.1","5","1", NULL };
 const gchar *ShadeModel_OptionsList[]  = { "Lambertian, use Palette",
 					   "Terrain",
 					   "Material Color",
@@ -207,6 +211,28 @@ GnomeResEntryInfoType v3dControl_pref_def_const[] = {
 	GNOME_RES_ENTRY_FLOAT_VEC4
 	( "V3dControl.View/SliceLimiter", "SliceLimiter", "0 1000 25 0", GET_GLV_OFFSET (&GLvd_offset.slice_start_n[0]), 
 	  N_("View"), N_("Slicing Control: 1000 slice plane cover full range [Start, Stop, Step, --]"), NULL
+		),
+
+	GNOME_RES_ENTRY_OPTION
+	( GNOME_RES_STRING, "V3dControl.View/VolumeRender", "Composite", GET_GLV_OFFSET (&GLvd_offset.volume_mode[0]),
+	  VolumeMode_OptionsList, N_("View"),
+	  N_("Raycast Volume rendering mode (Vertex Source: Raycast Volume, multi layer scans):\n"
+	     " Composite: semi transparent density cloud (emission/absorption along each view ray)\n"
+	     " MIP: maximum intensity projection, shows the largest value along each view ray\n"
+	     "Color: palette via Color Offset/Saturation. Opacity: Trans. Offset + Transparency * value.")
+		),
+	GNOME_RES_ENTRY_FLOATSLIDER
+	( "V3dControl.View/VolumeSteps", "Volume Steps", "256", GET_GLV_OFFSET (&GLvd_offset.volume_steps),
+	  VolumeSteps_OptionsList, N_("View"),
+	  N_("Raycast Volume quality: number of samples along the volume diagonal.\n"
+	     "Higher is smoother but slower (cost ~ steps x covered pixels). Default 256."), NULL
+		),
+	GNOME_RES_ENTRY_FLOATSLIDER
+	( "V3dControl.View/VolumeDensity", "Volume Density", "10", GET_GLV_OFFSET (&GLvd_offset.volume_density),
+	  VolumeDensity_OptionsList, N_("View"),
+	  N_("Raycast Volume (Composite) density: optical depth per unit length at full opacity.\n"
+	     "Small: thin transparent haze, large: dense, only the near surface of the cloud is seen.\n"
+	     "Independent of Volume Steps and zoom. Default 10."), NULL
 		),
 
 #if 0

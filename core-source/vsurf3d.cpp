@@ -209,6 +209,16 @@ namespace
         std::string const SIMPLE_SURFACE_FRAGMENT_SHADER("simple-surface-fragment.glsl");
         GLuint SimpleSurface_ProgramName(0);
 
+        // volume ray casting shaders (full screen triangle + ray marching through the 3D texture)
+        std::string const VOLUME_VERTEX_SHADER("volume-vertex.glsl");
+        std::string const VOLUME_FRAGMENT_SHADER("volume-fragment.glsl");
+        GLuint Volume_ProgramName(0);
+        GLint Loc_vol_invMVP(-1);
+        GLint Loc_vol_half(-1);
+        GLint Loc_vol_mode(-1);
+        GLint Loc_vol_steps(-1);
+        GLint Loc_vol_density(-1);
+
         // generic vertex tesselation shaders
 	std::string const ICO_TESS_VERTEX_SHADER("ico-vertex.glsl");
 	std::string const ICO_TESS_CONTROL_SHADER("ico-control.glsl");
@@ -543,6 +553,18 @@ public:
 		return Surf3d::checkError("make_plane::update_texture palette");
         };
         
+        // bind 3D volume data (unit 2) and palette (unit 1) for the ray casting program
+        bool bind_volume_textures (){
+                if (!Validated || numv <= 1 || TesselationTextureCount < 3)
+                        return false;
+                glActiveTexture (GL_TEXTURE1);
+                glBindTexture (GL_TEXTURE_1D, TesselationTextureName[1]);
+                glActiveTexture (GL_TEXTURE2);
+                glBindTexture (GL_TEXTURE_3D, TesselationTextureName[2]);
+                glActiveTexture (GL_TEXTURE0);
+                return true;
+        };
+
         gboolean draw (bool force_fallback=false){
 		if (!Validated) return false;
 
@@ -1185,6 +1207,7 @@ public:
                 surface_plane = NULL;
                 text_vao = NULL;
                 ico_vao = NULL;
+                volume_vao = 0;
                 force_fallback = false;
                 fit_pending = false;
         };
@@ -1216,7 +1239,12 @@ public:
                         surface_plane = NULL; // intentionally leaked, see above
                         text_vao = NULL;
                         ico_vao = NULL;
+                        volume_vao = 0;
                         return;
+                }
+                if (volume_vao){
+                        glDeleteVertexArrays (1, &volume_vao);
+                        volume_vao = 0;
                 }
                 end ();
                 if (text_vao){
@@ -1480,6 +1508,36 @@ private:
 
 		if (Validated){
                         compiler Compiler;
+                        GLuint VertexShader     = Compiler.create (GL_VERTEX_SHADER, getDataDirectory() + VOLUME_VERTEX_SHADER, CMD_ARGS_FOR_SHADERS);
+                        GLuint FragmentShader   = Compiler.create (GL_FRAGMENT_SHADER, getDataDirectory() + VOLUME_FRAGMENT_SHADER, CMD_ARGS_FOR_SHADERS);
+
+                        if (!VertexShader || !FragmentShader)
+                                Validated = false;
+                        else {
+                                Volume_ProgramName = glCreateProgram ();
+                                glAttachShader (Volume_ProgramName, VertexShader);
+                                glAttachShader (Volume_ProgramName, FragmentShader);
+                                glLinkProgram (Volume_ProgramName);
+                        }
+
+			Validated = Validated && Compiler.check();
+			Validated = Validated && Compiler.check_program(Volume_ProgramName);
+
+                        if (Validated){
+                                Loc_vol_invMVP  = glGetUniformLocation (Volume_ProgramName, "InvModelViewProjection");
+                                Loc_vol_half    = glGetUniformLocation (Volume_ProgramName, "VolumeHalf");
+                                Loc_vol_mode    = glGetUniformLocation (Volume_ProgramName, "VolumeMode");
+                                Loc_vol_steps   = glGetUniformLocation (Volume_ProgramName, "VolumeSteps");
+                                Loc_vol_density = glGetUniformLocation (Volume_ProgramName, "VolumeDensity");
+                                glUseProgram (Volume_ProgramName);
+                                glUniform1i (glGetUniformLocation (Volume_ProgramName, "GXSM_Palette"), 1);    // texture unit 1
+                                glUniform1i (glGetUniformLocation (Volume_ProgramName, "Volume3D_Z_Data"), 2); // texture unit 2
+                                glUseProgram (0);
+                        }
+		}
+
+		if (Validated){
+                        compiler Compiler;
                         GLuint VertexShader     = Compiler.create (GL_VERTEX_SHADER, getDataDirectory() + ICO_TESS_VERTEX_SHADER, CMD_ARGS_FOR_SHADERS);
                         GLuint ControlShader    = Compiler.create (GL_TESS_CONTROL_SHADER, getDataDirectory() + ICO_TESS_CONTROL_SHADER, CMD_ARGS_FOR_SHADERS);
                         GLuint EvaluationShader = Compiler.create (GL_TESS_EVALUATION_SHADER, getDataDirectory() + ICO_TESS_EVALUATION_SHADER, CMD_ARGS_FOR_SHADERS);
@@ -1594,6 +1652,10 @@ private:
                 bind_block (IcoTess_ProgramName, ModelViewMat_block, "ModelViewMatrices", sizeof(ubo::uniform_model_view));
                 bind_block (IcoTess_ProgramName, SurfaceGeometry_block, "SurfaceGeometry", sizeof(ubo::uniform_surface_geometry));
                 bind_block (IcoTess_ProgramName, FragmentShading_block, "FragmentShading", sizeof(ubo::uniform_fragment_shading));
+
+                bind_block (Volume_ProgramName, ModelViewMat_block, "ModelViewMatrices", sizeof(ubo::uniform_model_view));
+                bind_block (Volume_ProgramName, SurfaceGeometry_block, "SurfaceGeometry", sizeof(ubo::uniform_surface_geometry));
+                bind_block (Volume_ProgramName, FragmentShading_block, "FragmentShading", sizeof(ubo::uniform_fragment_shading));
                 
                 // create surface base plane
                 if (numx > 0 && numy > 0 && numv > 0 && Surf3D_Z_Data && Surf3D_Palette){
@@ -1744,6 +1806,8 @@ public:
                         glDeleteProgram(S3D_ProgramName);
                         glDeleteProgram(IcoTess_ProgramName);
                         glDeleteProgram(SimpleSurface_ProgramName);
+                        glDeleteProgram(Volume_ProgramName);
+                        Volume_ProgramName = 0;
 
                         Tesselation_ProgramName = 0;
                         S3D_ProgramName = 0;
@@ -1847,7 +1911,7 @@ public:
                 updateModelViewM ();
 
                 // Geometry control
-                if (s->GLv_data.vertex_source[0] == 'V')
+                if (s->GLv_data.vertex_source[0] == 'V' || s->GLv_data.vertex_source[0] == 'R') // volume: z extent from layer range
                         Block_SurfaceGeometry.aspect = glm::vec4 (1.0f,
                                                                   (s->get_scan ())->data.s.ry / (s->get_scan ())->data.s.rx,
                                                                   GL_height_scale*(s->get_scan ())->data.s.rz / (s->get_scan ())->data.s.rx,
@@ -2042,6 +2106,10 @@ public:
                                 glEnable (GL_DEPTH_TEST);
                         }
                         break;
+                case 'R': // GPU ray casting through the volume (3D texture)
+                        if (!draw_volume_raycast ())
+                                surface_plane->draw (force_fallback); // no volume data (single layer): show surface
+                        break;
                 case 'Z':
                 default:
                         surface_plane->draw (force_fallback);
@@ -2206,6 +2274,46 @@ public:
                 WindowSize  = glm::ivec2(w, h);
         };
 
+        // Volume ray casting: one full screen triangle, each pixel marches its ray through
+        // the volume box (see gl-400/volume-fragment.glsl). Correct from any direction,
+        // also with the camera inside the volume. Requires a multi layer scan (3D texture).
+        bool draw_volume_raycast (){
+                if (!Volume_ProgramName || !surface_plane || !surface_plane->bind_volume_textures ())
+                        return false;
+
+                if (!volume_vao)
+                        glGenVertexArrays (1, &volume_vao);
+
+                glm::vec4 a = Block_SurfaceGeometry.aspect; // x, y(=scan y), z(=layers)
+                glm::vec3 half = 0.5f * glm::vec3 (a.x, a.z, a.y); // GL x, y=up, z
+
+                glUseProgram (Volume_ProgramName);
+                glUniformMatrix4fv (Loc_vol_invMVP, 1, GL_FALSE, &glm::inverse (Block_ModelViewMat.ModelViewProjection)[0][0]);
+                glUniform3fv (Loc_vol_half, 1, &half[0]);
+                glUniform1i (Loc_vol_mode, s->GLv_data.volume_mode[0] == 'M' ? 1 : 0);
+                glUniform1f (Loc_vol_steps, s->GLv_data.volume_steps > 8. ? s->GLv_data.volume_steps : 8.);
+                glUniform1f (Loc_vol_density, s->GLv_data.volume_density);
+
+                // premultiplied alpha output, no depth interaction
+                GLboolean depth_on = glIsEnabled (GL_DEPTH_TEST);
+                glDisable (GL_DEPTH_TEST);
+                glDisable (GL_CULL_FACE);
+                glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
+                glEnable (GL_BLEND);
+                glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+                glBindVertexArray (volume_vao);
+                glDrawArrays (GL_TRIANGLES, 0, 3);
+                glBindVertexArray (0);
+
+                glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                glDisable (GL_BLEND);
+                if (depth_on)
+                        glEnable (GL_DEPTH_TEST);
+                glUseProgram (Tesselation_ProgramName); // render() continues with the surface program
+                return Surf3d::checkError ("draw_volume_raycast");
+        };
+
         void request_fit (){ fit_pending = true; };
 
         void set_force_fallback(bool force){
@@ -2333,6 +2441,7 @@ private:
         base_plane *surface_plane;
         text_plane *text_vao;
         icosahedron *ico_vao;
+        GLuint volume_vao; // empty VAO for the attribute-less full screen triangle (VAOs are per context)
 
         glm::vec2 WindowSize;
 	glm::vec2 MouseOrigin;
