@@ -15,7 +15,11 @@ in vec2 NDC;
 out vec4 FragColor;
 
 uniform mat4  InvModelViewProjection; // NDC -> model space
-uniform vec3  VolumeHalf;             // half extents of the volume box in model space (GL x, y=up, z)
+uniform vec3  VolumeHalf;             // half extents of the full volume box in model space (GL x, y=up, z)
+uniform vec3  VolumeLo;               // clip box (SliceLimiter start/stop on the layer axis), model space
+uniform vec3  VolumeHi;
+uniform vec2  VolumeLayer;            // layer axis: layer fraction f = VolumeLayer.x + y * VolumeLayer.y
+                                      // (start layer at y = 0, Hskl = selected layer range height in scan widths)
 uniform int   VolumeMode;             // 0: composite, 1: MIP
 uniform float VolumeSteps;            // samples along the box diagonal
 uniform float VolumeDensity;          // optical depth per model unit at opacity 1
@@ -23,10 +27,16 @@ uniform float VolumeDensity;          // optical depth per model unit at opacity
 #define VOLUME_COMPOSITE 0
 #define VOLUME_MIP       1
 
-// model space position -> 3D texture coordinate (same mapping as shadeVolume in tess-fragment.glsl)
+vec3 VolN; // 3D texture size (nx, ny, nv), set in main()
+
+// model space position -> 3D texture coordinate.
+// u: fractions 0..1 of the index ranges (x, z orientation as the surface / shadeVolume),
+// mapped onto texel CENTERS: 0 -> first pixel/layer, 1 -> last pixel/layer. Mapping 0..1 to the
+// texture edges would blend half a voxel with the border color at all faces (fading first/last layer).
 vec3 volume_texcoord (vec3 p)
 {
-        return vec3 (0.5 - p.x/aspect.x, 0.5 - p.z/aspect.y, 0.5 - p.y/aspect.z);
+        vec3 u = vec3 (0.5 - p.x/aspect.x, 0.5 - p.z/aspect.y, VolumeLayer.x + p.y*VolumeLayer.y);
+        return (u*(VolN - 1.0) + 0.5) / VolN;
 }
 
 float volume_value (vec3 p)
@@ -54,6 +64,8 @@ float hash12 (vec2 p)
 
 void main()
 {
+        VolN = vec3 (textureSize (Volume3D_Z_Data, 0));
+
         // ray from near to far plane through this pixel, in model space (works for perspective and ortho)
         vec4 pn = InvModelViewProjection * vec4 (NDC, -1.0, 1.0);
         vec4 pf = InvModelViewProjection * vec4 (NDC,  1.0, 1.0);
@@ -64,8 +76,8 @@ void main()
         vec3 rds = vec3 (abs (rd.x) < 1e-12 ? 1e-12 : rd.x,
                          abs (rd.y) < 1e-12 ? 1e-12 : rd.y,
                          abs (rd.z) < 1e-12 ? 1e-12 : rd.z);
-        vec3 t0 = (-VolumeHalf - ro) / rds;
-        vec3 t1 = ( VolumeHalf - ro) / rds;
+        vec3 t0 = (VolumeLo - ro) / rds;
+        vec3 t1 = (VolumeHi - ro) / rds;
         vec3 tlo = min (t0, t1);
         vec3 thi = max (t0, t1);
         float tmin = max (max (max (tlo.x, tlo.y), tlo.z), 0.0);
@@ -73,7 +85,7 @@ void main()
         if (tmax <= tmin)
                 discard;
 
-        // fixed step in model units: box diagonal / VolumeSteps
+        // fixed step in model units: full box diagonal / VolumeSteps (independent of clipping)
         float rlen  = length (rd);
         float ds    = 2.0*length (VolumeHalf) / max (VolumeSteps, 1.0);
         float dt    = ds / rlen;

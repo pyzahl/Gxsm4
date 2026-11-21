@@ -215,6 +215,9 @@ namespace
         GLuint Volume_ProgramName(0);
         GLint Loc_vol_invMVP(-1);
         GLint Loc_vol_half(-1);
+        GLint Loc_vol_lo(-1);
+        GLint Loc_vol_hi(-1);
+        GLint Loc_vol_layer(-1);
         GLint Loc_vol_mode(-1);
         GLint Loc_vol_steps(-1);
         GLint Loc_vol_density(-1);
@@ -1367,7 +1370,10 @@ private:
                 // 1) auto Z (conservative): full Z range rises to ~20% of the scan width,
                 //    but never flatten real relief (Hskl >= 1) and stay within the Hskl slider range
                 const double relief = 0.2;
-                if (s->GLv_data.height_scale_mode[0] == 'A'){
+                const bool raycast = s->GLv_data.vertex_source[0] == 'R';
+                if (raycast)
+                        s->GLv_data.hskl = 1.0; // selected layer range as tall as the scan is wide: cube
+                else if (s->GLv_data.height_scale_mode[0] == 'A'){
                         if (zr > 0. && rx > 0.)
                                 s->GLv_data.hskl = glm::clamp (nice_125 (relief * rx / zr), 1.0, 20.0);
                 } else
@@ -1403,10 +1409,15 @@ private:
                 const float ty = tanf (glm::radians (s->GLv_data.fov)*0.5f);
                 const float tx = ty*aspect;
                 float d_need = 0.f, ext_x = 0.f, ext_y = 0.f, z_max = 0.f;
+                glm::vec3 vlo, vhi, vhalf; glm::vec2 vlayer;
+                if (raycast)
+                        volumeBox (vlo, vhi, vhalf, vlayer);
                 for (int i=0; i<8; ++i){
                         glm::vec3 c ((i&1 ? 0.5f : -0.5f),
                                      (i&2 ? 0.5f*hs : -0.5f*hs) + off,
                                      (i&4 ? 0.5f*a  : -0.5f*a));
+                        if (raycast)
+                                c = glm::vec3 (i&1 ? vhi.x : vlo.x, i&2 ? vhi.y : vlo.y, i&4 ? vhi.z : vlo.z);
                         glm::vec3 w = glm::vec3 (glm::translate (R, modelPosition ()) * glm::vec4 (c, 1.f));
                         // NOTE: std::fabs, not fabsf -- fabsf(glm::dot(..)) evaluated to 0 in a standalone glm/gcc test
                         float xc = margin*std::fabs (glm::dot (w, right));
@@ -1526,6 +1537,9 @@ private:
                         if (Validated){
                                 Loc_vol_invMVP  = glGetUniformLocation (Volume_ProgramName, "InvModelViewProjection");
                                 Loc_vol_half    = glGetUniformLocation (Volume_ProgramName, "VolumeHalf");
+                                Loc_vol_lo      = glGetUniformLocation (Volume_ProgramName, "VolumeLo");
+                                Loc_vol_hi      = glGetUniformLocation (Volume_ProgramName, "VolumeHi");
+                                Loc_vol_layer   = glGetUniformLocation (Volume_ProgramName, "VolumeLayer");
                                 Loc_vol_mode    = glGetUniformLocation (Volume_ProgramName, "VolumeMode");
                                 Loc_vol_steps   = glGetUniformLocation (Volume_ProgramName, "VolumeSteps");
                                 Loc_vol_density = glGetUniformLocation (Volume_ProgramName, "VolumeDensity");
@@ -2274,6 +2288,33 @@ public:
                 WindowSize  = glm::ivec2(w, h);
         };
 
+        // Raycast volume geometry (model space, GL x, y=up, z):
+        //  x, z: scan area as for the surface (width 1, depth ry/rx)
+        //  y   : layer axis. SliceLimiter [start, stop, -, -] = layer indices (0 based, as the layer
+        //        selector, stop inclusive and clamped to the last layer) select the layer range.
+        //        Hskl = height of the SELECTED layer range in units of the scan width, independent
+        //        of the height scale mode: Hskl = 1 gives a cube (for a square scan) for any range.
+        //        The start layer is at y = 0, further layers stack up for Hskl > 0, down for Hskl < 0.
+        // half: half extents of the volume box, sets the sampling step.
+        // layer: layer fraction (0..1 = first..last layer) f = layer.x + y*layer.y
+        void volumeBox (glm::vec3 &lo, glm::vec3 &hi, glm::vec3 &half, glm::vec2 &layer) const {
+                const float a = (s->get_scan ())->data.s.rx > 0. ? (float)((s->get_scan ())->data.s.ry / (s->get_scan ())->data.s.rx) : 1.f;
+                float h = s->GLv_data.hskl;
+                if (std::fabs (h) < 1e-3f) h = h < 0.f ? -1e-3f : 1e-3f;
+                const int nv = (s->get_scan ())->mem2d->GetNv ();
+                const float last = nv > 1 ? (float)(nv-1) : 1.f;
+                float i0 = glm::clamp (roundf (s->GLv_data.slice_start_n[0]), 0.f, last);
+                float i1 = glm::clamp (roundf (s->GLv_data.slice_start_n[1]), 0.f, last);
+                if (i1 < i0) std::swap (i0, i1);
+                const float f0 = i0/last;                       // layer fraction 0..1 (texel centers in shader)
+                const float df = fmaxf ((i1 - i0)/last, 1e-3f); // selected layer range (fraction)
+                const float y1 = h; // stop layer
+                lo = glm::vec3 (-0.5f, fminf (0.f, y1), -0.5f*a);
+                hi = glm::vec3 ( 0.5f, fmaxf (0.f, y1),  0.5f*a);
+                half = 0.5f * glm::vec3 (1.f, std::fabs (h), a);
+                layer = glm::vec2 (f0, df/h);
+        };
+
         // Volume ray casting: one full screen triangle, each pixel marches its ray through
         // the volume box (see gl-400/volume-fragment.glsl). Correct from any direction,
         // also with the camera inside the volume. Requires a multi layer scan (3D texture).
@@ -2284,12 +2325,16 @@ public:
                 if (!volume_vao)
                         glGenVertexArrays (1, &volume_vao);
 
-                glm::vec4 a = Block_SurfaceGeometry.aspect; // x, y(=scan y), z(=layers)
-                glm::vec3 half = 0.5f * glm::vec3 (a.x, a.z, a.y); // GL x, y=up, z
+                glm::vec3 lo, hi, half;
+                glm::vec2 layer;
+                volumeBox (lo, hi, half, layer);
 
                 glUseProgram (Volume_ProgramName);
                 glUniformMatrix4fv (Loc_vol_invMVP, 1, GL_FALSE, &glm::inverse (Block_ModelViewMat.ModelViewProjection)[0][0]);
                 glUniform3fv (Loc_vol_half, 1, &half[0]);
+                glUniform3fv (Loc_vol_lo, 1, &lo[0]);
+                glUniform3fv (Loc_vol_hi, 1, &hi[0]);
+                glUniform2fv (Loc_vol_layer, 1, &layer[0]);
                 glUniform1i (Loc_vol_mode, s->GLv_data.volume_mode[0] == 'M' ? 1 : 0);
                 glUniform1f (Loc_vol_steps, s->GLv_data.volume_steps > 8. ? s->GLv_data.volume_steps : 8.);
                 glUniform1f (Loc_vol_density, s->GLv_data.volume_density);

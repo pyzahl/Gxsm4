@@ -210,7 +210,11 @@ GnomeResEntryInfoType v3dControl_pref_def_const[] = {
 
 	GNOME_RES_ENTRY_FLOAT_VEC4
 	( "V3dControl.View/SliceLimiter", "SliceLimiter", "0 1000 25 0", GET_GLV_OFFSET (&GLvd_offset.slice_start_n[0]), 
-	  N_("View"), N_("Slicing Control: 1000 slice plane cover full range [Start, Stop, Step, --]"), NULL
+	  N_("View"), N_("Slicing Control: 1000 slice plane cover full range [Start, Stop, Step, --]\n"
+			 "Raycast Volume: Start, Stop = layer indices (0 based as the layer selector, Stop inclusive,\n"
+			 "clamped to the last layer). The Start layer is placed at z=0, layers stack up (Hskl < 0: down),\n"
+			 "Hskl = height of the selected range in scan widths (Hskl=1: cube).\n"
+			 "Step is not used (sampling: Volume Steps)."), NULL
 		),
 
 	GNOME_RES_ENTRY_OPTION
